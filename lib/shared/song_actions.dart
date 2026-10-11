@@ -1,0 +1,59 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../core/audio/audio_providers.dart';
+import '../core/models/song.dart';
+import '../features/downloads/presentation/downloads_providers.dart';
+
+final songActionsProvider = Provider<SongActions>(SongActions.new);
+
+/// Acciones sobre canciones que comparten todas las pantallas.
+///
+/// Antes de reproducir se guarda la canción en la BD: así un resultado de
+/// búsqueda que ya está descargado se reproduce desde el archivo local, de
+/// forma transparente.
+class SongActions {
+  SongActions(this._ref);
+
+  final Ref _ref;
+
+  Future<Song> _persist(Song song) async {
+    // Volvemos a leerla aunque tenga id: su descarga puede haber cambiado.
+    return _ref.read(songDaoProvider).upsert(song);
+  }
+
+  Future<void> playQueue(List<Song> songs, int index) async {
+    final saved = [for (final s in songs) await _persist(s)];
+    await _ref
+        .read(audioPlayerServiceProvider)
+        .playQueue(saved, startIndex: index);
+  }
+
+  Future<void> playShuffled(List<Song> songs) async {
+    if (songs.isEmpty) return;
+    final audio = _ref.read(audioPlayerServiceProvider);
+    await audio.setShuffle(true);
+    await playQueue(songs, 0);
+  }
+
+  Future<void> playNext(Song song) async =>
+      _ref.read(audioPlayerServiceProvider).playNext(await _persist(song));
+
+  Future<void> addToQueue(Song song) async =>
+      _ref.read(audioPlayerServiceProvider).addToQueue(await _persist(song));
+
+  Future<Song> download(Song song) =>
+      _ref.read(downloadManagerProvider).download(song);
+
+  Future<void> downloadAll(List<Song> songs) async {
+    final manager = _ref.read(downloadManagerProvider);
+    for (final s in songs.where((s) => !s.isDownloaded)) {
+      await manager.download(s);
+    }
+  }
+
+  Future<void> cancelDownload(Song song) =>
+      _ref.read(downloadManagerProvider).cancel(song);
+
+  Future<Song> deleteDownload(Song song) =>
+      _ref.read(downloadManagerProvider).delete(song);
+}
