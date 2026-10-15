@@ -15,6 +15,7 @@ import 'features/history/data/history_recorder.dart';
 import 'features/playlists/data/playlist_cover_service.dart';
 import 'features/playlists/data/playlist_dao.dart';
 import 'features/radio/radio_service.dart';
+import 'features/search/data/search_history_dao.dart';
 
 /// Servicios de vida larga que se crean una vez al arrancar.
 class AppDependencies {
@@ -28,6 +29,7 @@ class AppDependencies {
     required this.historyDao,
     required this.historyRecorder,
     required this.settings,
+    required this.searchHistory,
   });
 
   final AppDatabase database;
@@ -39,6 +41,7 @@ class AppDependencies {
   final HistoryDao historyDao;
   final HistoryRecorder historyRecorder;
   final SettingsDao settings;
+  final SearchHistoryDao searchHistory;
 }
 
 Future<AppDependencies> bootstrap() async {
@@ -90,5 +93,6 @@ Future<AppDependencies> bootstrap() async {
     historyDao: historyDao,
     historyRecorder: HistoryRecorder(audio: audio, dao: historyDao),
     settings: settings,
+    searchHistory: SearchHistoryDao(database),
   );
 }

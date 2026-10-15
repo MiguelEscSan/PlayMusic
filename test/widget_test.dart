@@ -19,8 +19,12 @@ import 'package:sponify/features/history/data/history_dao.dart';
 import 'package:sponify/features/history/presentation/history_providers.dart';
 import 'package:sponify/features/playlists/data/playlist_dao.dart';
 import 'package:sponify/features/playlists/presentation/playlists_providers.dart';
+import 'package:sponify/features/search/data/search_history_dao.dart';
 import 'package:sponify/features/search/data/search_source.dart';
+import 'package:sponify/features/search/data/suggestion_source.dart';
 import 'package:sponify/features/search/presentation/search_controller.dart';
+import 'package:sponify/features/search/presentation/search_history_providers.dart';
+import 'package:sponify/features/search/presentation/search_suggestions_controller.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 Song _song(String id, String title) => Song(
@@ -40,6 +44,12 @@ class _FakeSearch implements SearchSource {
     queries.add(query);
     return SearchPage([_song('a', 'Primera'), _song('b', 'Segunda')], null);
   }
+}
+
+/// Sin sugerencias: los tests nunca tocan la red.
+class _NoSuggestions implements SuggestionSource {
+  @override
+  Future<List<String>> suggestions(String query) async => const [];
 }
 
 /// Reproductor falso: guarda lo que se le pide y emite el estado.
@@ -133,6 +143,8 @@ void main() {
           downloadManagerProvider.overrideWithValue(downloads),
           historyDaoProvider.overrideWithValue(historyDao),
           searchSourceProvider.overrideWithValue(search),
+          searchHistoryDaoProvider.overrideWithValue(SearchHistoryDao(db)),
+          suggestionSourceProvider.overrideWithValue(_NoSuggestions()),
         ],
         child: const SponifyApp(),
       ),
