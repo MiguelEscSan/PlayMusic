@@ -27,6 +27,7 @@ class Song {
     this.fileSizeBytes,
     this.downloadedAt,
     this.downloadProgress,
+    this.likedAt,
   });
 
   /// Identificador interno estable (UUID v4 generado al guardar en la BD).
@@ -62,6 +63,13 @@ class Song {
   /// de verdad del progreso es el stream del gestor de descargas (Paso 3).
   final double? downloadProgress;
 
+  /// Cuándo se marcó "me gusta". `null` = no está en Favoritos. Se lee de la
+  /// BD pero NO va en [toMap]: así `SongDao.upsert` nunca borra un like; solo
+  /// lo escribe `SongDao.setLiked`.
+  final DateTime? likedAt;
+
+  bool get isLiked => likedAt != null;
+
   /// Derivado de [localPath] para que nunca pueda quedar desincronizado.
   bool get isDownloaded => localPath != null;
 
@@ -84,8 +92,10 @@ class Song {
     int? fileSizeBytes,
     DateTime? downloadedAt,
     double? downloadProgress,
+    DateTime? likedAt,
     bool clearLocalFile = false,
     bool clearDownloadProgress = false,
+    bool clearLiked = false,
   }) {
     return Song(
       id: id ?? this.id,
@@ -105,6 +115,7 @@ class Song {
       downloadProgress: clearDownloadProgress
           ? null
           : (downloadProgress ?? this.downloadProgress),
+      likedAt: clearLiked ? null : (likedAt ?? this.likedAt),
     );
   }
 
@@ -139,6 +150,9 @@ class Song {
     downloadedAt: map['downloaded_at'] == null
         ? null
         : DateTime.fromMillisecondsSinceEpoch(map['downloaded_at']! as int),
+    likedAt: map['liked_at'] == null
+        ? null
+        : DateTime.fromMillisecondsSinceEpoch(map['liked_at']! as int),
   );
 
   /// Dos canciones son la misma si coinciden en origen; evita duplicados

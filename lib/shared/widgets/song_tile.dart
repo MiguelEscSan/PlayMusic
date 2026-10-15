@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/audio/audio_providers.dart';
 import '../../core/models/song.dart';
 import '../../core/utils/formatters.dart';
+import '../../features/favorites/presentation/favorites_providers.dart';
 import '../../features/playlists/presentation/widgets/add_to_playlist_sheet.dart';
 import '../song_actions.dart';
 import 'artwork_image.dart';
@@ -43,6 +44,7 @@ class SongTile extends ConsumerWidget {
     final isCurrent = ref.watch(
       playerSnapshotProvider.select((s) => s.value?.currentSong == song),
     );
+    final isLiked = ref.watch(isLikedProvider(song));
     final theme = Theme.of(context);
     final actions = ref.read(songActionsProvider);
 
@@ -77,6 +79,13 @@ class SongTile extends ConsumerWidget {
             // `_`: los callbacks deben usar el context de la fila, no el del
             // menú, que ya se ha cerrado cuando se ejecutan.
             itemBuilder: (_) => [
+              _item(
+                isLiked
+                    ? Icons.favorite_rounded
+                    : Icons.favorite_border_rounded,
+                isLiked ? 'Quitar de Me gusta' : 'Me gusta',
+                () => actions.toggleLike(song),
+              ),
               _item(
                 Icons.playlist_play_rounded,
                 'Reproducir a continuación',
@@ -114,7 +123,11 @@ class SongTile extends ConsumerWidget {
   ) => PopupMenuItem(
     value: onSelected,
     child: Row(
-      children: [Icon(icon, size: 20), const SizedBox(width: 12), Text(label)],
+      children: [
+        Icon(icon, size: 20),
+        const SizedBox(width: 12),
+        Flexible(child: Text(label, overflow: TextOverflow.ellipsis)),
+      ],
     ),
   );
 }

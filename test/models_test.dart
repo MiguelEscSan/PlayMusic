@@ -88,4 +88,22 @@ void main() {
       expect(_withSongs([]).coverUrls, isEmpty);
     });
   });
+
+  group('Song: me gusta', () {
+    test('fromMap lee liked_at y toMap no lo escribe', () {
+      final map = {..._song('1').toMap(), 'liked_at': 1700000000000};
+      final s = Song.fromMap(map);
+      expect(s.isLiked, isTrue);
+      expect(s.likedAt, DateTime.fromMillisecondsSinceEpoch(1700000000000));
+      expect(s.toMap().containsKey('liked_at'), isFalse);
+      expect(Song.fromMap(_song('1').toMap()).isLiked, isFalse);
+    });
+
+    test('copyWith pone y quita el me gusta', () {
+      final liked = _song('1').copyWith(likedAt: DateTime(2026));
+      expect(liked.isLiked, isTrue);
+      expect(liked.copyWith(title: 'x').isLiked, isTrue);
+      expect(liked.copyWith(clearLiked: true).isLiked, isFalse);
+    });
+  });
 }
