@@ -104,15 +104,6 @@ class _PlaylistViewState extends ConsumerState<_PlaylistView> {
     }
   }
 
-  void _move(int oldIndex, int newIndex) {
-    setState(() {
-      final list = [..._songs];
-      list.insert(newIndex, list.removeAt(oldIndex));
-      _songs = list;
-    });
-    ref.read(playlistDaoProvider).move(widget.playlist.id, oldIndex, newIndex);
-  }
-
   @override
   Widget build(BuildContext context) {
     final playlist = widget.playlist;
@@ -157,71 +148,110 @@ class _PlaylistViewState extends ConsumerState<_PlaylistView> {
 
     Future<void> removeCover() => covers().clear(playlist.id);
 
+    final meta = [
+      if (playlist.isFullyDownloaded) 'Descargada',
+      if (!playlist.isFullyDownloaded && playlist.downloadedCount > 0)
+        downloadedLabel(playlist.downloadedCount),
+      songCount(songs.length),
+      formatDuration(playlist.totalDuration),
+    ];
+
     final header = Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          PlaylistCover(playlist, size: 180, radius: 12),
-          const SizedBox(height: 16),
+          Center(child: PlaylistCover(playlist, size: 250, radius: 6)),
+          const SizedBox(height: 24),
           Text(
             playlist.name,
-            style: theme.textTheme.headlineSmall?.copyWith(
+            style: theme.textTheme.headlineMedium?.copyWith(
               fontWeight: FontWeight.w800,
             ),
-            textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 8),
           Text(
-            '${songCount(songs.length)} · '
-            '${formatDuration(playlist.totalDuration)}'
-            '${playlist.downloadedCount > 0 ? ' · ${downloadedLabel(playlist.downloadedCount)}' : ''}',
-            textAlign: TextAlign.center,
+            meta.join(' · '),
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           Row(
             children: [
-              Expanded(
-                child: FilledButton.icon(
-                  onPressed: songs.isEmpty
-                      ? null
-                      : () => actions.playQueue(songs, 0),
-                  icon: const Icon(Icons.play_arrow_rounded),
-                  label: const Text('Reproducir'),
+              IconButton(
+                tooltip: playlist.isFullyDownloaded
+                    ? 'Toda la playlist está descargada'
+                    : 'Descargar toda la playlist',
+                onPressed: songs.isEmpty || playlist.isFullyDownloaded
+                    ? null
+                    : () async {
+                        await actions.downloadAll(songs);
+                        if (context.mounted) {
+                          showSnack(context, 'Descargando la playlist…');
+                        }
+                      },
+                icon: Icon(
+                  playlist.isFullyDownloaded
+                      ? Icons.offline_pin_rounded
+                      : Icons.download_for_offline_outlined,
+                  size: 28,
+                  color: playlist.isFullyDownloaded
+                      ? theme.colorScheme.primary
+                      : null,
+                ),
+              ),
+              PopupMenuButton<VoidCallback>(
+                tooltip: 'Más opciones',
+                icon: const Icon(Icons.more_horiz_rounded, size: 28),
+                onSelected: (f) => f(),
+                itemBuilder: (_) => [
+                  PopupMenuItem(
+                    value: rename,
+                    child: _MenuRow(Icons.edit_outlined, 'Renombrar'),
+                  ),
+                  PopupMenuItem(
+                    value: changeCover,
+                    child: _MenuRow(Icons.image_outlined, 'Cambiar portada'),
+                  ),
+                  if (playlist.coverUrl != null)
+                    PopupMenuItem(
+                      value: removeCover,
+                      child: _MenuRow(
+                        Icons.hide_image_outlined,
+                        'Quitar portada',
+                      ),
+                    ),
+                  PopupMenuItem(
+                    value: delete,
+                    child: _MenuRow(
+                      Icons.delete_outline_rounded,
+                      'Borrar playlist',
+                      color: theme.colorScheme.error,
+                    ),
+                  ),
+                ],
+              ),
+              const Spacer(),
+              IconButton(
+                tooltip: 'Aleatorio',
+                onPressed: songs.isEmpty
+                    ? null
+                    : () => actions.playShuffled(songs),
+                icon: Icon(
+                  Icons.shuffle_rounded,
+                  size: 26,
+                  color: theme.colorScheme.primary,
                 ),
               ),
               const SizedBox(width: 8),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: songs.isEmpty
-                      ? null
-                      : () => actions.playShuffled(songs),
-                  icon: const Icon(Icons.shuffle_rounded),
-                  label: const Text('Aleatorio'),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: songs.isEmpty || playlist.isFullyDownloaded
-                      ? null
-                      : () async {
-                          await actions.downloadAll(songs);
-                          if (context.mounted) {
-                            showSnack(context, 'Descargando la playlist…');
-                          }
-                        },
-                  icon: Icon(
-                    playlist.isFullyDownloaded
-                        ? Icons.offline_pin_rounded
-                        : Icons.download_for_offline_outlined,
-                  ),
-                  label: Text(
-                    playlist.isFullyDownloaded ? 'Descargada' : 'Descargar',
-                  ),
-                ),
+              IconButton.filled(
+                tooltip: 'Reproducir',
+                iconSize: 32,
+                onPressed: songs.isEmpty
+                    ? null
+                    : () => actions.playQueue(songs, 0),
+                icon: const Icon(Icons.play_arrow_rounded),
               ),
             ],
           ),
@@ -231,39 +261,22 @@ class _PlaylistViewState extends ConsumerState<_PlaylistView> {
 
     return Scaffold(
       appBar: AppBar(
-        actions: [
-          PopupMenuButton<VoidCallback>(
-            onSelected: (f) => f(),
-            itemBuilder: (_) => [
-              PopupMenuItem(
-                value: rename,
-                child: _MenuRow(Icons.edit_outlined, 'Renombrar'),
-              ),
-              PopupMenuItem(
-                value: changeCover,
-                child: _MenuRow(Icons.image_outlined, 'Cambiar portada'),
-              ),
-              if (playlist.coverUrl != null)
-                PopupMenuItem(
-                  value: removeCover,
-                  child: _MenuRow(
-                    Icons.hide_image_outlined,
-                    'Quitar portada',
-                  ),
-                ),
-              PopupMenuItem(
-                value: delete,
-                child: _MenuRow(
-                  Icons.delete_outline_rounded,
-                  'Borrar playlist',
-                  color: theme.colorScheme.error,
-                ),
-              ),
+        backgroundColor: Colors.transparent,
+        scrolledUnderElevation: 0,
+        elevation: 0,
+      ),
+      body: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.center,
+            colors: [
+              theme.colorScheme.primary.withValues(alpha: 0.2),
+              theme.colorScheme.surface,
             ],
           ),
-        ],
-      ),
-      body: songs.isEmpty
+        ),
+        child: songs.isEmpty
           ? ListView(
               children: [
                 header,
@@ -274,13 +287,12 @@ class _PlaylistViewState extends ConsumerState<_PlaylistView> {
                 ),
               ],
             )
-          : ReorderableListView.builder(
-              header: header,
-              buildDefaultDragHandles: false,
+          : ListView.builder(
               padding: const EdgeInsets.only(bottom: 24),
-              itemCount: songs.length,
-              onReorderItem: _move,
-              itemBuilder: (context, i) {
+              itemCount: songs.length + 1,
+              itemBuilder: (context, index) {
+                if (index == 0) return header;
+                final i = index - 1;
                 final song = songs[i];
                 // Un solo Dismissible para los dos sentidos: derecha encola
                 // (y la fila vuelve), izquierda quita de la playlist.
@@ -327,16 +339,11 @@ class _PlaylistViewState extends ConsumerState<_PlaylistView> {
                     song: song,
                     swipeToQueue: false,
                     onTap: () => actions.playQueue(songs, i),
-                    leading: ReorderableDragStartListener(
-                      index: i,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.drag_indicator_rounded),
-                          const SizedBox(width: 8),
-                          ArtworkImage(url: song.artworkUrl, seed: song.title),
-                        ],
-                      ),
+                    leading: ArtworkImage(
+                      url: song.artworkUrl,
+                      seed: song.title,
+                      size: 48,
+                      radius: 4,
                     ),
                     extraActions: [
                       SongMenuAction(
@@ -349,6 +356,7 @@ class _PlaylistViewState extends ConsumerState<_PlaylistView> {
                 );
               },
             ),
+      ),
     );
   }
 }
