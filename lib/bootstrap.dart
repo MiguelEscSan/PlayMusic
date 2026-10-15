@@ -7,6 +7,7 @@ import 'core/audio/sponify_audio_handler.dart';
 import 'core/audio/stream_url_provider.dart';
 import 'core/database/app_database.dart';
 import 'core/database/song_dao.dart';
+import 'core/settings/settings_dao.dart';
 import 'core/storage/file_paths.dart';
 import 'features/downloads/data/download_manager.dart';
 import 'features/history/data/history_dao.dart';
@@ -25,6 +26,7 @@ class AppDependencies {
     required this.downloads,
     required this.historyDao,
     required this.historyRecorder,
+    required this.settings,
   });
 
   final AppDatabase database;
@@ -35,6 +37,7 @@ class AppDependencies {
   final DownloadManager downloads;
   final HistoryDao historyDao;
   final HistoryRecorder historyRecorder;
+  final SettingsDao settings;
 }
 
 Future<AppDependencies> bootstrap() async {
@@ -77,5 +80,6 @@ Future<AppDependencies> bootstrap() async {
     downloads: downloads,
     historyDao: historyDao,
     historyRecorder: HistoryRecorder(audio: audio, dao: historyDao),
+    settings: SettingsDao(database),
   );
 }

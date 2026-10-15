@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'app.dart';
 import 'bootstrap.dart';
 import 'core/audio/audio_providers.dart';
+import 'core/settings/settings_providers.dart';
 import 'features/downloads/presentation/downloads_providers.dart';
 import 'features/history/presentation/history_providers.dart';
 import 'features/playlists/presentation/playlists_providers.dart';
@@ -20,6 +21,7 @@ Future<void> main() async {
         playlistCoverServiceProvider.overrideWithValue(deps.playlistCovers),
         downloadManagerProvider.overrideWithValue(deps.downloads),
         historyDaoProvider.overrideWithValue(deps.historyDao),
+        settingsDaoProvider.overrideWithValue(deps.settings),
       ],
       child: const SponifyApp(),
     ),
