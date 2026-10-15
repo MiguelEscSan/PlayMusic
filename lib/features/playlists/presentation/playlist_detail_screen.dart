@@ -229,10 +229,15 @@ class _PlaylistViewState extends ConsumerState<_PlaylistView> {
               onReorderItem: _move,
               itemBuilder: (context, i) {
                 final song = songs[i];
+                // Un solo Dismissible para los dos sentidos: derecha encola
+                // (y la fila vuelve), izquierda quita de la playlist.
                 return Dismissible(
                   key: ValueKey(song.id),
-                  direction: DismissDirection.endToStart,
-                  background: Container(
+                  background: const QueueSwipeBackground(),
+                  confirmDismiss: (direction) async =>
+                      direction == DismissDirection.endToStart ||
+                      await queueOnSwipe(context, actions, song),
+                  secondaryBackground: Container(
                     color: theme.colorScheme.errorContainer,
                     alignment: Alignment.centerRight,
                     padding: const EdgeInsets.only(right: 24),
@@ -244,6 +249,7 @@ class _PlaylistViewState extends ConsumerState<_PlaylistView> {
                   },
                   child: SongTile(
                     song: song,
+                    swipeToQueue: false,
                     onTap: () => actions.playQueue(songs, i),
                     leading: ReorderableDragStartListener(
                       index: i,

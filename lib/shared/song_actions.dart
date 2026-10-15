@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/audio/audio_providers.dart';
 import '../core/models/song.dart';
 import '../features/downloads/presentation/downloads_providers.dart';
+import 'export/song_exporter.dart';
 
 final songActionsProvider = Provider<SongActions>(SongActions.new);
 
@@ -66,4 +67,9 @@ class SongActions {
 
   Future<Song> deleteDownload(Song song) =>
       _ref.read(downloadManagerProvider).delete(song);
+
+  /// Copia el archivo descargado a la carpeta pública de Música. Lanza
+  /// [SongExportException] si no se puede.
+  Future<String> exportToMusic(Song song) =>
+      _ref.read(songExporterProvider).export(song);
 }

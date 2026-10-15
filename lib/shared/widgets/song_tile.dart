@@ -6,6 +6,7 @@ import '../../core/models/song.dart';
 import '../../core/utils/formatters.dart';
 import '../../features/favorites/presentation/favorites_providers.dart';
 import '../../features/playlists/presentation/widgets/add_to_playlist_sheet.dart';
+import '../export/song_exporter.dart';
 import '../song_actions.dart';
 import 'artwork_image.dart';
 import 'dialogs.dart';
@@ -20,6 +21,34 @@ class SongMenuAction {
   final VoidCallback onSelected;
 }
 
+/// Fondo que asoma al deslizar una fila a la derecha para encolarla.
+class QueueSwipeBackground extends StatelessWidget {
+  const QueueSwipeBackground({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      color: scheme.primaryContainer,
+      alignment: Alignment.centerLeft,
+      padding: const EdgeInsets.only(left: 24),
+      child: Icon(Icons.queue_music_rounded, color: scheme.onPrimaryContainer),
+    );
+  }
+}
+
+/// `confirmDismiss` de "deslizar para encolar": añade [song] a la cola, avisa
+/// y devuelve `false` para que la fila vuelva a su sitio.
+Future<bool> queueOnSwipe(
+  BuildContext context,
+  SongActions actions,
+  Song song,
+) async {
+  await actions.addToQueue(song);
+  if (context.mounted) showSnack(context, 'Añadida a la cola');
+  return false;
+}
+
 /// Fila de canción usada en búsqueda, playlists y descargas.
 class SongTile extends ConsumerWidget {
   const SongTile({
@@ -29,6 +58,7 @@ class SongTile extends ConsumerWidget {
     this.extraActions = const [],
     this.leading,
     this.showDownloadButton = true,
+    this.swipeToQueue = true,
   });
 
   final Song song;
@@ -39,6 +69,12 @@ class SongTile extends ConsumerWidget {
   final Widget? leading;
   final bool showDownloadButton;
 
+  /// Deslizar a la derecha añade a la cola. Desactívalo si la fila ya va
+  /// dentro de otro [Dismissible]: dos gestos horizontales anidados se pelean
+  /// y el interior se tragaría el del padre. Ese padre puede reutilizar
+  /// [QueueSwipeBackground] y [queueOnSwipe].
+  final bool swipeToQueue;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isCurrent = ref.watch(
@@ -48,7 +84,7 @@ class SongTile extends ConsumerWidget {
     final theme = Theme.of(context);
     final actions = ref.read(songActionsProvider);
 
-    return ListTile(
+    final tile = ListTile(
       onTap: onTap,
       contentPadding: const EdgeInsets.only(left: 16, right: 4),
       leading: leading ?? ArtworkImage(url: song.artworkUrl, seed: song.title),
@@ -107,6 +143,12 @@ class SongTile extends ConsumerWidget {
                 'Añadir a una playlist',
                 () => showAddToPlaylistSheet(context, song),
               ),
+              if (song.isDownloaded)
+                _item(
+                  Icons.save_alt_rounded,
+                  'Exportar a Música',
+                  () => _export(context, actions),
+                ),
               for (final extra in extraActions)
                 _item(extra.icon, extra.label, extra.onSelected),
             ],
@@ -114,6 +156,27 @@ class SongTile extends ConsumerWidget {
         ],
       ),
     );
+
+    if (!swipeToQueue) return tile;
+    return Dismissible(
+      key: ObjectKey(song),
+      direction: DismissDirection.startToEnd,
+      background: const QueueSwipeBackground(),
+      // Nunca se descarta: la fila vuelve a su sitio tras encolar.
+      confirmDismiss: (_) => queueOnSwipe(context, actions, song),
+      child: tile,
+    );
+  }
+
+  Future<void> _export(BuildContext context, SongActions actions) async {
+    String message;
+    try {
+      await actions.exportToMusic(song);
+      message = 'Guardada en Música/Spoñify';
+    } on SongExportException catch (e) {
+      message = e.message;
+    }
+    if (context.mounted) showSnack(context, message);
   }
 
   PopupMenuItem<VoidCallback> _item(
