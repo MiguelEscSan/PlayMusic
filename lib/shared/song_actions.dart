@@ -21,6 +21,16 @@ class SongActions {
     return _ref.read(songDaoProvider).upsert(song);
   }
 
+  /// Alterna "me gusta". Guarda antes la canción (los resultados de búsqueda
+  /// llegan con id vacío) y decide con el estado de la BD, no con el de
+  /// [song], que puede estar desfasado.
+  Future<Song> toggleLike(Song song) async {
+    final dao = _ref.read(songDaoProvider);
+    final saved = await _persist(song);
+    await dao.setLiked(saved.id, !saved.isLiked);
+    return (await dao.findById(saved.id))!;
+  }
+
   Future<void> playQueue(List<Song> songs, int index) async {
     final saved = [for (final s in songs) await _persist(s)];
     await _ref

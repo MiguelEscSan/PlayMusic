@@ -145,7 +145,31 @@ void main() {
 
   testWidgets('la app arranca en Inicio', (tester) async {
     await pumpApp(tester);
-    expect(find.text('Aquí aparecerá tu música'), findsOneWidget);
+    expect(find.widgetWithText(AppBar, 'Inicio'), findsOneWidget);
+    // Sin favoritas la sección "Te gusta" no ocupa sitio.
+    expect(find.text('Te gusta'), findsNothing);
+  });
+
+  testWidgets('"Me gusta" en un resultado lo lleva a Inicio', (tester) async {
+    await pumpApp(tester);
+    await tester.tap(find.text('Buscar'));
+    await settle(tester);
+    await tester.enterText(find.byType(SearchBar), 'rosalia');
+    await tester.testTextInput.receiveAction(TextInputAction.search);
+    await settle(tester);
+
+    await tester.tap(find.byTooltip('Más opciones').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Me gusta'));
+    await settle(tester);
+
+    final liked = await tester.runAsync(songDao.liked);
+    expect([for (final s in liked!) s.title], ['Segunda']);
+
+    await tester.tap(find.text('Inicio'));
+    await settle(tester);
+    expect(find.text('Te gusta'), findsOneWidget);
+    expect(find.text('Segunda'), findsOneWidget);
   });
 
   testWidgets('buscar y tocar un resultado lo reproduce', (tester) async {

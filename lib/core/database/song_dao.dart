@@ -109,6 +109,27 @@ class SongDao {
     _notify();
   }
 
+  /// Marca o desmarca "me gusta". Es la única vía que escribe `liked_at`.
+  Future<void> setLiked(String songId, bool liked) async {
+    await _db.update(
+      'songs',
+      {'liked_at': liked ? DateTime.now().millisecondsSinceEpoch : null},
+      where: 'id = ?',
+      whereArgs: [songId],
+    );
+    _notify();
+  }
+
+  /// Canciones con "me gusta", la última marcada primero.
+  Future<List<Song>> liked() async {
+    final rows = await _db.query(
+      'songs',
+      where: 'liked_at IS NOT NULL',
+      orderBy: 'liked_at DESC',
+    );
+    return rows.map(Song.fromMap).toList();
+  }
+
   void _notify() {
     if (!_changes.isClosed) _changes.add(null);
   }

@@ -6,6 +6,7 @@ import '../../../core/audio/audio_providers.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../shared/widgets/artwork_image.dart';
 import '../../../shared/widgets/download_button.dart';
+import '../../favorites/presentation/like_button.dart';
 import '../../playlists/presentation/widgets/add_to_playlist_sheet.dart';
 import 'queue_sheet.dart';
 
@@ -117,6 +118,7 @@ class NowPlayingScreen extends ConsumerWidget {
                           ],
                         ),
                       ),
+                      LikeButton(song: song),
                       DownloadButton(song: song, size: 28),
                     ],
                   ),
