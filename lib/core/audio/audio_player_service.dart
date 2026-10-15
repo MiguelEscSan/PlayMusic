@@ -45,6 +45,18 @@ class PlayerSnapshot {
 
   bool get hasNext => currentIndex != null && currentIndex! < queue.length - 1;
   bool get hasPrevious => currentIndex != null && currentIndex! > 0;
+
+  /// La que sonará con "siguiente": la próxima de la cola o, con repetir
+  /// todo, la primera. La cola ya está en orden aleatorio si toca.
+  Song? get nextSong {
+    final i = currentIndex;
+    if (i == null || queue.isEmpty) return null;
+    if (i < queue.length - 1) return queue[i + 1];
+    return repeatMode == PlayerRepeatMode.all ? queue.first : null;
+  }
+
+  /// La anterior de la cola, sin dar la vuelta.
+  Song? get previousSong => hasPrevious ? queue[currentIndex! - 1] : null;
 }
 
 /// Fachada única del audio en la app. La implementación (Paso 2) envuelve

@@ -73,9 +73,8 @@ class NowPlayingScreen extends ConsumerWidget {
                         : constraints.maxWidth - 64)
                     .clamp(120.0, 420.0);
 
-            final cover = Hero(
-              tag: 'artwork',
-              child: AnimatedScale(
+            Widget coverOf(Song item) {
+              final cover = AnimatedScale(
                 scale: snapshot.isPlaying ? 1 : 0.86,
                 duration: const Duration(milliseconds: 300),
                 curve: Curves.easeOutCubic,
@@ -94,25 +93,55 @@ class NowPlayingScreen extends ConsumerWidget {
                     ],
                   ),
                   child: ArtworkImage(
-                    url: song.artworkUrl,
-                    seed: song.title,
+                    url: item.artworkUrl,
+                    seed: item.title,
                     size: artSize,
                     radius: 16,
                   ),
                 ),
-              ),
+              );
+              // Solo la que suena vuela desde el mini-player.
+              return item.id == song.id
+                  ? Hero(tag: 'artwork', child: cover)
+                  : cover;
+            }
+
+            Widget titleOf(Song item) => Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.headlineSmall,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        item.artist,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                LikeButton(song: item),
+                DownloadButton(song: item, size: 28),
+              ],
             );
 
-            // Deslizar la carátula cambia de canción.
-            final artwork = SwipeToSkip(
-              canSkipNext:
-                  snapshot.hasNext ||
-                  snapshot.repeatMode == PlayerRepeatMode.all,
-              canSkipPrevious: snapshot.hasPrevious,
+            // Carrusel: deslizar cambia de canción y asoma la vecina.
+            Widget carousel(Widget Function(Song item) builder) => SwipeToSkip(
+              current: song,
+              next: snapshot.nextSong,
+              previous: snapshot.previousSong,
               onNext: audio.skipToNext,
               // Siempre a la anterior; ⏮ reinicia la canción tras 3 s.
               onPrevious: () => audio.skipToIndex(snapshot.currentIndex! - 1),
-              child: cover,
+              itemBuilder: (_, item) => builder(item),
             );
 
             final controls = Padding(
@@ -120,32 +149,8 @@ class NowPlayingScreen extends ConsumerWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              song.title,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: theme.textTheme.headlineSmall,
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              song.artist,
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      LikeButton(song: song),
-                      DownloadButton(song: song, size: 28),
-                    ],
-                  ),
+                  // En vertical el título va dentro del carrusel.
+                  if (wide) titleOf(song),
                   if (snapshot.errorMessage case final error?)
                     Padding(
                       padding: const EdgeInsets.only(top: 8),
@@ -167,16 +172,29 @@ class NowPlayingScreen extends ConsumerWidget {
             if (wide) {
               return Row(
                 children: [
-                  Expanded(child: Center(child: artwork)),
+                  Expanded(
+                    child: carousel((item) => Center(child: coverOf(item))),
+                  ),
                   Expanded(child: Center(child: controls)),
                 ],
               );
             }
+            // Toda la zona de carátula y título responde al deslizar.
             return Column(
               children: [
-                const Spacer(),
-                artwork,
-                const Spacer(),
+                Expanded(
+                  child: carousel(
+                    (item) => Column(
+                      children: [
+                        Expanded(child: Center(child: coverOf(item))),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          child: titleOf(item),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
                 controls,
                 const SizedBox(height: 24),
               ],
