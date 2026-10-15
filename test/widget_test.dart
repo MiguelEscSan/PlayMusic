@@ -151,7 +151,9 @@ void main() {
   testWidgets('la app arranca en Inicio', (tester) async {
     await pumpApp(tester);
     expect(find.widgetWithText(AppBar, 'Inicio'), findsOneWidget);
-    // Sin favoritas ni historial esas secciones no ocupan sitio.
+    // Sin favoritas ni historial se ve el estado vacío, no una pantalla en
+    // blanco.
+    expect(find.text('Aquí aparecerá tu música'), findsOneWidget);
     expect(find.text('Te gusta'), findsNothing);
     expect(find.text('Escuchado recientemente'), findsNothing);
   });

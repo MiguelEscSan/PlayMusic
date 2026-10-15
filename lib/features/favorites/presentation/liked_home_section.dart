@@ -12,6 +12,9 @@ final likedHomeSection = HomeSection(
   id: 'favorites',
   order: 10,
   builder: (_) => const LikedHomeSection(),
+  hasContent: Provider(
+    (ref) => ref.watch(likedSongsProvider).value?.isNotEmpty ?? false,
+  ),
 );
 
 /// Bloque "Te gusta" de Inicio: las últimas favoritas y acceso a la lista

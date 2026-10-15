@@ -19,6 +19,23 @@ void main() {
     expect(find.text('Aquí aparecerá tu música'), findsOneWidget);
   });
 
+  testWidgets('si ninguna sección tiene contenido muestra el estado vacío', (
+    tester,
+  ) async {
+    final hidden = Provider<bool>((ref) => false);
+    await _pump(tester, [
+      HomeSection(
+        id: 'vacia',
+        order: 10,
+        hasContent: hidden,
+        builder: (_) => const Text('No debería verse'),
+      ),
+    ]);
+
+    expect(find.text('Aquí aparecerá tu música'), findsOneWidget);
+    expect(find.text('No debería verse'), findsNothing);
+  });
+
   testWidgets('pinta las secciones registradas por orden', (tester) async {
     await _pump(tester, [
       HomeSection(id: 'b', order: 20, builder: (_) => const Text('Segunda')),

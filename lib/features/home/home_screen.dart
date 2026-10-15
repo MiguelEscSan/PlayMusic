@@ -12,8 +12,11 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final sections = [...ref.watch(homeSectionsProvider)]
-      ..sort((a, b) => a.order.compareTo(b.order));
+    final sections = [
+      for (final section in ref.watch(homeSectionsProvider))
+        if (section.hasContent == null || ref.watch(section.hasContent!))
+          section,
+    ]..sort((a, b) => a.order.compareTo(b.order));
 
     return Scaffold(
       appBar: AppBar(

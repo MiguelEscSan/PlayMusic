@@ -13,6 +13,7 @@ class HomeSection {
     required this.id,
     required this.order,
     required this.builder,
+    this.hasContent,
   });
 
   final String id;
@@ -20,6 +21,11 @@ class HomeSection {
   /// Menor = más arriba. Usar saltos de 10 para poder intercalar.
   final int order;
   final WidgetBuilder builder;
+
+  /// false si ahora mismo no hay nada que enseñar (p. ej. sin favoritas).
+  /// Si ninguna sección tiene contenido, Inicio muestra su estado vacío en
+  /// vez de quedarse en blanco. null = siempre tiene contenido.
+  final Provider<bool>? hasContent;
 }
 
 /// Secciones de Inicio. Para añadir una, sumar una línea a la lista con la

@@ -12,6 +12,9 @@ final recentHomeSection = HomeSection(
   id: 'recent',
   order: 20,
   builder: (_) => const RecentHomeSection(),
+  hasContent: Provider(
+    (ref) => ref.watch(recentSongsProvider).value?.isNotEmpty ?? false,
+  ),
 );
 
 /// "Escuchado recientemente": fila horizontal de carátulas. Tocar una
