@@ -16,6 +16,7 @@ Future<void> main() async {
         audioPlayerServiceProvider.overrideWithValue(deps.audio),
         songDaoProvider.overrideWithValue(deps.songDao),
         playlistDaoProvider.overrideWithValue(deps.playlistDao),
+        playlistCoverServiceProvider.overrideWithValue(deps.playlistCovers),
         downloadManagerProvider.overrideWithValue(deps.downloads),
       ],
       child: const SponifyApp(),

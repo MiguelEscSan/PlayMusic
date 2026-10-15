@@ -89,6 +89,20 @@ class PlaylistDao {
     _notify();
   }
 
+  /// Portada personalizada (ruta local); null vuelve a la automática.
+  Future<void> setCover(String id, String? coverUrl) async {
+    await _db.update(
+      'playlists',
+      {
+        'cover_url': coverUrl,
+        'updated_at': DateTime.now().millisecondsSinceEpoch,
+      },
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+    _notify();
+  }
+
   /// Borra la playlist; las canciones y sus descargas no se tocan.
   Future<void> delete(String id) async {
     await _db.delete('playlists', where: 'id = ?', whereArgs: [id]);

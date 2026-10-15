@@ -3,9 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/models/song.dart';
 import '../../../../core/utils/formatters.dart';
-import '../../../../shared/widgets/artwork_image.dart';
 import '../../../../shared/widgets/dialogs.dart';
 import '../playlists_providers.dart';
+import 'playlist_cover.dart';
 
 Future<void> showAddToPlaylistSheet(BuildContext context, Song song) =>
     showModalBottomSheet<void>(
@@ -67,11 +67,7 @@ class _AddToPlaylistSheet extends ConsumerWidget {
           ),
           for (final p in playlists)
             ListTile(
-              leading: ArtworkImage(
-                url: p.effectiveCoverUrl,
-                seed: p.name,
-                size: 40,
-              ),
+              leading: PlaylistCover(p, size: 40),
               title: Text(p.name),
               subtitle: Text(songCount(p.length)),
               onTap: () => addTo(p.id, p.name),

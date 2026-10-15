@@ -383,8 +383,14 @@ class DownloadManager {
     _ => e.message ?? 'Error de descarga',
   };
 
+  /// Sin comprobar antes si existe: una cancelación puede borrar el mismo
+  /// archivo entre la comprobación y el borrado.
   Future<void> _deleteIfExists(File file) async {
-    if (await file.exists()) await file.delete();
+    try {
+      await file.delete();
+    } on PathNotFoundException {
+      // Ya no estaba.
+    }
   }
 
   void _set(String key, DownloadTask task) {

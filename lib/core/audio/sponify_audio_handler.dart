@@ -6,6 +6,7 @@ import 'package:just_audio/just_audio.dart';
 
 import '../models/song.dart';
 import 'audio_player_service.dart';
+import 'http_range_audio_source.dart';
 import 'playback_source.dart';
 
 /// Reproductor de la app: une just_audio (motor), audio_service (controles
@@ -424,9 +425,9 @@ class SponifyAudioHandler extends BaseAudioHandler
           filePath,
           tag: song.id,
         ),
-        RemoteStreamSource(:final uri, :final headers) => AudioSource.uri(
+        RemoteStreamSource(:final uri, :final headers) => HttpRangeAudioSource(
           uri,
-          headers: headers.isEmpty ? null : headers,
+          headers: headers,
           tag: song.id,
         ),
       };

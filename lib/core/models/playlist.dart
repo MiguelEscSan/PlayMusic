@@ -48,6 +48,20 @@ class Playlist {
   String? get effectiveCoverUrl =>
       coverUrl ?? (songs.isEmpty ? null : songs.first.artworkUrl);
 
+  /// Imágenes de la portada: la personalizada; si no, un mosaico 2×2 con
+  /// las 4 primeras carátulas distintas; con menos de 4, solo la primera.
+  /// Vacía si no hay ninguna (se pinta la portada generada).
+  List<String> get coverUrls {
+    if (coverUrl != null) return [coverUrl!];
+    final distinct = <String>[];
+    for (final song in songs) {
+      final url = song.artworkUrl;
+      if (url != null && !distinct.contains(url)) distinct.add(url);
+      if (distinct.length == 4) return distinct;
+    }
+    return distinct.take(1).toList();
+  }
+
   Playlist copyWith({
     String? name,
     String? description,

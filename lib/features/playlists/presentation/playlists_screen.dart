@@ -3,11 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/models/playlist.dart';
 import '../../../core/utils/formatters.dart';
-import '../../../shared/widgets/artwork_image.dart';
 import '../../../shared/widgets/dialogs.dart';
 import '../../../shared/widgets/empty_state.dart';
 import 'playlist_detail_screen.dart';
 import 'playlists_providers.dart';
+import 'widgets/playlist_cover.dart';
 
 class PlaylistsScreen extends ConsumerWidget {
   const PlaylistsScreen({super.key});
@@ -93,11 +93,7 @@ class _PlaylistRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) => ListTile(
     onTap: () => openPlaylist(context, playlist.id),
-    leading: ArtworkImage(
-      url: playlist.effectiveCoverUrl,
-      seed: playlist.name,
-      size: 56,
-    ),
+    leading: PlaylistCover(playlist, size: 56),
     title: Text(playlist.name),
     subtitle: Text(_subtitle(playlist)),
     trailing: playlist.isFullyDownloaded
@@ -122,12 +118,7 @@ class _PlaylistCard extends StatelessWidget {
       builder: (context, c) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ArtworkImage(
-            url: playlist.effectiveCoverUrl,
-            seed: playlist.name,
-            size: c.maxWidth,
-            radius: 12,
-          ),
+          PlaylistCover(playlist, size: c.maxWidth, radius: 12),
           const SizedBox(height: 8),
           Text(playlist.name, maxLines: 1, overflow: TextOverflow.ellipsis),
           Text(

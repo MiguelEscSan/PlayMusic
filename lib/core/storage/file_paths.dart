@@ -21,6 +21,11 @@ class FilePaths {
 
   Directory get musicDir => _musicDir;
 
+  /// Portadas de playlist elegidas por el usuario (se crea al guardar la
+  /// primera).
+  Directory get coversDir =>
+      Directory(p.join(p.dirname(_musicDir.path), 'covers'));
+
   /// Ruta final del archivo de una canción, p. ej. `.../music/<id>.m4a`.
   String songFile(String songId, String extension) =>
       p.join(_musicDir.path, '$songId.$extension');

@@ -1,11 +1,19 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/models/playlist.dart';
+import '../data/playlist_cover_service.dart';
 import '../data/playlist_dao.dart';
 
 /// Se sobrescribe en `main()` con la instancia de `bootstrap()`.
 final playlistDaoProvider = Provider<PlaylistDao>(
   (ref) => throw UnimplementedError('playlistDaoProvider se define en main()'),
+);
+
+/// Se sobrescribe en `main()` con la instancia de `bootstrap()`.
+final playlistCoverServiceProvider = Provider<PlaylistCoverService>(
+  (ref) => throw UnimplementedError(
+    'playlistCoverServiceProvider se define en main()',
+  ),
 );
 
 final playlistsProvider = StreamProvider<List<Playlist>>((ref) async* {

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
@@ -22,13 +24,24 @@ class ArtworkImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final url = this.url;
     final placeholder = _GeneratedCover(seed: seed ?? url ?? '', size: size);
     return ClipRRect(
       borderRadius: BorderRadius.circular(radius),
       child: url == null
           ? placeholder
+          // Portadas elegidas por el usuario: archivo en el almacenamiento
+          // de la app, no una URL.
+          : !url.startsWith('http')
+          ? Image.file(
+              File(url),
+              width: size,
+              height: size,
+              fit: BoxFit.cover,
+              errorBuilder: (_, _, _) => placeholder,
+            )
           : CachedNetworkImage(
-              imageUrl: url!,
+              imageUrl: url,
               width: size,
               height: size,
               // Las miniaturas de YouTube son 4:3 con bandas negras: al

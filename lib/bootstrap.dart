@@ -9,6 +9,7 @@ import 'core/database/app_database.dart';
 import 'core/database/song_dao.dart';
 import 'core/storage/file_paths.dart';
 import 'features/downloads/data/download_manager.dart';
+import 'features/playlists/data/playlist_cover_service.dart';
 import 'features/playlists/data/playlist_dao.dart';
 
 /// Servicios de vida larga que se crean una vez al arrancar.
@@ -17,6 +18,7 @@ class AppDependencies {
     required this.database,
     required this.songDao,
     required this.playlistDao,
+    required this.playlistCovers,
     required this.audio,
     required this.downloads,
   });
@@ -24,6 +26,7 @@ class AppDependencies {
   final AppDatabase database;
   final SongDao songDao;
   final PlaylistDao playlistDao;
+  final PlaylistCoverService playlistCovers;
   final SponifyAudioHandler audio;
   final DownloadManager downloads;
 }
@@ -60,6 +63,7 @@ Future<AppDependencies> bootstrap() async {
     database: database,
     songDao: songDao,
     playlistDao: playlistDao,
+    playlistCovers: PlaylistCoverService(playlistDao, paths.coversDir),
     audio: audio,
     downloads: downloads,
   );

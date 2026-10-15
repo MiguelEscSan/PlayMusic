@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../core/models/playlist.dart';
 import '../../../core/models/song.dart';
@@ -9,7 +10,9 @@ import '../../../shared/widgets/artwork_image.dart';
 import '../../../shared/widgets/dialogs.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/song_tile.dart';
+import '../data/playlist_cover_service.dart';
 import 'playlists_providers.dart';
+import 'widgets/playlist_cover.dart';
 
 void openPlaylist(BuildContext context, String id) => Navigator.of(
   context,
@@ -80,6 +83,8 @@ class _PlaylistViewState extends ConsumerState<_PlaylistView> {
   Widget build(BuildContext context) {
     final playlist = widget.playlist;
     final dao = ref.read(playlistDaoProvider);
+    // Solo se lee al usarlo: no hace falta para pintar la pantalla.
+    PlaylistCoverService covers() => ref.read(playlistCoverServiceProvider);
     final actions = ref.read(songActionsProvider);
     final theme = Theme.of(context);
     final songs = _songs;
@@ -102,23 +107,28 @@ class _PlaylistViewState extends ConsumerState<_PlaylistView> {
             'se mantienen en Descargas.',
       );
       if (!ok) return;
-      await dao.delete(playlist.id);
+      await covers().deletePlaylist(playlist.id);
       if (context.mounted) Navigator.pop(context);
     }
+
+    Future<void> changeCover() async {
+      final image = await ImagePicker().pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 90,
+      );
+      if (image != null) await covers().setFromFile(playlist.id, image.path);
+    }
+
+    Future<void> removeCover() => covers().clear(playlist.id);
 
     final header = Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Center(
-            child: ArtworkImage(
-              url: playlist.effectiveCoverUrl,
-              seed: playlist.name,
-              size: 180,
-              radius: 12,
-            ),
-          ),
+          Center(child: PlaylistCover(playlist, size: 180, radius: 12)),
           const SizedBox(height: 16),
           Text(playlist.name, style: theme.textTheme.headlineSmall),
           const SizedBox(height: 4),
@@ -183,6 +193,15 @@ class _PlaylistViewState extends ConsumerState<_PlaylistView> {
             onSelected: (f) => f(),
             itemBuilder: (_) => [
               PopupMenuItem(value: rename, child: const Text('Renombrar')),
+              PopupMenuItem(
+                value: changeCover,
+                child: const Text('Cambiar portada'),
+              ),
+              if (playlist.coverUrl != null)
+                PopupMenuItem(
+                  value: removeCover,
+                  child: const Text('Quitar portada'),
+                ),
               PopupMenuItem(
                 value: delete,
                 child: const Text('Borrar playlist'),

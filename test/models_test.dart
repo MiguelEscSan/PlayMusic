@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sponify/core/models/playlist.dart';
 import 'package:sponify/core/models/song.dart';
 
-Song _song(String id, {String? localPath}) => Song(
+Song _song(String id, {String? localPath, String? art}) => Song(
   id: id,
   title: 'T$id',
   artist: 'A',
@@ -10,7 +10,20 @@ Song _song(String id, {String? localPath}) => Song(
   source: SongSource.youtube,
   sourceId: 'yt$id',
   localPath: localPath,
+  artworkUrl: art,
 );
+
+Playlist _withSongs(List<Song> songs, {String? coverUrl}) {
+  final now = DateTime.now();
+  return Playlist(
+    id: 'p',
+    name: 'Mix',
+    coverUrl: coverUrl,
+    createdAt: now,
+    updatedAt: now,
+    songs: songs,
+  );
+}
 
 void main() {
   test('Song: toMap/fromMap ida y vuelta', () {
@@ -42,5 +55,37 @@ void main() {
     expect(p.downloadedCount, 1);
     final r = p.reorder(0, 3);
     expect(r.songs.map((s) => s.id), ['2', '3', '1']);
+  });
+
+  group('Playlist.coverUrls', () {
+    test('mosaico con las 4 primeras carátulas distintas', () {
+      final p = _withSongs([
+        _song('1', art: 'a'),
+        _song('2', art: 'a'),
+        _song('3'),
+        _song('4', art: 'b'),
+        _song('5', art: 'c'),
+        _song('6', art: 'd'),
+        _song('7', art: 'e'),
+      ]);
+      expect(p.coverUrls, ['a', 'b', 'c', 'd']);
+    });
+
+    test('con menos de 4 carátulas distintas, solo la primera', () {
+      final p = _withSongs([_song('1', art: 'a'), _song('2', art: 'b')]);
+      expect(p.coverUrls, ['a']);
+    });
+
+    test('la portada personalizada manda', () {
+      final p = _withSongs([
+        for (final x in ['a', 'b', 'c', 'd']) _song(x, art: x),
+      ], coverUrl: 'mine');
+      expect(p.coverUrls, ['mine']);
+    });
+
+    test('sin carátulas, vacía', () {
+      expect(_withSongs([_song('1')]).coverUrls, isEmpty);
+      expect(_withSongs([]).coverUrls, isEmpty);
+    });
   });
 }
