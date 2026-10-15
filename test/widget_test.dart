@@ -143,8 +143,15 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  testWidgets('la app arranca en Inicio', (tester) async {
+    await pumpApp(tester);
+    expect(find.text('Aquí aparecerá tu música'), findsOneWidget);
+  });
+
   testWidgets('buscar y tocar un resultado lo reproduce', (tester) async {
     await pumpApp(tester);
+    await tester.tap(find.text('Buscar'));
+    await settle(tester);
     expect(find.text('Busca cualquier canción'), findsOneWidget);
 
     await tester.enterText(find.byType(SearchBar), 'rosalia');

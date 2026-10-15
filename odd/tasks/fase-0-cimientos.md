@@ -14,16 +14,21 @@ hasta terminar la fase y confirmarlo con el usuario.
 
 ## Tareas
 
-- [ ] T1 Tests de la cola de `SponifyAudioHandler` (playQueue, playNext,
+- [x] T1 Tests de la cola de `SponifyAudioHandler` (playQueue, playNext,
       addToQueue, removeFromQueue, moveInQueue, aleatorio). Ruta: inline.
-      Son tests de caracterización: el comportamiento ya existe, así que
-      pasan desde el principio (sin RED).
-- [ ] T2 Ganchos del reproductor: `songStarted`, `onQueueEnded`,
-      `stopAfterCurrent`. Test primero.
-- [ ] T3 Esquema de BD v2: `songs.liked_at`, `play_history`,
-      `search_history`, `settings`, con test de migración v1→v2. Test primero.
-- [ ] T4 Pestaña Inicio con `homeSectionsProvider` (secciones registrables)
-      y pantalla de Ajustes vacía. Widget test.
+      Se pensaron como tests de caracterización, pero 2 fallaron y
+      destaparon un bug: `playNext`/`addToQueue` no refrescaban el
+      `PlayerSnapshot`, así que la hoja de cola no mostraba la canción
+      añadida. Arreglado. Commit `ed0594b`.
+- [x] T2 Ganchos del reproductor: `songStarted`, `onQueueEnded`,
+      `stopAfterCurrent` (+ `PlayerSnapshot.stopAfterCurrent`). RED → GREEN.
+      Commit `620be0d`. De paso se arregló un test de descargas inestable en
+      Windows (`997ae82`).
+- [x] T3 Esquema de BD v2: `songs.liked_at`, `play_history`,
+      `search_history`, `settings`, con test de migración v1→v2. RED → GREEN.
+      Commit `5a7141a`.
+- [x] T4 Pestaña Inicio (primera pestaña) con `homeSectionsProvider` y
+      pantalla de Ajustes vacía. RED → GREEN. Commit: ver abajo.
 
 ## Criterios de aceptación
 
@@ -34,4 +39,20 @@ hasta terminar la fase y confirmarlo con el usuario.
 
 ## Progreso y evidencias
 
-(se rellena tarea a tarea)
+- Tras cada tarea: `flutter analyze lib test` → No issues found.
+- Final: `flutter test` → 58/58 en verde, dos corridas seguidas (antes 6
+  corridas seguidas tras el arreglo del test inestable).
+
+## Notas para las oleadas 1 y 2
+
+- Inicio: cada funcionalidad expone su `HomeSection` y suma una línea a la
+  lista de `homeSectionsProvider` (`lib/features/home/home_sections.dart`).
+- `SongDao.upsert` actualiza con `Song.toMap()`, que no incluye `liked_at`:
+  no borra el "me gusta". Favoritos debe leer `liked_at` en `Song.fromMap`
+  sin añadirlo a `toMap` (o hacerlo con cuidado).
+- Ganchos: Historial escucha `songStarted`; Radio asigna `onQueueEnded`;
+  Temporizador usa `setStopAfterCurrent` y `pause()`.
+
+## Siguiente paso
+
+Oleada 1 (A Favoritos, B Historial, C Importar playlist, D Temporizador).

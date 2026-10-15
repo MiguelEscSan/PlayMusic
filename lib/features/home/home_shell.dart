@@ -4,8 +4,9 @@ import '../downloads/presentation/downloads_screen.dart';
 import '../player/presentation/mini_player.dart';
 import '../playlists/presentation/playlists_screen.dart';
 import '../search/presentation/search_screen.dart';
+import 'home_screen.dart';
 
-/// Estructura principal: 3 pestañas + mini-reproductor fijo abajo.
+/// Estructura principal: 4 pestañas + mini-reproductor fijo abajo.
 /// En pantallas anchas (tablet, horizontal) la navegación pasa a un
 /// NavigationRail lateral.
 class HomeShell extends StatefulWidget {
@@ -20,9 +21,10 @@ class _HomeShellState extends State<HomeShell> {
 
   /// Cada pestaña tiene su propio Navigator: abrir una playlist no tapa
   /// la barra de navegación ni el mini-reproductor.
-  final _navigatorKeys = List.generate(3, (_) => GlobalKey<NavigatorState>());
+  final _navigatorKeys = List.generate(4, (_) => GlobalKey<NavigatorState>());
 
   static const _destinations = [
+    (Icons.home_outlined, Icons.home_rounded, 'Inicio'),
     (Icons.search_rounded, Icons.search_rounded, 'Buscar'),
     (Icons.queue_music_outlined, Icons.queue_music_rounded, 'Playlists'),
     (
@@ -33,8 +35,9 @@ class _HomeShellState extends State<HomeShell> {
   ];
 
   Widget _root(int i) => switch (i) {
-    0 => const SearchScreen(),
-    1 => const PlaylistsScreen(),
+    0 => const HomeScreen(),
+    1 => const SearchScreen(),
+    2 => const PlaylistsScreen(),
     _ => const DownloadsScreen(),
   };
 
@@ -54,7 +57,7 @@ class _HomeShellState extends State<HomeShell> {
     final pages = IndexedStack(
       index: _tab,
       children: [
-        for (var i = 0; i < 3; i++)
+        for (var i = 0; i < _destinations.length; i++)
           Navigator(
             key: _navigatorKeys[i],
             onGenerateRoute: (_) =>
