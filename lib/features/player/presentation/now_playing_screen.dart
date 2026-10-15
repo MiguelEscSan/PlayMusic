@@ -8,6 +8,7 @@ import '../../../shared/widgets/artwork_image.dart';
 import '../../../shared/widgets/download_button.dart';
 import '../../favorites/presentation/like_button.dart';
 import '../../playlists/presentation/widgets/add_to_playlist_sheet.dart';
+import '../sleep_timer/sleep_timer_sheet.dart';
 import 'queue_sheet.dart';
 
 void openNowPlaying(BuildContext context) {
@@ -59,6 +60,7 @@ class NowPlayingScreen extends ConsumerWidget {
         ),
         centerTitle: true,
         actions: [
+          const SleepTimerButton(),
           IconButton(
             tooltip: 'Añadir a una playlist',
             icon: const Icon(Icons.playlist_add_rounded),
