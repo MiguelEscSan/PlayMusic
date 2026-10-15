@@ -113,7 +113,8 @@ class SponifyAudioHandler extends BaseAudioHandler
     _queue.add(song);
     _unshuffled?.add(song);
     _publishQueue();
-    if (_index == null) await _loadAt(_queue.length - 1);
+    if (_index == null) return _loadAt(_queue.length - 1);
+    _broadcast();
   }
 
   @override
@@ -128,7 +129,8 @@ class SponifyAudioHandler extends BaseAudioHandler
       original.insert(pos + 1, song);
     }
     _publishQueue();
-    if (_index == null) await _loadAt(insertAt);
+    if (_index == null) return _loadAt(insertAt);
+    _broadcast();
   }
 
   @override
