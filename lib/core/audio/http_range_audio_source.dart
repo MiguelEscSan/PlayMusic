@@ -43,7 +43,7 @@ class HttpRangeAudioSource extends StreamAudioSource {
         'HttpRangeAudioSource: HTTP ${response.statusCode} '
         '(c=${uri.queryParameters['c']}, itag=${uri.queryParameters['itag']})',
       );
-      throw HttpException('HTTP ${response.statusCode}', uri: uri);
+      throw HttpStatusException(response.statusCode, uri: uri);
     }
 
     final partial = response.statusCode == HttpStatus.partialContent;
@@ -67,4 +67,12 @@ class HttpRangeAudioSource extends StreamAudioSource {
   }
 
   static int? _nullIfNegative(int length) => length < 0 ? null : length;
+}
+
+/// Respuesta HTTP de error de googlevideo, con su código para que quien la
+/// reciba distinga un bloqueo (403) de otros fallos sin comparar textos.
+class HttpStatusException extends HttpException {
+  HttpStatusException(this.statusCode, {super.uri}) : super('HTTP $statusCode');
+
+  final int statusCode;
 }

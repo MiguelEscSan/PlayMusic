@@ -600,8 +600,8 @@ class _ForbiddenAwareSource extends HttpRangeAudioSource {
   Future<StreamAudioResponse> request([int? start, int? end]) async {
     try {
       return await super.request(start, end);
-    } on HttpException catch (e) {
-      if (e.message == 'HTTP ${HttpStatus.forbidden}') onForbidden();
+    } on HttpStatusException catch (e) {
+      if (e.statusCode == HttpStatus.forbidden) onForbidden();
       rethrow;
     }
   }

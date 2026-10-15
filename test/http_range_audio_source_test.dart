@@ -70,7 +70,13 @@ void main() {
       status = HttpStatus.forbidden;
       expect(
         HttpRangeAudioSource(uri).request(0, 10),
-        throwsA(isA<HttpException>()),
+        throwsA(
+          isA<HttpStatusException>().having(
+            (e) => e.statusCode,
+            'statusCode',
+            HttpStatus.forbidden,
+          ),
+        ),
       );
     },
   );
