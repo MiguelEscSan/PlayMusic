@@ -214,4 +214,48 @@ void main() {
     expect(await dao.downloaded(), isEmpty);
     expect(storageChanges.last.isDownloaded, isFalse);
   });
+
+  group('solo con wifi (canDownload)', () {
+    var allowed = false;
+
+    setUp(() async {
+      allowed = false;
+      await manager.dispose();
+      manager = DownloadManager(
+        dio: Dio()..httpClientAdapter = server,
+        songDao: dao,
+        paths: FilePaths(tmp),
+        resolver: resolver,
+        chunkSize: 10000,
+        canDownload: () async => allowed,
+      );
+    });
+
+    test('sin permiso la descarga falla sin pedir nada', () async {
+      final song = _song('wifi');
+      final failed = waitFor(song, DownloadStatus.failed);
+      await manager.download(song);
+      final task = await failed;
+
+      expect(
+        task.error,
+        'Esperando wifi: activa la descarga con datos en Ajustes',
+      );
+      expect(resolver.calls, 0);
+      expect(server.ranges, isEmpty);
+      expect(await dao.downloaded(), isEmpty);
+    });
+
+    test('al reintentar con permiso se descarga', () async {
+      final song = _song('wifi');
+      final failed = waitFor(song, DownloadStatus.failed);
+      await manager.download(song);
+      await failed;
+
+      allowed = true;
+      final done = waitFor(song, DownloadStatus.completed);
+      await manager.download(song);
+      expect((await done).progress, 1.0);
+    });
+  });
 }

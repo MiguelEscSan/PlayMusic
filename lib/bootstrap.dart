@@ -14,6 +14,7 @@ import 'features/history/data/history_dao.dart';
 import 'features/history/data/history_recorder.dart';
 import 'features/playlists/data/playlist_cover_service.dart';
 import 'features/playlists/data/playlist_dao.dart';
+import 'features/settings/data/download_policy.dart';
 
 /// Servicios de vida larga que se crean una vez al arrancar.
 class AppDependencies {
@@ -54,6 +55,7 @@ Future<AppDependencies> bootstrap() async {
   );
 
   final audio = await initAudio(resolver);
+  final settings = SettingsDao(database);
 
   final downloads = DownloadManager(
     dio: Dio(
@@ -66,6 +68,8 @@ Future<AppDependencies> bootstrap() async {
     paths: paths,
     resolver: resolver,
     onStorageChanged: audio.onSongStorageChanged,
+    // Ajuste "Descargar solo con wifi".
+    canDownload: downloadPolicy(settings),
   );
 
   // El historial escucha al reproductor desde el arranque.
@@ -80,6 +84,6 @@ Future<AppDependencies> bootstrap() async {
     downloads: downloads,
     historyDao: historyDao,
     historyRecorder: HistoryRecorder(audio: audio, dao: historyDao),
-    settings: SettingsDao(database),
+    settings: settings,
   );
 }
