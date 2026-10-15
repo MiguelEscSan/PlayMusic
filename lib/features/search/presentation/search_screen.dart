@@ -5,6 +5,8 @@ import '../../../shared/song_actions.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/song_tile.dart';
 import 'search_controller.dart';
+import 'search_history_providers.dart';
+import 'search_suggestions_controller.dart';
 
 class SearchScreen extends ConsumerStatefulWidget {
   const SearchScreen({super.key});
@@ -35,11 +37,31 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     super.dispose();
   }
 
+  /// El usuario está escribiendo algo que aún no ha enviado.
+  bool _editing = false;
+
+  /// Busca [query] (enviada, reciente o sugerida) y la deja en el campo.
+  void _submit(String query) {
+    final q = query.trim();
+    _text.text = q;
+    _editing = false;
+    ref.read(searchSuggestionsProvider.notifier).clear();
+    FocusManager.instance.primaryFocus?.unfocus();
+    setState(() {});
+    ref.read(searchControllerProvider.notifier).search(q);
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(searchControllerProvider);
     final controller = ref.read(searchControllerProvider.notifier);
     final actions = ref.read(songActionsProvider);
+    final suggestions = ref.watch(searchSuggestionsProvider);
+    final recents = ref.watch(recentSearchesProvider).value ?? const [];
+    final typed = _text.text.trim();
+    final showRecents = typed.isEmpty && recents.isNotEmpty;
+    final showSuggestions =
+        _editing && typed.isNotEmpty && suggestions.isNotEmpty;
 
     return Scaffold(
       body: SafeArea(
@@ -64,19 +86,34 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                       icon: const Icon(Icons.close_rounded),
                       onPressed: () {
                         _text.clear();
+                        _editing = false;
+                        ref.read(searchSuggestionsProvider.notifier).clear();
                         controller.search('');
                         setState(() {});
                       },
                     ),
                 ],
                 onChanged: (q) {
-                  setState(() {});
-                  controller.onQueryChanged(q);
+                  setState(() => _editing = true);
+                  ref
+                      .read(searchSuggestionsProvider.notifier)
+                      .onQueryChanged(q);
                 },
-                onSubmitted: controller.search,
+                onSubmitted: _submit,
               ),
             ),
-            if (state.isLoading)
+            if (showRecents)
+              ..._recentSlivers(context, recents)
+            else if (showSuggestions)
+              SliverList.builder(
+                itemCount: suggestions.length,
+                itemBuilder: (context, i) => ListTile(
+                  leading: const Icon(Icons.search_rounded),
+                  title: Text(suggestions[i]),
+                  onTap: () => _submit(suggestions[i]),
+                ),
+              )
+            else if (state.isLoading)
               const SliverFillRemaining(
                 hasScrollBody: false,
                 child: Center(child: CircularProgressIndicator()),
@@ -140,5 +177,44 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         ),
       ),
     );
+  }
+
+  /// "Búsquedas recientes": tocar repite la búsqueda; la X la quita.
+  List<Widget> _recentSlivers(BuildContext context, List<String> recents) {
+    final dao = ref.read(searchHistoryDaoProvider);
+    return [
+      SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 8, 0),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Búsquedas recientes',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ),
+              TextButton(
+                onPressed: dao.clear,
+                child: const Text('Borrar todo'),
+              ),
+            ],
+          ),
+        ),
+      ),
+      SliverList.builder(
+        itemCount: recents.length,
+        itemBuilder: (context, i) => ListTile(
+          leading: const Icon(Icons.history_rounded),
+          title: Text(recents[i]),
+          trailing: IconButton(
+            tooltip: 'Quitar',
+            icon: const Icon(Icons.close_rounded),
+            onPressed: () => dao.remove(recents[i]),
+          ),
+          onTap: () => _submit(recents[i]),
+        ),
+      ),
+    ];
   }
 }

@@ -8,6 +8,7 @@ import 'core/settings/settings_providers.dart';
 import 'features/downloads/presentation/downloads_providers.dart';
 import 'features/history/presentation/history_providers.dart';
 import 'features/playlists/presentation/playlists_providers.dart';
+import 'features/search/presentation/search_history_providers.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,6 +23,7 @@ Future<void> main() async {
         downloadManagerProvider.overrideWithValue(deps.downloads),
         historyDaoProvider.overrideWithValue(deps.historyDao),
         settingsDaoProvider.overrideWithValue(deps.settings),
+        searchHistoryDaoProvider.overrideWithValue(deps.searchHistory),
       ],
       child: const SponifyApp(),
     ),

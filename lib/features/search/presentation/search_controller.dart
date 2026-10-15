@@ -6,6 +6,7 @@ import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 import '../../../core/models/song.dart';
 import '../data/search_source.dart';
 import '../data/youtube_search_source.dart';
+import 'search_history_providers.dart';
 
 final searchSourceProvider = Provider<SearchSource>((ref) {
   final yt = YoutubeExplode();
@@ -38,33 +39,22 @@ final searchControllerProvider =
       SongSearchController.new,
     );
 
-/// Búsqueda con debounce mientras se escribe y paginación infinita.
+/// Búsqueda con paginación infinita. Cada búsqueda enviada se guarda en el
+/// historial; mientras se escribe la pantalla solo muestra sugerencias.
 class SongSearchController extends Notifier<SearchState> {
-  Timer? _debounce;
-
   /// Cada búsqueda nueva invalida las respuestas de las anteriores.
   int _generation = 0;
 
   @override
-  SearchState build() {
-    ref.onDispose(() => _debounce?.cancel());
-    return const SearchState();
-  }
-
-  /// Llamado en cada pulsación de tecla.
-  void onQueryChanged(String query) {
-    _debounce?.cancel();
-    if (query.trim().length < 3) return;
-    _debounce = Timer(const Duration(milliseconds: 600), () => search(query));
-  }
+  SearchState build() => const SearchState();
 
   Future<void> search(String query) async {
-    _debounce?.cancel();
     final q = query.trim();
     if (q.isEmpty) {
       state = const SearchState();
       return;
     }
+    unawaited(_remember(q));
     if (q == state.query && state.results.isNotEmpty) return;
 
     final generation = ++_generation;
@@ -117,6 +107,13 @@ class SongSearchController extends Notifier<SearchState> {
     final q = state.query;
     state = const SearchState();
     return search(q);
+  }
+
+  /// Guardar el historial nunca debe estropear la búsqueda.
+  Future<void> _remember(String query) async {
+    try {
+      await ref.read(searchHistoryDaoProvider).record(query);
+    } catch (_) {}
   }
 
   String _describe(Object e) {
