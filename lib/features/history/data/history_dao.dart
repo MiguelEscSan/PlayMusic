@@ -56,6 +56,23 @@ class HistoryDao {
     return rows.map(Song.fromMap).toList();
   }
 
+  /// Canciones más escuchadas en los últimos [days] días, por número de
+  /// escuchas (desempate: la escucha más reciente primero).
+  Future<List<Song>> topSongs({int limit = 50, int days = 30}) async {
+    final since = _clock()
+        .subtract(Duration(days: days))
+        .millisecondsSinceEpoch;
+    final rows = await _db.rawQuery(
+      'SELECT s.*, COUNT(*) AS plays, MAX(h.played_at) AS last_played '
+      'FROM play_history h JOIN songs s ON s.id = h.song_id '
+      'WHERE h.played_at >= ? '
+      'GROUP BY s.id '
+      'ORDER BY plays DESC, last_played DESC LIMIT ?',
+      [since, limit],
+    );
+    return rows.map(Song.fromMap).toList();
+  }
+
   Future<void> clear() async {
     await _db.delete('play_history');
     _notify();

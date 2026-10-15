@@ -88,4 +88,17 @@ void main() {
     final row = (await db.db.query('play_history')).single;
     expect(row['played_at'], 42);
   });
+
+  test('topSongs ordena por escuchas y excluye lo anterior a 30 días', () async {
+    now = 40 * Duration.millisecondsPerDay;
+    final old = await saved('old');
+    await db.db.insert('play_history', {'song_id': old, 'played_at': 1000});
+    final a = await saved('a');
+    final b = await saved('b');
+    final c = await saved('c');
+    for (final id in [b, c, c, a, a, a]) {
+      await dao.record(id);
+    }
+    expect(titles(await dao.topSongs()), ['Ta', 'Tc', 'Tb']);
+  });
 }

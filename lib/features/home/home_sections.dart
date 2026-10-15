@@ -1,10 +1,11 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../favorites/presentation/liked_home_section.dart';
 import '../history/presentation/recent_home_section.dart';
+import '../history/presentation/top_home_section.dart';
+import '../playlists/presentation/playlists_home_section.dart';
 
-/// Un bloque de la pantalla de Inicio (p. ej. "Te gusta", "Recientes").
+/// Un bloque de la pantalla de Inicio (p. ej. "Más escuchadas", "Recientes").
 ///
 /// Cada funcionalidad aporta su sección desde su propia carpeta; Inicio solo
 /// las ordena por [order] y las pinta.
@@ -32,5 +33,5 @@ class HomeSection {
 /// sección que expone la funcionalidad (una línea por funcionalidad, así las
 /// ramas en paralelo apenas chocan).
 final homeSectionsProvider = Provider<List<HomeSection>>(
-  (ref) => [likedHomeSection, recentHomeSection],
+  (ref) => [topHomeSection, playlistsHomeSection, recentHomeSection],
 );

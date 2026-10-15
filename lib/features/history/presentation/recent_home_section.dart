@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/models/song.dart';
 import '../../../shared/song_actions.dart';
-import '../../../shared/widgets/artwork_image.dart';
+import '../../../shared/widgets/song_tile.dart';
 import '../../home/home_sections.dart';
 import 'history_providers.dart';
 
@@ -17,25 +17,27 @@ final recentHomeSection = HomeSection(
   ),
 );
 
-/// "Escuchado recientemente": fila horizontal de carátulas. Tocar una
-/// reproduce la lista entera desde esa canción. Sin historial no ocupa
+/// "Escuchado recientemente": lista vertical de las últimas canciones.
+/// Tocar una reproduce la lista desde esa canción. Sin historial no ocupa
 /// espacio.
 class RecentHomeSection extends ConsumerWidget {
   const RecentHomeSection({super.key});
 
-  static const _cover = 120.0;
+  static const _maxSongs = 3;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final songs = ref.watch(recentSongsProvider).value ?? const <Song>[];
     if (songs.isEmpty) return const SizedBox.shrink();
     final theme = Theme.of(context);
+    final actions = ref.read(songActionsProvider);
+    final shown = songs.take(_maxSongs).toList();
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 8, 8),
+          padding: const EdgeInsets.fromLTRB(16, 16, 8, 4),
           child: Row(
             children: [
               Expanded(
@@ -51,71 +53,13 @@ class RecentHomeSection extends ConsumerWidget {
             ],
           ),
         ),
-        SizedBox(
-          height: _cover + 52,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: songs.length,
-            separatorBuilder: (_, _) => const SizedBox(width: 12),
-            itemBuilder: (context, i) => _RecentCard(
-              song: songs[i],
-              size: _cover,
-              onTap: () => ref.read(songActionsProvider).playQueue(songs, i),
-            ),
+        for (var i = 0; i < shown.length; i++)
+          SongTile(
+            song: shown[i],
+            showDownloadButton: false,
+            onTap: () => actions.playQueue(songs, i),
           ),
-        ),
       ],
-    );
-  }
-}
-
-class _RecentCard extends StatelessWidget {
-  const _RecentCard({
-    required this.song,
-    required this.size,
-    required this.onTap,
-  });
-
-  final Song song;
-  final double size;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return SizedBox(
-      width: size,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(8),
-        onTap: onTap,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ArtworkImage(
-              url: song.artworkUrl,
-              seed: song.title,
-              size: size,
-              radius: 8,
-            ),
-            const SizedBox(height: 6),
-            Text(
-              song.title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.bodyMedium,
-            ),
-            Text(
-              song.artist,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
