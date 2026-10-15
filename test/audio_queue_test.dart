@@ -1,7 +1,12 @@
+// StreamAudioSource es experimental en just_audio (ver HttpRangeAudioSource).
+// ignore_for_file: experimental_member_use
+
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:sponify/core/audio/audio_player_service.dart';
 import 'package:sponify/core/audio/playback_source.dart';
 import 'package:sponify/core/audio/sponify_audio_handler.dart';
 import 'package:sponify/core/models/song.dart';
@@ -11,6 +16,10 @@ import 'package:sponify/core/models/song.dart';
 class FakePlayer implements AudioPlayer {
   final processing = StreamController<ProcessingState>.broadcast();
   final loaded = <String?>[];
+
+  /// Se ejecuta antes de "cargar" la fuente; puede lanzar para simular que
+  /// el reproductor la rechaza.
+  Future<void> Function(AudioSource source)? onSetSource;
   bool _playing = false;
   ProcessingState _state = ProcessingState.idle;
 
@@ -45,6 +54,7 @@ class FakePlayer implements AudioPlayer {
     int? initialIndex,
     Duration? initialPosition,
   }) async {
+    await onSetSource?.call(source);
     loaded.add((source as IndexedAudioSource).tag as String?);
     _state = ProcessingState.ready;
     return null;
@@ -77,6 +87,19 @@ class _LocalResolver implements PlaybackSourceResolver {
     Song song, {
     bool forceRefresh = false,
   }) async => LocalFileSource('/music/${song.id}.m4a');
+}
+
+/// Resolver que delega en una función: permite lanzar o devolver URLs.
+class _FnResolver implements PlaybackSourceResolver {
+  _FnResolver(this.fn);
+  final Future<PlaybackSource> Function(Song song, bool forceRefresh) fn;
+  final calls = <bool>[];
+
+  @override
+  Future<PlaybackSource> resolve(Song song, {bool forceRefresh = false}) {
+    calls.add(forceRefresh);
+    return fn(song, forceRefresh);
+  }
 }
 
 Song song(String id) => Song(
@@ -228,6 +251,97 @@ void main() {
       expect(player.playing, isFalse);
       expect(player.loaded, ['a']);
       expect(audio.current.stopAfterCurrent, isFalse);
+    });
+  });
+
+  group('YouTube bloqueado', () {
+    SponifyAudioHandler handlerWith(_FnResolver resolver) {
+      final handler = SponifyAudioHandler(resolver: resolver, player: player);
+      addTearDown(handler.dispose);
+      return handler;
+    }
+
+    test('si el resolver lanza YoutubeBlockedException muestra un error '
+        'claro', () async {
+      final handler = handlerWith(
+        _FnResolver((s, _) async => throw const YoutubeBlockedException()),
+      );
+
+      await handler.playQueue([song('a')]);
+
+      expect(handler.current.status, PlaybackStatus.error);
+      expect(
+        handler.current.errorMessage,
+        YoutubeBlockedException.defaultMessage,
+      );
+      expect(player.loaded, isEmpty);
+    });
+
+    test('con autoplay salta a la siguiente que sí se puede', () async {
+      final handler = handlerWith(
+        _FnResolver((s, _) async {
+          if (s.id == 'a') throw const YoutubeBlockedException();
+          return LocalFileSource('/music/${s.id}.m4a');
+        }),
+      );
+
+      await handler.playQueue([song('a'), song('b')]);
+
+      expect(handler.current.currentSong?.id, 'b');
+      expect(player.loaded, ['b']);
+    });
+
+    test(
+      'un 403 de googlevideo tras el reintento muestra el mismo mensaje',
+      () async {
+        final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+        server.listen((req) {
+          req.response.statusCode = HttpStatus.forbidden;
+          req.response.close();
+        });
+        addTearDown(server.close);
+
+        final resolver = _FnResolver(
+          (s, _) async => RemoteStreamSource(
+            Uri.parse('http://127.0.0.1:${server.port}/${s.id}'),
+          ),
+        );
+        // Como el proxy de just_audio: pide bytes a la fuente y, si falla, el
+        // reproductor solo ve un error genérico.
+        player.onSetSource = (source) async {
+          try {
+            await (source as StreamAudioSource).request(0, 16);
+          } catch (_) {
+            throw PlayerException(0, 'Source error', 0);
+          }
+        };
+        final handler = handlerWith(resolver);
+
+        await handler.playQueue([song('a')]);
+
+        expect(resolver.calls, [
+          false,
+          true,
+        ], reason: 'reintenta con URL nueva');
+        expect(handler.current.status, PlaybackStatus.error);
+        expect(
+          handler.current.errorMessage,
+          YoutubeBlockedException.defaultMessage,
+        );
+      },
+    );
+
+    test('otros errores de carga conservan su mensaje', () async {
+      final resolver = _FnResolver(
+        (s, _) async => RemoteStreamSource(Uri.parse('https://x.test/a')),
+      );
+      player.onSetSource = (_) async =>
+          throw PlayerException(0, 'Source error', 0);
+      final handler = handlerWith(resolver);
+
+      await handler.playQueue([song('a')]);
+
+      expect(handler.current.errorMessage, 'Source error');
     });
   });
 }
