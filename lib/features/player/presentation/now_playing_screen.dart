@@ -12,6 +12,7 @@ import '../../lyrics/presentation/lyrics_screen.dart';
 import '../../playlists/presentation/widgets/add_to_playlist_sheet.dart';
 import '../sleep_timer/sleep_timer_sheet.dart';
 import 'queue_sheet.dart';
+import 'swipe_to_skip.dart';
 
 void openNowPlaying(BuildContext context) {
   Navigator.of(context).push(
@@ -72,7 +73,7 @@ class NowPlayingScreen extends ConsumerWidget {
                         : constraints.maxWidth - 64)
                     .clamp(120.0, 420.0);
 
-            final artwork = Hero(
+            final cover = Hero(
               tag: 'artwork',
               child: AnimatedScale(
                 scale: snapshot.isPlaying ? 1 : 0.86,
@@ -83,7 +84,9 @@ class NowPlayingScreen extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: theme.colorScheme.primary.withValues(alpha: 0.35),
+                        color: theme.colorScheme.primary.withValues(
+                          alpha: 0.35,
+                        ),
                         blurRadius: 60,
                         spreadRadius: -16,
                         offset: const Offset(0, 28),
@@ -98,6 +101,17 @@ class NowPlayingScreen extends ConsumerWidget {
                   ),
                 ),
               ),
+            );
+
+            // Deslizar la carátula cambia de canción.
+            final artwork = SwipeToSkip(
+              canSkipNext:
+                  snapshot.hasNext ||
+                  snapshot.repeatMode == PlayerRepeatMode.all,
+              canSkipPrevious: snapshot.hasPrevious,
+              onNext: audio.skipToNext,
+              onPrevious: audio.skipToPrevious,
+              child: cover,
             );
 
             final controls = Padding(
