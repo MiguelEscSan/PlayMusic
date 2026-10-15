@@ -169,4 +169,57 @@ void main() {
     expect(currentId(), 'b');
     expect(player.loaded, ['a', 'b']);
   });
+
+  group('ganchos', () {
+    test('songStarted emite cada canción que empieza a sonar', () async {
+      final started = <String>[];
+      final sub = audio.songStarted.listen((s) => started.add(s.id));
+
+      await audio.playQueue([song('a'), song('b')]);
+      player.complete();
+      await pumpEventQueue();
+
+      expect(started, ['a', 'b']);
+      await sub.cancel();
+    });
+
+    test('onQueueEnded añade lo que devuelve y sigue sonando', () async {
+      List<String>? seen;
+      audio.onQueueEnded = (queue) async {
+        seen = [for (final s in queue) s.id];
+        return [song('r1'), song('r2')];
+      };
+
+      await audio.playQueue([song('a')]);
+      player.complete();
+      await pumpEventQueue();
+
+      expect(seen, ['a']);
+      expect(ids(), ['a', 'r1', 'r2']);
+      expect(currentId(), 'r1');
+    });
+
+    test('sin onQueueEnded la cola se para al final', () async {
+      await audio.playQueue([song('a')]);
+      player.complete();
+      await pumpEventQueue();
+
+      expect(ids(), ['a']);
+      expect(player.playing, isFalse);
+    });
+
+    test('stopAfterCurrent para al acabar la canción y se desactiva', () async {
+      await audio.playQueue([song('a'), song('b')]);
+      await audio.setStopAfterCurrent(true);
+      expect(audio.current.stopAfterCurrent, isTrue);
+
+      player.complete();
+      await pumpEventQueue();
+
+      expect(currentId(), 'a', reason: 'no avanza');
+      expect(player.playing, isFalse);
+      expect(player.loaded, ['a']);
+      expect(audio.current.stopAfterCurrent, isFalse);
+    });
+  });
 }

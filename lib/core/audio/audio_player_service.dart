@@ -21,6 +21,7 @@ class PlayerSnapshot {
     this.shuffleEnabled = false,
     this.isPlayingOffline = false,
     this.errorMessage,
+    this.stopAfterCurrent = false,
   });
 
   final PlaybackStatus status;
@@ -38,6 +39,9 @@ class PlayerSnapshot {
   final bool isPlayingOffline;
 
   final String? errorMessage;
+
+  /// true si el reproductor se parará al terminar la canción actual.
+  final bool stopAfterCurrent;
 
   bool get hasNext => currentIndex != null && currentIndex! < queue.length - 1;
   bool get hasPrevious => currentIndex != null && currentIndex! > 0;
@@ -95,5 +99,22 @@ abstract interface class AudioPlayerService {
   /// suene use la fuente correcta sin cortar la reproducción actual.
   Future<void> onSongStorageChanged(Song updated);
 
+  // --- Ganchos para otras funcionalidades -------------------------------
+
+  /// Emite cada canción cuando empieza a sonar (p. ej. para el historial).
+  Stream<Song> get songStarted;
+
+  /// Si está definido, se llama al terminar la cola (sin "repetir todo") con
+  /// la cola actual; las canciones que devuelva se añaden al final y siguen
+  /// sonando (p. ej. radio automática). Una lista vacía para la cola.
+  QueueEndedCallback? get onQueueEnded;
+  set onQueueEnded(QueueEndedCallback? callback);
+
+  /// Para al terminar la canción actual en vez de pasar a la siguiente. Se
+  /// desactiva solo después de usarse. Ver [PlayerSnapshot.stopAfterCurrent].
+  Future<void> setStopAfterCurrent(bool enabled);
+
   Future<void> dispose();
 }
+
+typedef QueueEndedCallback = Future<List<Song>> Function(List<Song> queue);

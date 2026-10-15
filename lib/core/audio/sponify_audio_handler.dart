@@ -39,7 +39,13 @@ class SponifyAudioHandler extends BaseAudioHandler
   final AudioPlayer _player;
   final List<StreamSubscription<Object?>> _subs = [];
   final _snapshotController = StreamController<PlayerSnapshot>.broadcast();
+  final _songStartedController = StreamController<Song>.broadcast();
   final _random = Random();
+
+  @override
+  QueueEndedCallback? onQueueEnded;
+
+  bool _stopAfterCurrent = false;
 
   /// Orden de reproducción actual.
   List<Song> _queue = [];
@@ -80,6 +86,9 @@ class SponifyAudioHandler extends BaseAudioHandler
 
   @override
   PlayerSnapshot get current => _snapshot;
+
+  @override
+  Stream<Song> get songStarted => _songStartedController.stream;
 
   // ===========================================================================
   // AudioPlayerService: cola
@@ -276,6 +285,12 @@ class SponifyAudioHandler extends BaseAudioHandler
   bool _shuffleEnabled = false;
 
   @override
+  Future<void> setStopAfterCurrent(bool enabled) async {
+    _stopAfterCurrent = enabled;
+    _broadcast();
+  }
+
+  @override
   Future<void> setShuffleMode(AudioServiceShuffleMode shuffleMode) =>
       setShuffle(shuffleMode != AudioServiceShuffleMode.none);
 
@@ -309,6 +324,7 @@ class SponifyAudioHandler extends BaseAudioHandler
     }
     await _player.dispose();
     await _snapshotController.close();
+    await _songStartedController.close();
   }
 
   // ===========================================================================
@@ -358,7 +374,10 @@ class SponifyAudioHandler extends BaseAudioHandler
 
     _resolving = false;
     _broadcast();
-    if (autoplay) unawaited(_player.play());
+    if (autoplay) {
+      unawaited(_player.play());
+      _songStartedController.add(song);
+    }
     _prefetchNext();
   }
 
@@ -393,11 +412,30 @@ class SponifyAudioHandler extends BaseAudioHandler
   }
 
   Future<void> _onTrackCompleted() async {
+    if (_stopAfterCurrent) {
+      _stopAfterCurrent = false;
+      return _parkAtStart();
+    }
     if (_hasNext) return _loadAt(_index! + 1);
     if (_repeat == PlayerRepeatMode.all && _queue.isNotEmpty) return _loadAt(0);
-    // Fin de la cola: dejamos la última canción preparada al principio.
+
+    final more = await onQueueEnded?.call(List.unmodifiable(_queue)) ?? [];
+    if (more.isNotEmpty) {
+      final next = _queue.length;
+      _queue.addAll(more);
+      _unshuffled?.addAll(more);
+      _publishQueue();
+      return _loadAt(next);
+    }
+    await _parkAtStart();
+  }
+
+  /// Fin de la reproducción: dejamos la canción actual preparada al
+  /// principio.
+  Future<void> _parkAtStart() async {
     await _player.pause();
     await _player.seek(Duration.zero);
+    _broadcast();
   }
 
   /// Calienta la caché de URLs del resolver para la siguiente canción.
@@ -514,6 +552,7 @@ class SponifyAudioHandler extends BaseAudioHandler
       shuffleEnabled: _shuffleEnabled,
       isPlayingOffline: _playingOffline,
       errorMessage: _error,
+      stopAfterCurrent: _stopAfterCurrent,
     );
     if (!_snapshotController.isClosed) _snapshotController.add(_snapshot);
   }
