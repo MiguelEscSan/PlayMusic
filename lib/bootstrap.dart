@@ -14,6 +14,7 @@ import 'features/history/data/history_dao.dart';
 import 'features/history/data/history_recorder.dart';
 import 'features/playlists/data/playlist_cover_service.dart';
 import 'features/playlists/data/playlist_dao.dart';
+import 'features/radio/radio_service.dart';
 
 /// Servicios de vida larga que se crean una vez al arrancar.
 class AppDependencies {
@@ -54,6 +55,14 @@ Future<AppDependencies> bootstrap() async {
   );
 
   final audio = await initAudio(resolver);
+  final settings = SettingsDao(database);
+
+  // Radio automática: al acabarse la cola sigue con canciones relacionadas.
+  audio.onQueueEnded = RadioService.youtube(
+    YoutubeExplode(),
+    songDao: songDao,
+    settings: settings,
+  ).nextFor;
 
   final downloads = DownloadManager(
     dio: Dio(
@@ -80,6 +89,6 @@ Future<AppDependencies> bootstrap() async {
     downloads: downloads,
     historyDao: historyDao,
     historyRecorder: HistoryRecorder(audio: audio, dao: historyDao),
-    settings: SettingsDao(database),
+    settings: settings,
   );
 }
