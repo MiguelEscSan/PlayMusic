@@ -99,7 +99,7 @@ jobs:
         id: apk
         shell: bash
         run: |
-          APK="sponify-${{ steps.version.outputs.version }}.apk"
+          APK="koda-${{ steps.version.outputs.version }}.apk"
           mv build/app/outputs/flutter-apk/app-release.apk "build/app/outputs/flutter-apk/${APK}"
           echo "path=build/app/outputs/flutter-apk/${APK}" >> "$GITHUB_OUTPUT"
           echo "name=${APK}" >> "$GITHUB_OUTPUT"
@@ -115,7 +115,7 @@ jobs:
         if: github.ref_type == 'tag'
         uses: softprops/action-gh-release@v2
         with:
-          name: Spoñify ${{ github.ref_name }}
+          name: Koda ${{ github.ref_name }}
           tag_name: ${{ github.ref_name }}
           files: ${{ steps.apk.outputs.path }}
           generate_release_notes: true

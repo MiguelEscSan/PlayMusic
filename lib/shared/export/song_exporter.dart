@@ -66,7 +66,7 @@ class MethodChannelSongExporter implements SongExporter {
         'displayName': exportDisplayName(song, path),
         'mimeType': exportMimeType(path),
       });
-      return location ?? 'Música/Spoñify';
+      return location ?? 'Música/Koda';
     } on MissingPluginException catch (e) {
       throw SongExportException(SongExportError.unsupported, e.message);
     } on PlatformException catch (e) {

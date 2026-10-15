@@ -14,7 +14,7 @@ import 'settings_providers.dart';
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
-  static const appName = 'Spoñify';
+  static const appName = 'Koda';
   static const appVersion = '1.0.0';
 
   @override

@@ -34,7 +34,7 @@ void main() {
   tearDown(() => messenger.setMockMethodCallHandler(channel, null));
 
   test('envía ruta, nombre visible y tipo MIME', () async {
-    mock((_) async => 'Music/Spoñify/Bad Bunny - Tití.m4a');
+    mock((_) async => 'Music/Koda/Bad Bunny - Tití.m4a');
 
     final location = await exporter.export(
       _song(
@@ -44,7 +44,7 @@ void main() {
       ),
     );
 
-    expect(location, 'Music/Spoñify/Bad Bunny - Tití.m4a');
+    expect(location, 'Music/Koda/Bad Bunny - Tití.m4a');
     expect(calls.single.method, 'exportAudio');
     expect(calls.single.arguments, {
       'path': '/data/music/id1.m4a',

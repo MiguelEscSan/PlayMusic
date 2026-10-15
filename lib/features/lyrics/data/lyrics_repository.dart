@@ -50,7 +50,7 @@ class LyricsRepository {
 
   static const _baseUrl = 'https://lrclib.net/api';
   static const _userAgent =
-      'Sponify/1.0 (https://github.com/MiguelEscSan/PlayMusic)';
+      'Koda/1.0 (https://github.com/MiguelEscSan/PlayMusic)';
 
   /// Margen de duración aceptado al elegir un resultado de búsqueda.
   static const _durationTolerance = 5;

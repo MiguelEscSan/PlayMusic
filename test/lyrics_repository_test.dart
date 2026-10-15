@@ -79,7 +79,7 @@ void main() {
       'artist_name': 'Artista',
       'duration': '200',
     });
-    expect(req.headers['User-Agent'], contains('Sponify'));
+    expect(req.headers['User-Agent'], contains('Koda'));
   });
 
   test('get solo con texto plano devuelve PlainLyrics', () async {

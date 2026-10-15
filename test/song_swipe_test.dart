@@ -44,7 +44,7 @@ class _FakeExporter implements SongExporter {
   Future<String> export(Song song) async {
     if (error != null) throw error!;
     exported.add(song);
-    return 'Music/Spoñify/x.m4a';
+    return 'Music/Koda/x.m4a';
   }
 }
 
@@ -262,7 +262,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(exporter.exported, [song]);
-      expect(find.text('Guardada en Música/Spoñify'), findsOneWidget);
+      expect(find.text('Guardada en Música/Koda'), findsOneWidget);
     });
 
     testWidgets('si falla muestra el error en español', (tester) async {
@@ -281,7 +281,7 @@ void main() {
         ),
         findsOneWidget,
       );
-      expect(find.text('Guardada en Música/Spoñify'), findsNothing);
+      expect(find.text('Guardada en Música/Koda'), findsNothing);
     });
   });
 }

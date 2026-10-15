@@ -153,7 +153,7 @@ class MainActivity : AudioServiceActivity() {
 
     private companion object {
         const val EXPORT_CHANNEL = "sponify/export"
-        const val FOLDER = "Spoñify"
+        const val FOLDER = "Koda"
         const val WRITE_PERMISSION_REQUEST = 4201
     }
 }

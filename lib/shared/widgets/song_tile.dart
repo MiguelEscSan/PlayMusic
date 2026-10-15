@@ -172,7 +172,7 @@ class SongTile extends ConsumerWidget {
     String message;
     try {
       await actions.exportToMusic(song);
-      message = 'Guardada en Música/Spoñify';
+      message = 'Guardada en Música/Koda';
     } on SongExportException catch (e) {
       message = e.message;
     }

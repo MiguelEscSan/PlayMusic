@@ -16,7 +16,7 @@ class SponifyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Spoñify',
+      title: 'Koda',
       debugShowCheckedModeBanner: false,
       themeMode: ThemeMode.dark,
       theme: _theme(Brightness.light),

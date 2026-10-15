@@ -1,6 +1,6 @@
 # Publicar una versión (APK Android)
 
-El workflow `.github/workflows/release.yml` analiza, testea y compila el APK de Spoñify.
+El workflow `.github/workflows/release.yml` analiza, testea y compila el APK de Koda.
 
 ## Publicar una versión
 
@@ -11,12 +11,12 @@ git push origin v1.0.1
 
 Un tag `v*` lanza el workflow: `flutter analyze`, `flutter test`, `flutter build apk --release`
 con `--build-name` igual al tag sin la `v` (`1.0.1`) y `--build-number` igual al número de ejecución.
-Al terminar crea (o actualiza) la GitHub Release del tag con `sponify-1.0.1.apk` adjunto.
+Al terminar crea (o actualiza) la GitHub Release del tag con `koda-1.0.1.apk` adjunto.
 
 ## Ejecución manual
 
 GitHub → **Actions** → **Release APK** → **Run workflow**. No crea Release: el APK queda como
-artefacto de la ejecución, con nombre `sponify-<versión de pubspec>-dev.<sha>.apk`.
+artefacto de la ejecución, con nombre `koda-<versión de pubspec>-dev.<sha>.apk`.
 
 ## Dónde descargar el APK
 

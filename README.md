@@ -1,4 +1,4 @@
-# sponify
+# Koda
 
 Reproductor de música híbrido (streaming + offline)
 

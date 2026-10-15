@@ -240,6 +240,6 @@ void main() {
     final about = find.text('Acerca de');
     await tester.ensureVisible(about);
     expect(about, findsOneWidget);
-    expect(find.textContaining('Spoñify'), findsWidgets);
+    expect(find.textContaining('Koda'), findsWidgets);
   });
 }

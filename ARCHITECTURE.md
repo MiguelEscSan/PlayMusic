@@ -1,4 +1,4 @@
-# Spoñify — Arquitectura (Paso 1)
+# Koda — Arquitectura (Paso 1)
 
 ## Decisiones
 
