@@ -18,26 +18,28 @@ class YoutubeSearchSource implements SearchSource {
       _toPage(await _yt.search.search(query));
 
   SearchPage _toPage(VideoSearchList list) {
-    final songs = list
-        .where((v) => !v.isLive && v.duration != null)
-        .where((v) => v.duration! <= _maxDuration)
-        .map(_toSong)
-        .toList();
+    final songs = list.map(songFromVideo).whereType<Song>().toList();
     return SearchPage(songs, () async {
       final next = await list.nextPage();
       return next == null ? const SearchPage([], null) : _toPage(next);
     });
   }
 
-  Song _toSong(Video v) => Song(
-    id: '', // se asigna al guardarla en la BD
-    title: cleanTitle(v.title),
-    artist: cleanArtist(v.author),
-    durationMs: v.duration!.inMilliseconds,
-    artworkUrl: v.thumbnails.highResUrl,
-    source: SongSource.youtube,
-    sourceId: v.id.value,
-  );
+  /// Convierte un vídeo en canción; null si no lo parece (directo, sin
+  /// duración o demasiado largo).
+  static Song? songFromVideo(Video v) {
+    final duration = v.duration;
+    if (v.isLive || duration == null || duration > _maxDuration) return null;
+    return Song(
+      id: '', // se asigna al guardarla en la BD
+      title: cleanTitle(v.title),
+      artist: cleanArtist(v.author),
+      durationMs: duration.inMilliseconds,
+      artworkUrl: v.thumbnails.highResUrl,
+      source: SongSource.youtube,
+      sourceId: v.id.value,
+    );
+  }
 
   static final _junk = RegExp(
     r'\s*[\(\[][^\)\]]*\b(official|oficial|video|lyrics?|letra|audio|'
