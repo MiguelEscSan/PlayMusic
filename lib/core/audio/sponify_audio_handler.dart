@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math';
 
 import 'package:audio_service/audio_service.dart';
@@ -58,6 +59,9 @@ class SponifyAudioHandler extends BaseAudioHandler
   bool _resolving = false;
   bool _playingOffline = false;
   bool _retriedCurrent = false;
+
+  /// googlevideo respondió 403 a la fuente de la carga actual.
+  bool _sourceForbidden = false;
   String? _error;
 
   /// Se incrementa en cada carga; si el usuario salta varias veces seguidas,
@@ -341,6 +345,7 @@ class SponifyAudioHandler extends BaseAudioHandler
     _index = index;
     _error = null;
     _resolving = true;
+    _sourceForbidden = false;
     if (!forceRefresh) _retriedCurrent = false;
     mediaItem.add(_toMediaItem(song));
     _broadcast();
@@ -355,6 +360,11 @@ class SponifyAudioHandler extends BaseAudioHandler
       // (normalmente una descargada).
       if (autoplay && _hasNext) await _loadAt(index + 1);
       return;
+    } on YoutubeBlockedException catch (e) {
+      if (generation != _loadGeneration) return;
+      _fail(e.message);
+      if (autoplay && _hasNext) await _loadAt(index + 1);
+      return;
     }
     if (generation != _loadGeneration) return; // el usuario ya cambió de pista
 
@@ -362,7 +372,7 @@ class SponifyAudioHandler extends BaseAudioHandler
     mediaItem.add(_toMediaItem(song, offline: _playingOffline));
 
     try {
-      await _player.setAudioSource(_toAudioSource(source, song));
+      await _player.setAudioSource(_toAudioSource(source, song, generation));
     } on PlayerInterruptedException {
       return; // otra carga la sustituyó
     } on PlayerException catch (e) {
@@ -393,7 +403,7 @@ class SponifyAudioHandler extends BaseAudioHandler
       _retriedCurrent = true;
       return _loadAt(index, autoplay: autoplay, forceRefresh: true);
     }
-    _fail(e.message ?? 'Error de reproducción (${e.code})');
+    _fail(_playerErrorMessage(e, 'Error de reproducción (${e.code})'));
     if (autoplay && _hasNext) await _loadAt(index + 1);
   }
 
@@ -402,7 +412,7 @@ class SponifyAudioHandler extends BaseAudioHandler
   Future<void> _onPlaybackError(PlayerException e) async {
     final index = _index;
     if (index == null || _resolving || _playingOffline || _retriedCurrent) {
-      _fail(e.message ?? 'Error de reproducción');
+      _fail(_playerErrorMessage(e, 'Error de reproducción'));
       return;
     }
     final position = _player.position;
@@ -449,6 +459,14 @@ class SponifyAudioHandler extends BaseAudioHandler
     unawaited(_resolver.resolve(next).then((_) {}, onError: (_) {}));
   }
 
+  /// El proxy de just_audio convierte el 403 de googlevideo en un error
+  /// genérico; si la fuente actual lo recibió, mostramos el mensaje de
+  /// bloqueo de YouTube en vez del críptico del reproductor.
+  String _playerErrorMessage(PlayerException e, String fallback) =>
+      _sourceForbidden
+      ? YoutubeBlockedException.defaultMessage
+      : e.message ?? fallback;
+
   void _fail(String message) {
     _resolving = false;
     _error = message;
@@ -459,18 +477,25 @@ class SponifyAudioHandler extends BaseAudioHandler
   // Traducciones a just_audio / audio_service
   // ===========================================================================
 
-  AudioSource _toAudioSource(PlaybackSource source, Song song) =>
-      switch (source) {
-        LocalFileSource(:final filePath) => AudioSource.file(
-          filePath,
-          tag: song.id,
-        ),
-        RemoteStreamSource(:final uri, :final headers) => HttpRangeAudioSource(
-          uri,
-          headers: headers,
-          tag: song.id,
-        ),
-      };
+  AudioSource _toAudioSource(
+    PlaybackSource source,
+    Song song,
+    int generation,
+  ) => switch (source) {
+    LocalFileSource(:final filePath) => AudioSource.file(
+      filePath,
+      tag: song.id,
+    ),
+    RemoteStreamSource(:final uri, :final headers) => _ForbiddenAwareSource(
+      uri,
+      headers: headers,
+      tag: song.id,
+      // Solo cuenta si sigue siendo la carga vigente.
+      onForbidden: () {
+        if (generation == _loadGeneration) _sourceForbidden = true;
+      },
+    ),
+  };
 
   MediaItem _toMediaItem(Song song, {bool offline = false}) => MediaItem(
     id: song.id,
@@ -555,5 +580,29 @@ class SponifyAudioHandler extends BaseAudioHandler
       stopAfterCurrent: _stopAfterCurrent,
     );
     if (!_snapshotController.isClosed) _snapshotController.add(_snapshot);
+  }
+}
+
+/// [HttpRangeAudioSource] que avisa cuando googlevideo responde 403, porque
+/// el proxy de just_audio se lo oculta al reproductor (le llega un 500).
+class _ForbiddenAwareSource extends HttpRangeAudioSource {
+  _ForbiddenAwareSource(
+    super.uri, {
+    super.headers,
+    super.tag,
+    required this.onForbidden,
+  });
+
+  final void Function() onForbidden;
+
+  @override
+  // ignore: experimental_member_use
+  Future<StreamAudioResponse> request([int? start, int? end]) async {
+    try {
+      return await super.request(start, end);
+    } on HttpException catch (e) {
+      if (e.message == 'HTTP ${HttpStatus.forbidden}') onForbidden();
+      rethrow;
+    }
   }
 }

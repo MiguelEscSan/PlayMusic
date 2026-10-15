@@ -98,4 +98,12 @@ void main() {
       throwsA(isA<SongUnavailableException>()),
     );
   });
+
+  test('YouTube bloqueado -> propaga YoutubeBlockedException', () async {
+    yt.error = const YoutubeBlockedException();
+    await expectLater(
+      resolver.resolve(_song()),
+      throwsA(isA<YoutubeBlockedException>()),
+    );
+  });
 }

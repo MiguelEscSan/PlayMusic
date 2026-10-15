@@ -37,6 +37,21 @@ abstract interface class PlaybackSourceResolver {
   Future<PlaybackSource> resolve(Song song, {bool forceRefresh = false});
 }
 
+/// YouTube entrega URLs pero las corta con 403 pasado ~1 MB (le falta el PO
+/// token) en todos los clientes que sabemos usar. No se arregla reintentando:
+/// hay que esperar o actualizar la app con un cliente nuevo.
+class YoutubeBlockedException implements Exception {
+  const YoutubeBlockedException([this.message = defaultMessage]);
+
+  static const defaultMessage =
+      'YouTube ha bloqueado esta canción. Prueba más tarde o actualiza la app.';
+
+  final String message;
+
+  @override
+  String toString() => 'YoutubeBlockedException: $message';
+}
+
 class SongUnavailableException implements Exception {
   const SongUnavailableException(this.song, [this.reason]);
   final Song song;
