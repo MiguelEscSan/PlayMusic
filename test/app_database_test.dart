@@ -18,10 +18,7 @@ Future<Set<String>> _tables(Database db) async => {
 };
 
 void _expectV2Schema(Set<String> tables, Set<String> songColumns) {
-  expect(
-    tables,
-    containsAll(['play_history', 'search_history', 'settings']),
-  );
+  expect(tables, containsAll(['play_history', 'search_history', 'settings']));
   expect(songColumns, contains('liked_at'));
 }
 

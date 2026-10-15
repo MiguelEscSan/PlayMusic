@@ -73,8 +73,10 @@ class FakePlayer implements AudioPlayer {
 
 class _LocalResolver implements PlaybackSourceResolver {
   @override
-  Future<PlaybackSource> resolve(Song song, {bool forceRefresh = false}) async =>
-      LocalFileSource('/music/${song.id}.m4a');
+  Future<PlaybackSource> resolve(
+    Song song, {
+    bool forceRefresh = false,
+  }) async => LocalFileSource('/music/${song.id}.m4a');
 }
 
 Song song(String id) => Song(
@@ -127,12 +129,15 @@ void main() {
     expect(player.loaded, ['x']);
   });
 
-  test('quitar una anterior a la actual mantiene la canción que suena', () async {
-    await audio.playQueue([song('a'), song('b'), song('c')], startIndex: 2);
-    await audio.removeFromQueue(0);
-    expect(ids(), ['b', 'c']);
-    expect(currentId(), 'c');
-  });
+  test(
+    'quitar una anterior a la actual mantiene la canción que suena',
+    () async {
+      await audio.playQueue([song('a'), song('b'), song('c')], startIndex: 2);
+      await audio.removeFromQueue(0);
+      expect(ids(), ['b', 'c']);
+      expect(currentId(), 'c');
+    },
+  );
 
   test('quitar la que suena pasa a la que ocupa su lugar', () async {
     await audio.playQueue([song('a'), song('b'), song('c')]);
@@ -149,18 +154,21 @@ void main() {
     expect(audio.current.currentIndex, 2);
   });
 
-  test('aleatorio deja la actual primera y al quitarlo vuelve el orden', () async {
-    final songs = [for (final c in 'abcdefgh'.split('')) song(c)];
-    await audio.playQueue(songs, startIndex: 3);
+  test(
+    'aleatorio deja la actual primera y al quitarlo vuelve el orden',
+    () async {
+      final songs = [for (final c in 'abcdefgh'.split('')) song(c)];
+      await audio.playQueue(songs, startIndex: 3);
 
-    await audio.setShuffle(true);
-    expect(ids().first, 'd');
-    expect(ids().toSet(), songs.map((s) => s.id).toSet());
+      await audio.setShuffle(true);
+      expect(ids().first, 'd');
+      expect(ids().toSet(), songs.map((s) => s.id).toSet());
 
-    await audio.setShuffle(false);
-    expect(ids(), 'abcdefgh'.split(''));
-    expect(currentId(), 'd');
-  });
+      await audio.setShuffle(false);
+      expect(ids(), 'abcdefgh'.split(''));
+      expect(currentId(), 'd');
+    },
+  );
 
   test('al acabar una canción suena la siguiente', () async {
     await audio.playQueue([song('a'), song('b')]);
