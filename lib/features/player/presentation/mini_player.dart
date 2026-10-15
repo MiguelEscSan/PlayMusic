@@ -39,7 +39,8 @@ class MiniPlayer extends ConsumerWidget {
                 canSkipNext: canSkipNext,
                 canSkipPrevious: snapshot.hasPrevious,
                 onNext: audio.skipToNext,
-                onPrevious: audio.skipToPrevious,
+                // Siempre a la anterior; ⏮ reinicia la canción tras 3 s.
+                onPrevious: () => audio.skipToIndex(snapshot.currentIndex! - 1),
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(12, 6, 4, 6),
                   child: Row(

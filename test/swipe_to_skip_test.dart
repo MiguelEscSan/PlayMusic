@@ -55,12 +55,16 @@ Song _song(int i) => Song(
 class _FakeAudio implements AudioPlayerService {
   int next = 0;
   int previous = 0;
+  final skippedTo = <int>[];
 
   @override
   Future<void> skipToNext() async => next++;
 
   @override
   Future<void> skipToPrevious() async => previous++;
+
+  @override
+  Future<void> skipToIndex(int index) async => skippedTo.add(index);
 
   @override
   Stream<Duration> get positionStream => const Stream.empty();
@@ -202,7 +206,9 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(audio.next, 1);
-      expect(audio.previous, 1);
+      // Siempre la pista anterior, nunca el reinicio de skipToPrevious.
+      expect(audio.skippedTo, [0]);
+      expect(audio.previous, 0);
     });
 
     testWidgets('no swipe at the edges of the queue', (tester) async {
@@ -221,6 +227,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(audio.next, 0);
+      expect(audio.skippedTo, isEmpty);
       expect(audio.previous, 0);
     });
   });

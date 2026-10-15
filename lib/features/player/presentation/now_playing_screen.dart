@@ -110,7 +110,8 @@ class NowPlayingScreen extends ConsumerWidget {
                   snapshot.repeatMode == PlayerRepeatMode.all,
               canSkipPrevious: snapshot.hasPrevious,
               onNext: audio.skipToNext,
-              onPrevious: audio.skipToPrevious,
+              // Siempre a la anterior; ⏮ reinicia la canción tras 3 s.
+              onPrevious: () => audio.skipToIndex(snapshot.currentIndex! - 1),
               child: cover,
             );
 
