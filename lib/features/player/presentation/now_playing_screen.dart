@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/audio/audio_player_service.dart';
 import '../../../core/audio/audio_providers.dart';
+import '../../../core/models/song.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../shared/widgets/artwork_image.dart';
 import '../../../shared/widgets/download_button.dart';
@@ -60,27 +61,6 @@ class NowPlayingScreen extends ConsumerWidget {
           style: theme.textTheme.labelLarge,
         ),
         centerTitle: true,
-        actions: [
-          IconButton(
-            tooltip: 'Letra',
-            icon: const Icon(Icons.lyrics_outlined),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute<void>(builder: (_) => const LyricsScreen()),
-            ),
-          ),
-          const SleepTimerButton(),
-          IconButton(
-            tooltip: 'Añadir a una playlist',
-            icon: const Icon(Icons.playlist_add_rounded),
-            onPressed: () => showAddToPlaylistSheet(context, song),
-          ),
-          IconButton(
-            tooltip: 'Cola',
-            icon: const Icon(Icons.queue_music_rounded),
-            onPressed: () => showQueueSheet(context),
-          ),
-        ],
       ),
       body: SafeArea(
         child: LayoutBuilder(
@@ -94,11 +74,29 @@ class NowPlayingScreen extends ConsumerWidget {
 
             final artwork = Hero(
               tag: 'artwork',
-              child: ArtworkImage(
-                url: song.artworkUrl,
-                seed: song.title,
-                size: artSize,
-                radius: 16,
+              child: AnimatedScale(
+                scale: snapshot.isPlaying ? 1 : 0.86,
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOutCubic,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.35),
+                        blurRadius: 60,
+                        spreadRadius: -16,
+                        offset: const Offset(0, 28),
+                      ),
+                    ],
+                  ),
+                  child: ArtworkImage(
+                    url: song.artworkUrl,
+                    seed: song.title,
+                    size: artSize,
+                    radius: 16,
+                  ),
+                ),
               ),
             );
 
@@ -145,6 +143,8 @@ class NowPlayingScreen extends ConsumerWidget {
                   _SeekBar(total: song.duration),
                   const SizedBox(height: 8),
                   _TransportControls(snapshot: snapshot, audio: audio),
+                  const SizedBox(height: 16),
+                  _ActionRow(song: song),
                 ],
               ),
             );
@@ -254,6 +254,41 @@ class _TransportControls extends StatelessWidget {
   }
 }
 
+/// Fila de acciones secundarias, solo iconos, bajo los controles.
+class _ActionRow extends StatelessWidget {
+  const _ActionRow({required this.song});
+
+  final Song song;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        IconButton(
+          tooltip: 'Letra',
+          icon: const Icon(Icons.lyrics_outlined),
+          onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute<void>(builder: (_) => const LyricsScreen()),
+          ),
+        ),
+        const SleepTimerButton(),
+        IconButton(
+          tooltip: 'Añadir a una playlist',
+          icon: const Icon(Icons.playlist_add_rounded),
+          onPressed: () => showAddToPlaylistSheet(context, song),
+        ),
+        IconButton(
+          tooltip: 'Cola',
+          icon: const Icon(Icons.queue_music_rounded),
+          onPressed: () => showQueueSheet(context),
+        ),
+      ],
+    );
+  }
+}
+
 /// Barra de posición. Mientras se arrastra muestra la posición del dedo
 /// y solo hace seek al soltar.
 class _SeekBar extends ConsumerStatefulWidget {
@@ -281,16 +316,22 @@ class _SeekBarState extends ConsumerState<_SeekBar> {
 
     return Column(
       children: [
-        Slider(
-          value: value,
-          max: max,
-          onChanged: (v) => setState(() => _dragValue = v),
-          onChangeEnd: (v) {
-            ref
-                .read(audioPlayerServiceProvider)
-                .seek(Duration(milliseconds: v.round()));
-            setState(() => _dragValue = null);
-          },
+        SliderTheme(
+          data: SliderTheme.of(context).copyWith(
+            trackHeight: 4,
+            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+          ),
+          child: Slider(
+            value: value,
+            max: max,
+            onChanged: (v) => setState(() => _dragValue = v),
+            onChangeEnd: (v) {
+              ref
+                  .read(audioPlayerServiceProvider)
+                  .seek(Duration(milliseconds: v.round()));
+              setState(() => _dragValue = null);
+            },
+          ),
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
