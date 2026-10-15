@@ -7,6 +7,7 @@ import '../../../core/utils/formatters.dart';
 import '../../../shared/widgets/artwork_image.dart';
 import '../../../shared/widgets/download_button.dart';
 import '../../favorites/presentation/like_button.dart';
+import '../../lyrics/presentation/lyrics_screen.dart';
 import '../../playlists/presentation/widgets/add_to_playlist_sheet.dart';
 import '../sleep_timer/sleep_timer_sheet.dart';
 import 'queue_sheet.dart';
@@ -60,6 +61,14 @@ class NowPlayingScreen extends ConsumerWidget {
         ),
         centerTitle: true,
         actions: [
+          IconButton(
+            tooltip: 'Letra',
+            icon: const Icon(Icons.lyrics_outlined),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute<void>(builder: (_) => const LyricsScreen()),
+            ),
+          ),
           const SleepTimerButton(),
           IconButton(
             tooltip: 'Añadir a una playlist',
