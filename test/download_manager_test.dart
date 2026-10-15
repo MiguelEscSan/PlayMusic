@@ -181,6 +181,10 @@ void main() {
   test('cancelar en cola borra el estado activo', () async {
     server.gate = Completer();
     final a = _song('a'), b = _song('b'), c = _song('c');
+    // Esperamos a que a y b acaben: si el tearDown borra la carpeta mientras
+    // siguen escribiendo, en Windows falla con "acceso denegado".
+    final aDone = waitFor(a, DownloadStatus.completed);
+    final bDone = waitFor(b, DownloadStatus.completed);
     await manager.download(a);
     await manager.download(b);
     await manager.download(c); // tercera: queda en cola (máx. 2)
@@ -195,6 +199,7 @@ void main() {
       DownloadStatus.cancelled,
     );
     server.gate!.complete();
+    await Future.wait([aDone, bDone]);
   });
 
   test('borrar elimina el archivo y vuelve a streaming', () async {
