@@ -84,7 +84,7 @@ class PlaylistsScreen extends ConsumerWidget {
         actions: [
           IconButton(
             tooltip: 'Importar de YouTube',
-            icon: const Icon(Icons.playlist_add_rounded),
+            icon: const Icon(Icons.cloud_download_outlined),
             onPressed: () => _importFromYoutube(context, ref),
           ),
         ],
@@ -189,7 +189,10 @@ class _PlaylistRow extends StatelessWidget {
   Widget build(BuildContext context) => ListTile(
     onTap: () => openPlaylist(context, playlist.id),
     leading: PlaylistCover(playlist, size: 56),
-    title: Text(playlist.name),
+    title: Text(
+      playlist.name,
+      style: const TextStyle(fontWeight: FontWeight.w700),
+    ),
     subtitle: Text(_subtitle(playlist)),
     trailing: playlist.isFullyDownloaded
         ? Icon(
@@ -215,7 +218,14 @@ class _PlaylistCard extends StatelessWidget {
         children: [
           PlaylistCover(playlist, size: c.maxWidth, radius: 12),
           const SizedBox(height: 8),
-          Text(playlist.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+          Text(
+            playlist.name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           Text(
             _subtitle(playlist),
             maxLines: 1,

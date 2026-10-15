@@ -43,6 +43,24 @@ class PlaylistDetailScreen extends ConsumerWidget {
   }
 }
 
+/// Fila de menú con icono; [color] tiñe icono y texto (p. ej. borrar).
+class _MenuRow extends StatelessWidget {
+  const _MenuRow(this.icon, this.label, {this.color});
+
+  final IconData icon;
+  final String label;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    children: [
+      Icon(icon, color: color),
+      const SizedBox(width: 12),
+      Text(label, style: TextStyle(color: color)),
+    ],
+  );
+}
+
 class _PlaylistView extends ConsumerStatefulWidget {
   const _PlaylistView({required this.playlist});
 
@@ -68,6 +86,22 @@ class _PlaylistViewState extends ConsumerState<_PlaylistView> {
   void _removeAt(int i) {
     setState(() => _songs = [..._songs]..removeAt(i));
     ref.read(playlistDaoProvider).removeAt(widget.playlist.id, i);
+  }
+
+  /// Deshacer un quitar: la BD añade al final y se reubica en [i].
+  Future<void> _restore(int i, Song song) async {
+    final last = _songs.length;
+    final at = i > last ? last : i;
+    setState(() {
+      final list = [..._songs];
+      list.insert(at, song);
+      _songs = list;
+    });
+    final dao = ref.read(playlistDaoProvider);
+    final added = await dao.addSong(widget.playlist.id, song);
+    if (added && at != last) {
+      await dao.move(widget.playlist.id, last, at);
+    }
   }
 
   void _move(int oldIndex, int newIndex) {
@@ -126,16 +160,22 @@ class _PlaylistViewState extends ConsumerState<_PlaylistView> {
     final header = Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Center(child: PlaylistCover(playlist, size: 180, radius: 12)),
+          PlaylistCover(playlist, size: 180, radius: 12),
           const SizedBox(height: 16),
-          Text(playlist.name, style: theme.textTheme.headlineSmall),
+          Text(
+            playlist.name,
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w800,
+            ),
+            textAlign: TextAlign.center,
+          ),
           const SizedBox(height: 4),
           Text(
             '${songCount(songs.length)} · '
             '${formatDuration(playlist.totalDuration)}'
             '${playlist.downloadedCount > 0 ? ' · ${downloadedLabel(playlist.downloadedCount)}' : ''}',
+            textAlign: TextAlign.center,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
@@ -143,41 +183,44 @@ class _PlaylistViewState extends ConsumerState<_PlaylistView> {
           const SizedBox(height: 16),
           Row(
             children: [
-              FilledButton.icon(
-                onPressed: songs.isEmpty
-                    ? null
-                    : () => actions.playQueue(songs, 0),
-                icon: const Icon(Icons.play_arrow_rounded),
-                label: const Text('Reproducir'),
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: songs.isEmpty
+                      ? null
+                      : () => actions.playQueue(songs, 0),
+                  icon: const Icon(Icons.play_arrow_rounded),
+                  label: const Text('Reproducir'),
+                ),
               ),
               const SizedBox(width: 8),
-              OutlinedButton.icon(
-                onPressed: songs.isEmpty
-                    ? null
-                    : () => actions.playShuffled(songs),
-                icon: const Icon(Icons.shuffle_rounded),
-                label: const Text('Aleatorio'),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: songs.isEmpty
+                      ? null
+                      : () => actions.playShuffled(songs),
+                  icon: const Icon(Icons.shuffle_rounded),
+                  label: const Text('Aleatorio'),
+                ),
               ),
-              const Spacer(),
-              IconButton(
-                tooltip: playlist.isFullyDownloaded
-                    ? 'Toda la playlist está descargada'
-                    : 'Descargar toda la playlist',
-                onPressed: songs.isEmpty || playlist.isFullyDownloaded
-                    ? null
-                    : () async {
-                        await actions.downloadAll(songs);
-                        if (context.mounted) {
-                          showSnack(context, 'Descargando la playlist…');
-                        }
-                      },
-                icon: Icon(
-                  playlist.isFullyDownloaded
-                      ? Icons.offline_pin_rounded
-                      : Icons.download_for_offline_outlined,
-                  color: playlist.isFullyDownloaded
-                      ? theme.colorScheme.primary
-                      : null,
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: songs.isEmpty || playlist.isFullyDownloaded
+                      ? null
+                      : () async {
+                          await actions.downloadAll(songs);
+                          if (context.mounted) {
+                            showSnack(context, 'Descargando la playlist…');
+                          }
+                        },
+                  icon: Icon(
+                    playlist.isFullyDownloaded
+                        ? Icons.offline_pin_rounded
+                        : Icons.download_for_offline_outlined,
+                  ),
+                  label: Text(
+                    playlist.isFullyDownloaded ? 'Descargada' : 'Descargar',
+                  ),
                 ),
               ),
             ],
@@ -192,19 +235,29 @@ class _PlaylistViewState extends ConsumerState<_PlaylistView> {
           PopupMenuButton<VoidCallback>(
             onSelected: (f) => f(),
             itemBuilder: (_) => [
-              PopupMenuItem(value: rename, child: const Text('Renombrar')),
+              PopupMenuItem(
+                value: rename,
+                child: _MenuRow(Icons.edit_outlined, 'Renombrar'),
+              ),
               PopupMenuItem(
                 value: changeCover,
-                child: const Text('Cambiar portada'),
+                child: _MenuRow(Icons.image_outlined, 'Cambiar portada'),
               ),
               if (playlist.coverUrl != null)
                 PopupMenuItem(
                   value: removeCover,
-                  child: const Text('Quitar portada'),
+                  child: _MenuRow(
+                    Icons.hide_image_outlined,
+                    'Quitar portada',
+                  ),
                 ),
               PopupMenuItem(
                 value: delete,
-                child: const Text('Borrar playlist'),
+                child: _MenuRow(
+                  Icons.delete_outline_rounded,
+                  'Borrar playlist',
+                  color: theme.colorScheme.error,
+                ),
               ),
             ],
           ),
@@ -241,11 +294,34 @@ class _PlaylistViewState extends ConsumerState<_PlaylistView> {
                     color: theme.colorScheme.errorContainer,
                     alignment: Alignment.centerRight,
                     padding: const EdgeInsets.only(right: 24),
-                    child: const Icon(Icons.playlist_remove_rounded),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Quitar',
+                          style: TextStyle(
+                            color: theme.colorScheme.onErrorContainer,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Icon(
+                          Icons.playlist_remove_rounded,
+                          color: theme.colorScheme.onErrorContainer,
+                        ),
+                      ],
+                    ),
                   ),
                   onDismissed: (_) {
                     _removeAt(i);
-                    showSnack(context, 'Quitada de "${playlist.name}"');
+                    showSnack(
+                      context,
+                      'Quitada de "${playlist.name}"',
+                      action: SnackBarAction(
+                        label: 'Deshacer',
+                        onPressed: () => _restore(i, song),
+                      ),
+                    );
                   },
                   child: SongTile(
                     song: song,

@@ -59,8 +59,12 @@ Future<bool> showConfirmDialog(
   return result ?? false;
 }
 
-void showSnack(BuildContext context, String message) {
+void showSnack(
+  BuildContext context,
+  String message, {
+  SnackBarAction? action,
+}) {
   ScaffoldMessenger.of(context)
     ..hideCurrentSnackBar()
-    ..showSnackBar(SnackBar(content: Text(message)));
+    ..showSnackBar(SnackBar(content: Text(message), action: action));
 }
