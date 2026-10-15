@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- just_audio sirve el audio de HttpRangeAudioSource a ExoPlayer a través de
+     un proxy local (http://127.0.0.1:<puerto>). Android bloquea el HTTP sin
+     cifrar por defecto, así que solo se permite hacia el propio dispositivo;
+     todo lo demás sigue exigiendo HTTPS. -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false" />
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">127.0.0.1</domain>
+        <domain includeSubdomains="false">localhost</domain>
+    </domain-config>
+</network-security-config>
