@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../favorites/presentation/liked_home_section.dart';
+import '../history/presentation/recent_home_section.dart';
 
 /// Un bloque de la pantalla de Inicio (p. ej. "Te gusta", "Recientes").
 ///
@@ -25,5 +26,5 @@ class HomeSection {
 /// sección que expone la funcionalidad (una línea por funcionalidad, así las
 /// ramas en paralelo apenas chocan).
 final homeSectionsProvider = Provider<List<HomeSection>>(
-  (ref) => [likedHomeSection],
+  (ref) => [likedHomeSection, recentHomeSection],
 );

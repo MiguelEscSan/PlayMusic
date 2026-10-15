@@ -9,6 +9,8 @@ import 'core/database/app_database.dart';
 import 'core/database/song_dao.dart';
 import 'core/storage/file_paths.dart';
 import 'features/downloads/data/download_manager.dart';
+import 'features/history/data/history_dao.dart';
+import 'features/history/data/history_recorder.dart';
 import 'features/playlists/data/playlist_cover_service.dart';
 import 'features/playlists/data/playlist_dao.dart';
 
@@ -21,6 +23,8 @@ class AppDependencies {
     required this.playlistCovers,
     required this.audio,
     required this.downloads,
+    required this.historyDao,
+    required this.historyRecorder,
   });
 
   final AppDatabase database;
@@ -29,6 +33,8 @@ class AppDependencies {
   final PlaylistCoverService playlistCovers;
   final SponifyAudioHandler audio;
   final DownloadManager downloads;
+  final HistoryDao historyDao;
+  final HistoryRecorder historyRecorder;
 }
 
 Future<AppDependencies> bootstrap() async {
@@ -59,6 +65,9 @@ Future<AppDependencies> bootstrap() async {
     onStorageChanged: audio.onSongStorageChanged,
   );
 
+  // El historial escucha al reproductor desde el arranque.
+  final historyDao = HistoryDao(database);
+
   return AppDependencies(
     database: database,
     songDao: songDao,
@@ -66,5 +75,7 @@ Future<AppDependencies> bootstrap() async {
     playlistCovers: PlaylistCoverService(playlistDao, paths.coversDir),
     audio: audio,
     downloads: downloads,
+    historyDao: historyDao,
+    historyRecorder: HistoryRecorder(audio: audio, dao: historyDao),
   );
 }

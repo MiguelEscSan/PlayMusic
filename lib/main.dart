@@ -5,6 +5,7 @@ import 'app.dart';
 import 'bootstrap.dart';
 import 'core/audio/audio_providers.dart';
 import 'features/downloads/presentation/downloads_providers.dart';
+import 'features/history/presentation/history_providers.dart';
 import 'features/playlists/presentation/playlists_providers.dart';
 
 Future<void> main() async {
@@ -18,6 +19,7 @@ Future<void> main() async {
         playlistDaoProvider.overrideWithValue(deps.playlistDao),
         playlistCoverServiceProvider.overrideWithValue(deps.playlistCovers),
         downloadManagerProvider.overrideWithValue(deps.downloads),
+        historyDaoProvider.overrideWithValue(deps.historyDao),
       ],
       child: const SponifyApp(),
     ),
