@@ -15,6 +15,8 @@ import 'package:sponify/core/models/song.dart';
 import 'package:sponify/core/storage/file_paths.dart';
 import 'package:sponify/features/downloads/data/download_manager.dart';
 import 'package:sponify/features/downloads/presentation/downloads_providers.dart';
+import 'package:sponify/features/history/data/history_dao.dart';
+import 'package:sponify/features/history/presentation/history_providers.dart';
 import 'package:sponify/features/playlists/data/playlist_dao.dart';
 import 'package:sponify/features/playlists/presentation/playlists_providers.dart';
 import 'package:sponify/features/search/data/search_source.dart';
@@ -89,6 +91,7 @@ void main() {
   late AppDatabase db;
   late SongDao songDao;
   late PlaylistDao playlistDao;
+  late HistoryDao historyDao;
   late DownloadManager downloads;
   late _FakeAudio audio;
   late _FakeSearch search;
@@ -104,6 +107,7 @@ void main() {
     );
     songDao = SongDao(db);
     playlistDao = PlaylistDao(db, songDao);
+    historyDao = HistoryDao(db);
     downloads = DownloadManager(
       dio: Dio(),
       songDao: songDao,
@@ -127,6 +131,7 @@ void main() {
           songDaoProvider.overrideWithValue(songDao),
           playlistDaoProvider.overrideWithValue(playlistDao),
           downloadManagerProvider.overrideWithValue(downloads),
+          historyDaoProvider.overrideWithValue(historyDao),
           searchSourceProvider.overrideWithValue(search),
         ],
         child: const SponifyApp(),
@@ -145,7 +150,20 @@ void main() {
 
   testWidgets('la app arranca en Inicio', (tester) async {
     await pumpApp(tester);
-    expect(find.text('Aquí aparecerá tu música'), findsOneWidget);
+    expect(find.widgetWithText(AppBar, 'Inicio'), findsOneWidget);
+    // Sin historial la sección de recientes no ocupa espacio.
+    expect(find.text('Escuchado recientemente'), findsNothing);
+  });
+
+  testWidgets('lo escuchado aparece en Inicio', (tester) async {
+    await pumpApp(tester);
+    await tester.runAsync(() async {
+      final song = await songDao.upsert(_song('r', 'Reciente'));
+      await historyDao.record(song.id);
+    });
+    await settle(tester);
+    expect(find.text('Escuchado recientemente'), findsOneWidget);
+    expect(find.text('Reciente'), findsOneWidget);
   });
 
   testWidgets('buscar y tocar un resultado lo reproduce', (tester) async {
