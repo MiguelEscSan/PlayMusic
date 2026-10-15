@@ -12,6 +12,9 @@ import '../domain/download_task.dart';
 
 typedef StorageChangedCallback = Future<void> Function(Song song);
 
+/// Decide si se puede empezar a descargar ahora (p. ej. "solo con wifi").
+typedef CanDownloadCheck = Future<bool> Function();
+
 /// Descarga canciones al almacenamiento de la app con progreso en tiempo
 /// real, una cola con límite de concurrencia, cancelación y reanudación.
 ///
@@ -32,6 +35,7 @@ class DownloadManager {
     required this._paths,
     required this._resolver,
     this.onStorageChanged,
+    this.canDownload,
     this.maxConcurrent = 2,
     this.chunkSize = 9 * 1024 * 1024,
   });
@@ -43,6 +47,13 @@ class DownloadManager {
 
   /// Normalmente `AudioPlayerService.onSongStorageChanged`.
   final StorageChangedCallback? onStorageChanged;
+
+  /// Se consulta justo antes de empezar cada descarga; si devuelve `false`
+  /// la tarea falla con [waitingForWifiError]. Sin él, siempre se descarga.
+  final CanDownloadCheck? canDownload;
+
+  static const waitingForWifiError =
+      'Esperando wifi: activa la descarga con datos en Ajustes';
 
   final int maxConcurrent;
   final int chunkSize;
@@ -167,6 +178,20 @@ class DownloadManager {
     final song = _tasks[key]!.song;
     final token = CancelToken();
     _cancelTokens[key] = token;
+    final allowed = await _allowedToStart();
+    if (token.isCancelled || !allowed) {
+      // Cancelada mientras se comprobaba, o sin permiso para descargar.
+      _cancelTokens.remove(key);
+      final task = _tasks[key];
+      if (task == null) return; // Borrada mientras tanto.
+      _set(
+        key,
+        token.isCancelled
+            ? task.copyWith(status: DownloadStatus.cancelled)
+            : _failed(key, waitingForWifiError),
+      );
+      return;
+    }
     _set(key, _tasks[key]!.copyWith(status: DownloadStatus.downloading));
     final part = File(_paths.partialFile(song.id));
 
@@ -205,6 +230,18 @@ class DownloadManager {
     } finally {
       _cancelTokens.remove(key);
       _lastProgressEmit.remove(key);
+    }
+  }
+
+  /// Si la comprobación falla (p. ej. no se puede leer la conectividad) no
+  /// bloqueamos la descarga: mejor descargar que quedarse colgado.
+  Future<bool> _allowedToStart() async {
+    final check = canDownload;
+    if (check == null) return true;
+    try {
+      return await check();
+    } catch (_) {
+      return true;
     }
   }
 

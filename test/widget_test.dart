@@ -12,6 +12,8 @@ import 'package:sponify/core/audio/playback_source.dart';
 import 'package:sponify/core/database/app_database.dart';
 import 'package:sponify/core/database/song_dao.dart';
 import 'package:sponify/core/models/song.dart';
+import 'package:sponify/core/settings/settings_dao.dart';
+import 'package:sponify/core/settings/settings_providers.dart';
 import 'package:sponify/core/storage/file_paths.dart';
 import 'package:sponify/features/downloads/data/download_manager.dart';
 import 'package:sponify/features/downloads/presentation/downloads_providers.dart';
@@ -142,6 +144,7 @@ void main() {
           playlistDaoProvider.overrideWithValue(playlistDao),
           downloadManagerProvider.overrideWithValue(downloads),
           historyDaoProvider.overrideWithValue(historyDao),
+          settingsDaoProvider.overrideWithValue(SettingsDao(db)),
           searchSourceProvider.overrideWithValue(search),
           searchHistoryDaoProvider.overrideWithValue(SearchHistoryDao(db)),
           suggestionSourceProvider.overrideWithValue(_NoSuggestions()),
@@ -253,6 +256,15 @@ void main() {
     await settle(tester);
     expect(find.text('Canción X'), findsOneWidget);
     expect(find.text('1 canción · 3:20'), findsOneWidget);
+  });
+
+  testWidgets('Ajustes se abre desde Inicio con sus secciones', (tester) async {
+    await pumpApp(tester);
+    await tester.tap(find.byTooltip('Ajustes'));
+    await settle(tester);
+    expect(find.widgetWithText(AppBar, 'Ajustes'), findsOneWidget);
+    expect(find.text('Radio automática'), findsOneWidget);
+    expect(find.text('0 KB · 0 canciones'), findsOneWidget);
   });
 
   testWidgets('Descargas vacía muestra el estado inicial', (tester) async {
