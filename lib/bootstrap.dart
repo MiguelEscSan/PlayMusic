@@ -10,6 +10,7 @@ import 'core/database/song_dao.dart';
 import 'core/settings/settings_dao.dart';
 import 'core/storage/file_paths.dart';
 import 'features/downloads/data/download_manager.dart';
+import 'features/favorites/data/liked_playlist.dart';
 import 'features/history/data/history_dao.dart';
 import 'features/history/data/history_recorder.dart';
 import 'features/playlists/data/playlist_cover_service.dart';
@@ -82,6 +83,15 @@ Future<AppDependencies> bootstrap() async {
     // Ajuste "Descargar solo con wifi".
     canDownload: downloadPolicy(settings),
   );
+
+  // Los "me gusta" de antes de existir "Me encanta" pasan a la playlist.
+  if ((await songDao.liked()).isNotEmpty) {
+    await LikedPlaylist(
+      playlists: playlistDao,
+      songs: songDao,
+      settings: settings,
+    ).ensure();
+  }
 
   // El historial escucha al reproductor desde el arranque.
   final historyDao = HistoryDao(database);

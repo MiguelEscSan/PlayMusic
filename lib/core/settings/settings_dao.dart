@@ -12,6 +12,9 @@ abstract final class SettingsKeys {
 
   /// Descargar solo con wifi (por defecto desactivado).
   static const downloadOnlyWifi = 'downloads.only_wifi';
+
+  /// Id de la playlist "Me encanta" (la crea `LikedPlaylist`).
+  static const likedPlaylistId = 'favorites.playlist_id';
 }
 
 /// Ajustes de la app en la tabla `settings` (clave/valor de texto).

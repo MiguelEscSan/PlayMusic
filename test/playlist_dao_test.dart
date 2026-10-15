@@ -70,4 +70,15 @@ void main() {
     expect(YoutubeSearchSource.cleanTitle('Song (feat. X)'), 'Song (feat. X)');
     expect(YoutubeSearchSource.cleanArtist('Rosalía - Topic'), 'Rosalía');
   });
+
+  test('removeSong quita por id y avisa si no estaba', () async {
+    final p = await dao.create('Mix');
+    for (final id in ['1', '2', '3']) {
+      await dao.addSong(p.id, _song(id));
+    }
+    final middle = (await dao.findById(p.id))!.songs[1];
+    expect(await dao.removeSong(p.id, middle.id), isTrue);
+    expect(titles((await dao.findById(p.id))!.songs), ['T1', 'T3']);
+    expect(await dao.removeSong(p.id, middle.id), isFalse);
+  });
 }

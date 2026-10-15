@@ -131,6 +131,18 @@ class PlaylistDao {
     _notify();
   }
 
+  /// Quita la canción con id [songId]. Devuelve false si no estaba.
+  Future<bool> removeSong(String playlistId, String songId) async {
+    final removed = await _db.transaction((txn) async {
+      final ids = await _songIdsOf(txn, playlistId);
+      if (!ids.remove(songId)) return false;
+      await _writeOrder(txn, playlistId, ids);
+      return true;
+    });
+    if (removed) _notify();
+    return removed;
+  }
+
   /// [newIndex] es la posición final (ya corregida).
   Future<void> move(String playlistId, int oldIndex, int newIndex) async {
     await _db.transaction((txn) async {

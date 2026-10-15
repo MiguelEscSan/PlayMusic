@@ -1,8 +1,20 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/models/song.dart';
+import '../../../core/settings/settings_providers.dart';
 import '../../downloads/data/download_manager.dart';
 import '../../downloads/presentation/downloads_providers.dart';
+import '../../playlists/presentation/playlists_providers.dart';
+import '../data/liked_playlist.dart';
+
+/// Sincroniza los "me gusta" con la playlist "Me encanta".
+final likedPlaylistProvider = Provider<LikedPlaylist>(
+  (ref) => LikedPlaylist(
+    playlists: ref.watch(playlistDaoProvider),
+    songs: ref.watch(songDaoProvider),
+    settings: ref.watch(settingsDaoProvider),
+  ),
+);
 
 /// Canciones con "me gusta", la última marcada primero. Se refresca sola
 /// con cada cambio en la tabla `songs`.

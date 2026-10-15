@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/audio/audio_providers.dart';
 import '../core/models/song.dart';
 import '../features/downloads/presentation/downloads_providers.dart';
+import '../features/favorites/presentation/favorites_providers.dart';
 import 'export/song_exporter.dart';
 
 final songActionsProvider = Provider<SongActions>(SongActions.new);
@@ -24,12 +25,15 @@ class SongActions {
 
   /// Alterna "me gusta". Guarda antes la canción (los resultados de búsqueda
   /// llegan con id vacío) y decide con el estado de la BD, no con el de
-  /// [song], que puede estar desfasado.
+  /// [song], que puede estar desfasado. También la añade o quita de la
+  /// playlist "Me encanta".
   Future<Song> toggleLike(Song song) async {
     final dao = _ref.read(songDaoProvider);
     final saved = await _persist(song);
     await dao.setLiked(saved.id, !saved.isLiked);
-    return (await dao.findById(saved.id))!;
+    final updated = (await dao.findById(saved.id))!;
+    await _ref.read(likedPlaylistProvider).sync(updated);
+    return updated;
   }
 
   Future<void> playQueue(List<Song> songs, int index) async {
