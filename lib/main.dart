@@ -3,29 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app.dart';
 import 'bootstrap.dart';
-import 'core/audio/audio_providers.dart';
-import 'core/settings/settings_providers.dart';
-import 'features/downloads/presentation/downloads_providers.dart';
-import 'features/history/presentation/history_providers.dart';
-import 'features/playlists/presentation/playlists_providers.dart';
-import 'features/search/presentation/search_history_providers.dart';
+import 'di/app_overrides.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final deps = await bootstrap();
   runApp(
-    ProviderScope(
-      overrides: [
-        audioPlayerServiceProvider.overrideWithValue(deps.audio),
-        songDaoProvider.overrideWithValue(deps.songDao),
-        playlistDaoProvider.overrideWithValue(deps.playlistDao),
-        playlistCoverServiceProvider.overrideWithValue(deps.playlistCovers),
-        downloadManagerProvider.overrideWithValue(deps.downloads),
-        historyDaoProvider.overrideWithValue(deps.historyDao),
-        settingsDaoProvider.overrideWithValue(deps.settings),
-        searchHistoryDaoProvider.overrideWithValue(deps.searchHistory),
-      ],
-      child: const SponifyApp(),
-    ),
+    ProviderScope(overrides: appOverrides(deps), child: const SponifyApp()),
   );
 }

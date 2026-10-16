@@ -1,4 +1,4 @@
-import '../../../core/models/song.dart';
+import '../../../core/domain/entities/song.dart';
 
 enum DownloadStatus { queued, downloading, completed, failed, cancelled }
 

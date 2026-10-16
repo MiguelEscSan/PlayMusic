@@ -1,10 +1,17 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sponify/core/data/models/song_model.dart';
+import 'package:sponify/core/data/repositories/settings_repository_impl.dart';
+import 'package:sponify/core/data/repositories/song_repository_impl.dart';
 import 'package:sponify/core/database/app_database.dart';
 import 'package:sponify/core/database/song_dao.dart';
-import 'package:sponify/core/models/song.dart';
+import 'package:sponify/core/domain/entities/song.dart';
+import 'package:sponify/core/error/failure.dart';
 import 'package:sponify/core/settings/settings_dao.dart';
-import 'package:sponify/features/radio/radio_service.dart';
+import 'package:sponify/features/radio/domain/radio_service.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+
+import 'domain/fakes/fake_feature_repositories.dart';
+import 'domain/fakes/fake_song_repository.dart';
 
 Song _song(String id, {SongSource source = SongSource.youtube}) => Song(
   id: '',
@@ -33,10 +40,15 @@ void main() {
   tearDown(() => db.close());
 
   RadioService radio(Future<List<Song>> Function(Song seed) fetch) =>
-      RadioService(fetchRelated: fetch, songDao: songs, settings: settings);
+      RadioService(
+        fetchRelated: fetch,
+        songRepository: SongRepositoryImpl(songs),
+        settings: SettingsRepositoryImpl(settings),
+      );
 
   Future<List<Song>> queueOf(List<String> ids) async => [
-    for (final id in ids) await songs.upsert(_song(id)),
+    for (final id in ids)
+      (await songs.upsert(SongModel.fromEntity(_song(id)))).toEntity(),
   ];
 
   test('devuelve las relacionadas guardadas en la BD con id', () async {
@@ -80,6 +92,30 @@ void main() {
     expect(called, isFalse);
   });
 
+  test('si falla al guardar (Err) devuelve vacío sin lanzar', () async {
+    final service = RadioService(
+      fetchRelated: (_) async => [_song('r1')],
+      songRepository: FakeSongRepository(),
+      settings: SettingsRepositoryImpl(settings),
+    );
+    expect(await service.nextFor(await queueOf(['a'])), isEmpty);
+  });
+
+  test('si no se puede leer el ajuste (Err) devuelve vacío', () async {
+    var called = false;
+    final service = RadioService(
+      fetchRelated: (_) async {
+        called = true;
+        return [_song('r1')];
+      },
+      songRepository: SongRepositoryImpl(songs),
+      settings: FakeSettingsRepository()
+        ..failure = const DatabaseFailure('disk full'),
+    );
+    expect(await service.nextFor(await queueOf(['a'])), isEmpty);
+    expect(called, isFalse);
+  });
+
   test('si falla la búsqueda devuelve vacío', () async {
     final service = radio((_) async => throw Exception('sin red'));
     expect(await service.nextFor(await queueOf(['a'])), isEmpty);
@@ -87,7 +123,9 @@ void main() {
 
   test('semilla que no es de YouTube o cola vacía devuelve vacío', () async {
     final service = radio((_) async => [_song('r1')]);
-    final local = await songs.upsert(_song('x', source: SongSource.local));
+    final local = (await songs.upsert(
+      SongModel.fromEntity(_song('x', source: SongSource.local)),
+    )).toEntity();
     expect(await service.nextFor([local]), isEmpty);
     expect(await service.nextFor(const []), isEmpty);
   });

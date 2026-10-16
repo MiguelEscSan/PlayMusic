@@ -1,52 +1,33 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/database/song_dao.dart';
-import '../../../core/models/song.dart';
-import '../data/download_manager.dart';
+import '../../../core/domain/entities/song.dart';
+import '../../../core/domain/song_key.dart';
+import '../../../di/providers.dart';
 import '../domain/download_task.dart';
+import 'downloads_notifier.dart';
 
-/// Se sobrescriben en `main()` con las instancias de `bootstrap()`.
-final songDaoProvider = Provider<SongDao>(
-  (ref) => throw UnimplementedError('songDaoProvider se define en main()'),
-);
+export 'downloads_notifier.dart';
 
-final downloadManagerProvider = Provider<DownloadManager>(
-  (ref) =>
-      throw UnimplementedError('downloadManagerProvider se define en main()'),
-);
-
-/// Todas las descargas activas o recientes.
+/// Todas las descargas activas o recientes, por [songKey].
 final downloadTasksProvider = StreamProvider<Map<String, DownloadTask>>(
-  (ref) => ref.watch(downloadManagerProvider).tasksStream,
+  (ref) => ref.watch(watchDownloadTasksUseCaseProvider)(),
 );
 
 /// Estado de descarga de una canción (botón de descarga en cada fila).
 final downloadTaskProvider = Provider.family<DownloadTask?, Song>(
-  (ref, song) =>
-      ref.watch(downloadTasksProvider).value?[DownloadManager.keyOf(song)],
+  (ref, song) => ref.watch(downloadTasksProvider).value?[songKey(song)],
 );
 
-/// Canciones descargadas; se refresca sola al descargar o borrar.
-final downloadedSongsProvider = StreamProvider<List<Song>>((ref) async* {
-  final dao = ref.watch(songDaoProvider);
-  yield await dao.downloaded();
-  await for (final _ in dao.changes) {
-    yield await dao.downloaded();
-  }
-});
-
-/// Espacio ocupado por las descargas, en bytes.
-final downloadsSizeProvider = StreamProvider<int>((ref) async* {
-  final dao = ref.watch(songDaoProvider);
-  yield await dao.downloadedBytes();
-  await for (final _ in dao.changes) {
-    yield await dao.downloadedBytes();
-  }
+/// Espacio ocupado por las descargas, en bytes (0 mientras cargan o si no
+/// se pudieron leer).
+final downloadsSizeProvider = Provider<int>((ref) {
+  final songs = ref.watch(downloadedSongsProvider).value ?? const [];
+  return songs.fold(0, (sum, s) => sum + (s.fileSizeBytes ?? 0));
 });
 
 /// Claves (`source:sourceId`) de las canciones descargadas, para marcar
 /// como descargados los resultados de búsqueda sin consultar la BD.
 final downloadedKeysProvider = Provider<Set<String>>((ref) {
   final songs = ref.watch(downloadedSongsProvider).value ?? const [];
-  return {for (final s in songs) DownloadManager.keyOf(s)};
+  return {for (final s in songs) songKey(s)};
 });

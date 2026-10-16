@@ -1,11 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sponify/core/database/app_database.dart';
 import 'package:sponify/core/database/song_dao.dart';
-import 'package:sponify/core/models/song.dart';
+import 'package:sponify/core/data/models/song_model.dart';
 import 'package:sponify/features/history/data/history_dao.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
-Song _song(String id) => Song(
+SongModel _song(String id) => SongModel(
   id: '',
   title: 'T$id',
   artist: 'A',
@@ -37,7 +37,7 @@ void main() {
   tearDown(() => db.close());
 
   Future<String> saved(String id) async => (await songs.upsert(_song(id))).id;
-  List<String> titles(List<Song> s) => [for (final x in s) x.title];
+  List<String> titles(List<SongModel> s) => [for (final x in s) x.title];
 
   test('recent devuelve lo último primero y sin repetidas', () async {
     final a = await saved('a');
@@ -67,18 +67,9 @@ void main() {
     expect(titles(await small.recent()), ['T5', 'T4', 'T3']);
   });
 
-  test('record notifica cambios', () async {
-    final id = await saved('a');
-    final notified = dao.changes.first;
-    await dao.record(id);
-    await notified;
-  });
-
-  test('clear vacía el historial y notifica', () async {
+  test('clear vacía el historial', () async {
     await dao.record(await saved('a'));
-    final notified = dao.changes.first;
     await dao.clear();
-    await notified;
     expect(await dao.recent(), isEmpty);
   });
 

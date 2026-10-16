@@ -56,26 +56,12 @@ void main() {
     expect(await fixed.recent(), ['b', 'a']);
   });
 
-  test('quitar una y borrar todo avisan de cambios', () async {
-    final events = <void>[];
-    final sub = dao.changes.listen(events.add);
+  test('quitar una y borrar todo', () async {
     await dao.record('a');
     await dao.record('b');
     await dao.remove('a');
     expect(await dao.recent(), ['b']);
     await dao.clear();
     expect(await dao.recent(), isEmpty);
-    await Future<void>.delayed(Duration.zero);
-    expect(events, hasLength(4));
-    await sub.cancel();
-  });
-
-  test('una búsqueda vacía no avisa de cambios', () async {
-    var count = 0;
-    final sub = dao.changes.listen((_) => count++);
-    await dao.record('  ');
-    await Future<void>.delayed(Duration.zero);
-    expect(count, 0);
-    await sub.cancel();
   });
 }

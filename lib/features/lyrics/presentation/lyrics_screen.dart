@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/audio/audio_providers.dart';
-import '../../../core/models/song.dart';
-import '../data/lrc_parser.dart';
-import '../data/lyrics_repository.dart';
+import '../../../di/providers.dart';
+import '../../../features/player/presentation/player_providers.dart';
+import '../../../core/domain/entities/song.dart';
+import '../domain/lyrics.dart';
 import 'lyrics_providers.dart';
 
 /// Pantalla de letra de la canción actual. Si la canción cambia mientras
@@ -173,9 +173,7 @@ class _SyncedLyricsViewState extends ConsumerState<_SyncedLyricsView> {
               key: _keys[i],
               text: widget.lines[i].text,
               isActive: i == current,
-              onTap: () => ref
-                  .read(audioPlayerServiceProvider)
-                  .seek(widget.lines[i].time),
+              onTap: () => ref.read(seekUseCaseProvider)(widget.lines[i].time),
             ),
         ],
       ),

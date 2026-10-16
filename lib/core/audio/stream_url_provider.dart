@@ -3,7 +3,7 @@ import 'dart:math';
 
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
-import '../models/song.dart';
+import '../domain/entities/song.dart';
 import 'playback_source.dart';
 
 /// Obtiene una URL de streaming fresca a partir del id de la canción en su

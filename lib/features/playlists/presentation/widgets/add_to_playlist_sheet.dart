@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/models/song.dart';
+import '../../../../core/domain/entities/song.dart';
+import '../../../../core/error/result.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../shared/widgets/dialogs.dart';
 import '../playlists_providers.dart';
@@ -26,14 +27,21 @@ class _AddToPlaylistSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final playlists = ref.watch(playlistsProvider).value ?? const [];
-    final dao = ref.read(playlistDaoProvider);
+    final notifier = ref.read(playlistsProvider.notifier);
+
+    /// Cierra la hoja y avisa en la pantalla de debajo.
+    void closeWith(String message) {
+      if (context.mounted) Navigator.pop(context);
+      if (parent.mounted) showSnack(parent, message);
+    }
 
     Future<void> addTo(String id, String name) async {
-      final added = await dao.addSong(id, song);
-      if (context.mounted) Navigator.pop(context);
-      if (parent.mounted) {
-        showSnack(parent, added ? 'Añadida a "$name"' : 'Ya estaba en "$name"');
-      }
+      final message = switch (await notifier.addSong(id, song)) {
+        Ok(value: true) => 'Añadida a "$name"',
+        Ok(value: false) => 'Ya estaba en "$name"',
+        Err() => 'No se pudo añadir a "$name"',
+      };
+      closeWith(message);
     }
 
     return ConstrainedBox(
@@ -61,8 +69,12 @@ class _AddToPlaylistSheet extends ConsumerWidget {
                 confirmLabel: 'Crear',
               );
               if (name == null) return;
-              final created = await dao.create(name);
-              await addTo(created.id, created.name);
+              switch (await notifier.create(name)) {
+                case Ok(value: final created):
+                  await addTo(created.id, created.name);
+                case Err():
+                  closeWith('No se pudo crear la playlist');
+              }
             },
           ),
           for (final p in playlists)

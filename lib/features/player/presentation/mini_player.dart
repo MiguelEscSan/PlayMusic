@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/audio/audio_player_service.dart';
-import '../../../core/audio/audio_providers.dart';
-import '../../../core/models/song.dart';
+import '../../../di/providers.dart';
+import 'player_providers.dart';
+import '../../../core/domain/entities/song.dart';
 import '../../../shared/widgets/artwork_image.dart';
 import 'now_playing_screen.dart';
 import 'swipe_to_skip.dart';
@@ -19,7 +20,7 @@ class MiniPlayer extends ConsumerWidget {
     final song = snapshot?.currentSong;
     if (snapshot == null || song == null) return const SizedBox.shrink();
 
-    final audio = ref.read(audioPlayerServiceProvider);
+    void skipToNext() => ref.read(skipToNextUseCaseProvider)();
     final loading =
         snapshot.status == PlaybackStatus.loading ||
         snapshot.status == PlaybackStatus.buffering;
@@ -41,10 +42,10 @@ class MiniPlayer extends ConsumerWidget {
                     current: song,
                     next: nextSong,
                     previous: snapshot.previousSong,
-                    onNext: audio.skipToNext,
+                    onNext: skipToNext,
                     // Siempre a la anterior; ⏮ reinicia la canción tras 3 s.
                     onPrevious: () =>
-                        audio.skipToIndex(snapshot.currentIndex! - 1),
+                        ref.read(skipToPreviousSongUseCaseProvider)(snapshot),
                     itemBuilder: (context, item) =>
                         _MiniSong(song: item, snapshot: snapshot),
                   ),
@@ -60,7 +61,7 @@ class MiniPlayer extends ConsumerWidget {
                 else
                   IconButton(
                     tooltip: snapshot.isPlaying ? 'Pausa' : 'Reproducir',
-                    onPressed: audio.togglePlayPause,
+                    onPressed: () => ref.read(togglePlayPauseUseCaseProvider)(),
                     icon: Icon(
                       snapshot.isPlaying
                           ? Icons.pause_rounded
@@ -72,7 +73,7 @@ class MiniPlayer extends ConsumerWidget {
                   padding: const EdgeInsets.only(right: 4),
                   child: IconButton(
                     tooltip: 'Siguiente',
-                    onPressed: nextSong != null ? audio.skipToNext : null,
+                    onPressed: nextSong != null ? skipToNext : null,
                     icon: const Icon(Icons.skip_next_rounded),
                   ),
                 ),

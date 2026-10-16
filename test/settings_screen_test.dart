@@ -6,16 +6,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sponify/core/audio/playback_source.dart';
+import 'package:sponify/core/data/models/song_model.dart';
+import 'package:sponify/core/data/repositories/settings_repository_impl.dart';
+import 'package:sponify/core/data/repositories/song_repository_impl.dart';
 import 'package:sponify/core/database/app_database.dart';
 import 'package:sponify/core/database/song_dao.dart';
-import 'package:sponify/core/models/song.dart';
+import 'package:sponify/core/domain/entities/song.dart';
 import 'package:sponify/core/settings/settings_dao.dart';
-import 'package:sponify/core/settings/settings_providers.dart';
+import 'package:sponify/di/providers.dart';
 import 'package:sponify/core/storage/file_paths.dart';
 import 'package:sponify/features/downloads/data/download_manager.dart';
-import 'package:sponify/features/downloads/presentation/downloads_providers.dart';
 import 'package:sponify/features/history/data/history_dao.dart';
-import 'package:sponify/features/history/presentation/history_providers.dart';
 import 'package:sponify/features/settings/data/download_policy.dart';
 import 'package:sponify/features/settings/presentation/settings_screen.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -56,7 +57,7 @@ void main() {
     settings = SettingsDao(db);
     downloads = DownloadManager(
       dio: Dio(),
-      songDao: songDao,
+      songRepository: SongRepositoryImpl(songDao),
       paths: FilePaths(tmp),
       resolver: _NoNetworkResolver(),
     );
@@ -64,7 +65,6 @@ void main() {
 
   tearDown(() async {
     await downloads.dispose();
-    await settings.dispose();
     await db.close();
     tmp.deleteSync(recursive: true);
   });
@@ -82,7 +82,7 @@ void main() {
       ProviderScope(
         overrides: [
           songDaoProvider.overrideWithValue(songDao),
-          downloadManagerProvider.overrideWithValue(downloads),
+          downloadServiceProvider.overrideWithValue(downloads),
           historyDaoProvider.overrideWithValue(historyDao),
           settingsDaoProvider.overrideWithValue(settings),
         ],
@@ -94,13 +94,14 @@ void main() {
 
   /// Guarda una canción como descargada con un archivo real en disco.
   Future<Song> addDownloaded(String id, int sizeBytes) async {
-    final saved = await songDao.upsert(_song(id));
+    final saved = await songDao.upsert(SongModel.fromEntity(_song(id)));
     final file = File('${tmp.path}/${saved.id}.m4a')..writeAsBytesSync([1]);
-    return songDao.markDownloaded(
+    final marked = await songDao.markDownloaded(
       saved.id,
       localPath: file.path,
       sizeBytes: sizeBytes,
     );
+    return marked!.toEntity();
   }
 
   SwitchListTile switchTile(WidgetTester tester, String title) =>
@@ -189,7 +190,7 @@ void main() {
 
   testWidgets('borrar el historial pide confirmación', (tester) async {
     await tester.runAsync(() async {
-      final song = await songDao.upsert(_song('h'));
+      final song = await songDao.upsert(SongModel.fromEntity(_song('h')));
       await historyDao.record(song.id);
     });
     await pumpSettings(tester);
@@ -208,7 +209,7 @@ void main() {
     test('sin "solo wifi" deja descargar sin mirar la conexión', () async {
       var checked = false;
       final canDownload = downloadPolicy(
-        settings,
+        SettingsRepositoryImpl(settings),
         connectivity: () async {
           checked = true;
           return [ConnectivityResult.mobile];
@@ -222,7 +223,7 @@ void main() {
       await settings.setBool(SettingsKeys.downloadOnlyWifi, true);
       var current = [ConnectivityResult.mobile];
       final canDownload = downloadPolicy(
-        settings,
+        SettingsRepositoryImpl(settings),
         connectivity: () async => current,
       );
       expect(await canDownload(), isFalse);

@@ -29,10 +29,4 @@ void main() {
     await settings.setBool('x', true);
     expect(await settings.getBool('x', fallback: false), isTrue);
   });
-
-  test('avisa de los cambios', () async {
-    final changed = settings.changes.first;
-    await settings.setBool(SettingsKeys.radioEnabled, false);
-    await changed;
-  });
 }

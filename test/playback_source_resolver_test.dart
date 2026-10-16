@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sponify/core/audio/playback_source.dart';
 import 'package:sponify/core/audio/playback_source_resolver_impl.dart';
 import 'package:sponify/core/audio/stream_url_provider.dart';
-import 'package:sponify/core/models/song.dart';
+import 'package:sponify/core/domain/entities/song.dart';
 
 class _FakeYoutube implements StreamUrlProvider {
   int calls = 0;

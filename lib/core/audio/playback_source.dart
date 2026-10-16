@@ -1,4 +1,4 @@
-import '../models/song.dart';
+import '../domain/entities/song.dart';
 
 /// Resultado de decidir CÓMO se reproduce una [Song].
 /// La capa de audio (Paso 2) lo traduce a `AudioSource.file` o

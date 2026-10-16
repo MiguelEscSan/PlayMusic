@@ -5,13 +5,20 @@ import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sponify/core/audio/playback_source.dart';
+import 'package:sponify/core/data/models/song_model.dart';
+import 'package:sponify/core/data/repositories/song_repository_impl.dart';
 import 'package:sponify/core/database/app_database.dart';
 import 'package:sponify/core/database/song_dao.dart';
-import 'package:sponify/core/models/song.dart';
+import 'package:sponify/core/domain/entities/song.dart';
+import 'package:sponify/core/domain/repositories/i_song_repository.dart';
+import 'package:sponify/core/error/failure.dart';
+import 'package:sponify/core/error/result.dart';
 import 'package:sponify/core/storage/file_paths.dart';
 import 'package:sponify/features/downloads/data/download_manager.dart';
 import 'package:sponify/features/downloads/domain/download_task.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+
+import 'domain/fakes/fake_song_repository.dart';
 
 /// Servidor falso que respeta la cabecera Range, como un CDN real.
 class _RangeServer implements HttpClientAdapter {
@@ -67,6 +74,47 @@ class _FakeResolver implements PlaybackSourceResolver {
   }
 }
 
+/// Repositorio real salvo [markDownloaded], que siempre falla.
+class _MarkDownloadedFails implements ISongRepository {
+  _MarkDownloadedFails(this._inner);
+
+  final ISongRepository _inner;
+
+  @override
+  Future<Result<Song>> markDownloaded(
+    String id, {
+    required String localPath,
+    required int sizeBytes,
+  }) async => const Err(UnexpectedFailure('disco lleno'));
+
+  @override
+  Future<Result<Song>> save(Song song) => _inner.save(song);
+
+  @override
+  Future<Result<Song>> findById(String id) => _inner.findById(id);
+
+  @override
+  Future<Result<Song>> findBySource(SongSource source, String sourceId) =>
+      _inner.findBySource(source, sourceId);
+
+  @override
+  Future<Result<List<Song>>> getDownloaded() => _inner.getDownloaded();
+
+  @override
+  Future<Result<int>> getDownloadedBytes() => _inner.getDownloadedBytes();
+
+  @override
+  Future<Result<List<Song>>> getLiked() => _inner.getLiked();
+
+  @override
+  Future<Result<Unit>> setLiked(String songId, {required bool liked}) =>
+      _inner.setLiked(songId, liked: liked);
+
+  @override
+  Future<Result<Unit>> clearDownload(String songId) =>
+      _inner.clearDownload(songId);
+}
+
 Song _song(String sourceId) => Song(
   id: '',
   title: 'Canción $sourceId',
@@ -75,6 +123,9 @@ Song _song(String sourceId) => Song(
   source: SongSource.youtube,
   sourceId: sourceId,
 );
+
+void _expectOk(Result<Object?> result) =>
+    expect(result.isOk, isTrue, reason: '$result');
 
 void main() {
   sqfliteFfiInit();
@@ -100,7 +151,7 @@ void main() {
     storageChanges = [];
     manager = DownloadManager(
       dio: Dio()..httpClientAdapter = server,
-      songDao: dao,
+      songRepository: SongRepositoryImpl(dao),
       paths: FilePaths(tmp),
       resolver: resolver,
       onStorageChanged: (s) async => storageChanges.add(s),
@@ -167,7 +218,7 @@ void main() {
 
   test('reanuda desde el .part tras un fallo', () async {
     final song = _song('res');
-    final saved = await dao.upsert(song);
+    final saved = await dao.upsert(SongModel.fromEntity(song));
     await File('${tmp.path}/${saved.id}.part')
         .writeAsBytes(body.sublist(0, 10000));
 
@@ -208,11 +259,92 @@ void main() {
     await manager.download(song);
     final path = (await done).song.localPath!;
 
-    final updated = await manager.delete(song);
+    final result = await manager.delete(song);
+    expect(result.isOk, isTrue, reason: '$result');
+    final updated = result.valueOrNull!;
     expect(updated.isDownloaded, isFalse);
     expect(File(path).existsSync(), isFalse);
     expect(await dao.downloaded(), isEmpty);
     expect(storageChanges.last.isDownloaded, isFalse);
+  });
+
+  test('un fallo del repositorio no lanza: la tarea queda fallida', () async {
+    final failing = DownloadManager(
+      dio: Dio()..httpClientAdapter = server,
+      songRepository: FakeSongRepository(),
+      paths: FilePaths(tmp),
+      resolver: resolver,
+    );
+    addTearDown(failing.dispose);
+    final song = _song('err');
+
+    expect(await failing.download(song), song);
+    final task = failing.tasks[DownloadManager.keyOf(song)]!;
+    expect(task.status, DownloadStatus.failed);
+    expect(task.error, 'not configured in fake');
+    expect(resolver.calls, 0);
+
+    expect((await failing.delete(song)).isErr, isTrue);
+    expect((await failing.deleteAll()).isErr, isTrue);
+    expect(
+      (await failing.forgetMissingFile(song.copyWith(id: 'x'))).isErr,
+      isTrue,
+    );
+  });
+
+  test('downloadsChanged avisa al terminar, al borrar y al olvidar un '
+      'archivo perdido, no con el progreso', () async {
+    final changes = <Song>[];
+    final sub = manager.downloadsChanged.listen(changes.add);
+    addTearDown(sub.cancel);
+    final song = _song('notify');
+
+    final done = waitFor(song, DownloadStatus.completed);
+    await manager.download(song);
+    final downloaded = (await done).song;
+    await pumpEventQueue();
+    expect(changes.map((s) => s.isDownloaded), [true]);
+
+    _expectOk(await manager.delete(downloaded));
+    await pumpEventQueue();
+    expect(changes.map((s) => s.isDownloaded), [true, false]);
+
+    final again = waitFor(song, DownloadStatus.completed);
+    await manager.download(song);
+    final redownloaded = (await again).song;
+    await File(redownloaded.localPath!).delete();
+    _expectOk(await manager.forgetMissingFile(redownloaded));
+    await pumpEventQueue();
+
+    expect(changes.map((s) => s.isDownloaded), [true, false, true, false]);
+    expect((await dao.findById(redownloaded.id))!.isDownloaded, isFalse);
+    expect(manager.tasks, isEmpty);
+  });
+
+  test('si la BD no registra el archivo, se borra del disco', () async {
+    final failing = DownloadManager(
+      dio: Dio()..httpClientAdapter = server,
+      songRepository: _MarkDownloadedFails(SongRepositoryImpl(dao)),
+      paths: FilePaths(tmp),
+      resolver: resolver,
+      chunkSize: 10000,
+    );
+    addTearDown(failing.dispose);
+    final song = _song('untracked');
+
+    final failed = failing
+        .watch(song)
+        .firstWhere((t) => t?.status == DownloadStatus.failed);
+    await failing.download(song);
+    final task = (await failed)!;
+
+    expect(task.error, 'disco lleno');
+    expect(
+      tmp.listSync().map((e) => e.path),
+      isEmpty,
+      reason: 'ni el archivo final ni el .part quedan sin registrar',
+    );
+    expect(await dao.downloaded(), isEmpty);
   });
 
   group('solo con wifi (canDownload)', () {
@@ -223,7 +355,7 @@ void main() {
       await manager.dispose();
       manager = DownloadManager(
         dio: Dio()..httpClientAdapter = server,
-        songDao: dao,
+        songRepository: SongRepositoryImpl(dao),
         paths: FilePaths(tmp),
         resolver: resolver,
         chunkSize: 10000,

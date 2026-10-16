@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/audio/audio_player_service.dart';
-import '../../../core/audio/audio_providers.dart';
+import '../../../di/providers.dart';
 
 /// Estado del temporizador de apagado.
 sealed class SleepTimerState {
@@ -64,14 +64,17 @@ class SleepTimerController extends Notifier<SleepTimerState> {
   /// apagamos por una instantánea antigua emitida antes de activarlo.
   bool _sawStopFlag = false;
 
-  AudioPlayerService get _audio => ref.read(audioPlayerServiceProvider);
   SleepTimerClock get _clock => ref.read(sleepTimerClockProvider);
+
+  /// Las acciones sobre el reproductor no lanzan (devuelven `Result`); un
+  /// fallo aquí no tiene a quién avisar, así que se ignora como antes.
+  void _setStopAfterCurrent(bool enabled) =>
+      unawaited(ref.read(setStopAfterCurrentUseCaseProvider)(enabled));
 
   @override
   SleepTimerState build() {
     _snapshotSub = ref
-        .watch(audioPlayerServiceProvider)
-        .snapshots
+        .watch(watchPlayerSnapshotUseCaseProvider)()
         .listen(_onSnapshot);
     ref.onDispose(() {
       _ticker?.cancel();
@@ -96,7 +99,7 @@ class SleepTimerController extends Notifier<SleepTimerState> {
     _clear();
     _sawStopFlag = false;
     state = const SleepTimerEndOfSong();
-    _audio.setStopAfterCurrent(true);
+    _setStopAfterCurrent(true);
   }
 
   /// Desactiva el temporizador sin pausar nada.
@@ -110,7 +113,7 @@ class SleepTimerController extends Notifier<SleepTimerState> {
     _ticker?.cancel();
     _ticker = null;
     if (state is SleepTimerEndOfSong) {
-      _audio.setStopAfterCurrent(false);
+      _setStopAfterCurrent(false);
     }
   }
 
@@ -123,7 +126,7 @@ class SleepTimerController extends Notifier<SleepTimerState> {
     _ticker?.cancel();
     _ticker = null;
     state = const SleepTimerOff();
-    _audio.pause();
+    unawaited(ref.read(pausePlaybackUseCaseProvider)());
   }
 
   void _onSnapshot(PlayerSnapshot snapshot) {

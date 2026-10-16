@@ -4,28 +4,32 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sponify/core/audio/audio_player_service.dart';
-import 'package:sponify/core/audio/audio_providers.dart';
-import 'package:sponify/core/models/song.dart';
-import 'package:sponify/features/lyrics/data/lrc_parser.dart';
-import 'package:sponify/features/lyrics/data/lyrics_repository.dart';
-import 'package:sponify/features/lyrics/presentation/lyrics_providers.dart';
+import 'package:sponify/di/providers.dart';
+import 'package:sponify/features/player/presentation/player_providers.dart';
+import 'package:sponify/core/domain/entities/song.dart';
+import 'package:sponify/core/error/failure.dart';
+import 'package:sponify/core/error/result.dart';
+import 'package:sponify/features/lyrics/domain/i_lyrics_repository.dart';
+import 'package:sponify/features/lyrics/domain/lyrics.dart';
 import 'package:sponify/features/lyrics/presentation/lyrics_screen.dart';
 
 /// Repositorio falso: cada llamada consume la siguiente respuesta preparada.
-class _FakeRepo implements LyricsRepository {
+/// Una respuesta que lanza se devuelve como `Err(NetworkFailure)`.
+class _FakeRepo implements ILyricsRepository {
   _FakeRepo(this.responses);
 
   final List<Future<Lyrics> Function()> responses;
   final requested = <Song>[];
 
   @override
-  Future<Lyrics> getLyrics(Song song) {
+  Future<Result<Lyrics>> getLyrics(Song song) async {
     requested.add(song);
-    return responses.removeAt(0)();
+    try {
+      return Ok(await responses.removeAt(0)());
+    } on Exception catch (e) {
+      return Err(NetworkFailure('$e', cause: e));
+    }
   }
-
-  @override
-  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 class _FakeAudio implements AudioPlayerService {
@@ -115,7 +119,7 @@ void main() {
 
   testWidgets('error con reintento', (tester) async {
     final repo = _FakeRepo([
-      () async => throw const LyricsLoadException('sin red'),
+      () async => throw Exception('sin red'),
       () async => const PlainLyrics('Ya cargó'),
     ]);
     await pump(tester, repo);

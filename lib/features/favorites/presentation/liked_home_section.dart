@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../shared/song_actions.dart';
+import '../../../di/providers.dart';
+import '../../../shared/widgets/error_view.dart';
 import '../../../shared/widgets/song_tile.dart';
 import '../../home/home_sections.dart';
 import 'favorites_providers.dart';
@@ -12,9 +13,11 @@ final likedHomeSection = HomeSection(
   id: 'favorites',
   order: 10,
   builder: (_) => const LikedHomeSection(),
-  hasContent: Provider(
-    (ref) => ref.watch(likedSongsProvider).value?.isNotEmpty ?? false,
-  ),
+  // Un fallo al cargar también se enseña (con su botón de reintentar).
+  hasContent: Provider((ref) {
+    final liked = ref.watch(likedSongsProvider);
+    return liked.hasError || (liked.value?.isNotEmpty ?? false);
+  }),
 );
 
 /// Bloque "Te gusta" de Inicio: las últimas favoritas y acceso a la lista
@@ -26,11 +29,18 @@ class LikedHomeSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final songs = ref.watch(likedSongsProvider).value ?? const [];
+    final liked = ref.watch(likedSongsProvider);
+    if (liked.hasError) {
+      return ErrorView(
+        error: liked.error!,
+        title: 'No se pudieron cargar tus favoritas',
+        onRetry: () => ref.invalidate(likedSongsProvider),
+      );
+    }
+    final songs = liked.value ?? const [];
     if (songs.isEmpty) return const SizedBox.shrink();
 
     final theme = Theme.of(context);
-    final actions = ref.read(songActionsProvider);
     final shown = songs.take(_maxSongs).toList();
 
     return Column(
@@ -67,7 +77,7 @@ class LikedHomeSection extends ConsumerWidget {
           SongTile(
             song: shown[i],
             showDownloadButton: false,
-            onTap: () => actions.playQueue(songs, i),
+            onTap: () => ref.read(playQueueUseCaseProvider)(songs, i),
           ),
       ],
     );

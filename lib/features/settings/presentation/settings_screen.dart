@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/settings/settings_dao.dart';
-import '../../../core/settings/settings_providers.dart';
+import '../../../core/error/result.dart';
+import '../../../di/providers.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../shared/widgets/dialogs.dart';
 import '../../downloads/presentation/downloads_providers.dart';
-import '../../history/presentation/history_providers.dart';
 import 'settings_providers.dart';
 
 /// Ajustes de la app: radio automática, descargas (solo wifi, espacio
@@ -20,12 +19,16 @@ class SettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // Mientras carga se muestran los valores por defecto.
-    final radio = ref.watch(radioEnabledProvider).value ?? true;
-    final onlyWifi = ref.watch(downloadOnlyWifiProvider).value ?? false;
+    final settings = ref.watch(settingsProvider).value ?? AppSettings.defaults;
     final usage = ref.watch(storageUsageProvider);
 
-    Future<void> setBool(String key, bool value) =>
-        ref.read(settingsDaoProvider).setBool(key, value);
+    /// Guarda un ajuste; si falla, el interruptor vuelve a su sitio.
+    Future<void> save(Future<Result<Unit>> Function() action) async {
+      final result = await action();
+      if (result.isErr && context.mounted) {
+        showSnack(context, 'No se pudo guardar el ajuste');
+      }
+    }
 
     Future<void> deleteDownloads() async {
       final ok = await showConfirmDialog(
@@ -36,7 +39,13 @@ class SettingsScreen extends ConsumerWidget {
             'seguirán en tus playlists para escucharlas en streaming.',
         confirmLabel: 'Borrar todo',
       );
-      if (ok) await ref.read(downloadManagerProvider).deleteAll();
+      if (!ok) return;
+      final result = await ref
+          .read(downloadedSongsProvider.notifier)
+          .deleteAll();
+      if (result.isErr && context.mounted) {
+        showSnack(context, 'No se pudieron borrar todas las descargas');
+      }
     }
 
     Future<void> clearHistory() async {
@@ -46,8 +55,12 @@ class SettingsScreen extends ConsumerWidget {
         message: 'Se borrará lo escuchado recientemente. No se puede deshacer.',
       );
       if (!ok) return;
-      await ref.read(historyDaoProvider).clear();
-      if (context.mounted) showSnack(context, 'Historial borrado');
+      final result = await ref.read(clearHistoryUseCaseProvider)();
+      if (!context.mounted) return;
+      showSnack(
+        context,
+        result.isOk ? 'Historial borrado' : 'No se pudo borrar el historial',
+      );
     }
 
     return Scaffold(
@@ -62,16 +75,20 @@ class SettingsScreen extends ConsumerWidget {
             subtitle: const Text(
               'Al acabar la cola, sigue con canciones parecidas',
             ),
-            value: radio,
-            onChanged: (v) => setBool(SettingsKeys.radioEnabled, v),
+            value: settings.radioEnabled,
+            onChanged: (v) => save(
+              () => ref.read(settingsProvider.notifier).setRadioEnabled(v),
+            ),
           ),
           const _SectionTitle('Descargas'),
           SwitchListTile(
             secondary: const Icon(Icons.wifi_rounded),
             title: const Text('Descargar solo con wifi'),
             subtitle: const Text('No usa datos móviles para descargar'),
-            value: onlyWifi,
-            onChanged: (v) => setBool(SettingsKeys.downloadOnlyWifi, v),
+            value: settings.downloadOnlyWifi,
+            onChanged: (v) => save(
+              () => ref.read(settingsProvider.notifier).setDownloadOnlyWifi(v),
+            ),
           ),
           ListTile(
             leading: const Icon(Icons.sd_storage_rounded),

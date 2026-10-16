@@ -1,14 +1,20 @@
-import '../../../core/database/song_dao.dart';
-import '../../../core/models/song.dart';
-import '../../../core/settings/settings_dao.dart';
-import '../../playlists/data/playlist_dao.dart';
+import '../../../core/domain/entities/playlist.dart';
+import '../../../core/domain/entities/song.dart';
+import '../../../core/domain/repositories/i_playlist_repository.dart';
+import '../../../core/domain/repositories/i_settings_repository.dart';
+import '../../../core/domain/repositories/i_song_repository.dart';
+import '../../../core/error/failure.dart';
+import '../../../core/error/result.dart';
+import '../domain/i_liked_playlist_sync.dart';
 
 /// Mantiene la playlist "Me encanta" igual que los "me gusta".
 ///
 /// Es una playlist normal (se puede reproducir, reordenar o renombrar). Su id
 /// se guarda en ajustes, así que renombrarla no la desconecta; si se borra,
 /// se vuelve a crear con el siguiente "me gusta".
-class LikedPlaylist {
+///
+/// Nunca lanza por un fallo de los repositorios: lo devuelve como `Err`.
+class LikedPlaylist implements ILikedPlaylistSync {
   LikedPlaylist({
     required this._playlists,
     required this._songs,
@@ -17,9 +23,9 @@ class LikedPlaylist {
 
   static const name = 'Me encanta';
 
-  final PlaylistDao _playlists;
-  final SongDao _songs;
-  final SettingsDao _settings;
+  final IPlaylistRepository _playlists;
+  final ISongRepository _songs;
+  final ISettingsRepository _settings;
 
   // Serializa las operaciones: dos "me gusta" seguidos no deben crear dos
   // playlists.
@@ -33,27 +39,84 @@ class LikedPlaylist {
 
   /// Id de la playlist. Si no existe la crea con todos los "me gusta"
   /// actuales, del más antiguo al más reciente.
-  Future<String> ensure() => _locked(_ensure);
+  Future<Result<String>> ensure() => _locked(_ensure);
 
-  Future<String> _ensure() async {
-    final id = await _settings.get(SettingsKeys.likedPlaylistId);
-    if (id != null && await _playlists.findById(id) != null) return id;
-
-    final playlist = await _playlists.create(name);
-    await _settings.set(SettingsKeys.likedPlaylistId, playlist.id);
-    for (final song in (await _songs.liked()).reversed) {
-      await _playlists.addSong(playlist.id, song);
+  Future<Result<String>> _ensure() async {
+    final String? id;
+    switch (await _settings.getLikedPlaylistId()) {
+      case Ok(:final value):
+        id = value;
+      case Err(:final failure):
+        return Err(failure);
     }
-    return playlist.id;
+    if (id != null) {
+      switch (await _playlists.findById(id)) {
+        case Ok():
+          return Ok(id);
+        case Err(failure: NotFoundFailure()):
+          // Borrada: se vuelve a crear abajo.
+          break;
+        case Err(:final failure):
+          return Err(failure);
+      }
+    }
+
+    final Playlist playlist;
+    switch (await _playlists.create(name)) {
+      case Ok(:final value):
+        playlist = value;
+      case Err(:final failure):
+        return Err(failure);
+    }
+
+    // El id se guarda solo cuando el relleno termina: si se guardara antes,
+    // un fallo aquí dejaría la playlist incompleta para siempre (el
+    // siguiente ensure() la encontraría y no volvería a rellenarla).
+    if (await _backfill(playlist.id) case Err(:final failure)) {
+      // Sin id guardado, el próximo ensure() la crea de nuevo; se borra esta
+      // para no acabar con dos "Me encanta" (si el borrado falla, queda una
+      // playlist suelta, pero nunca una "Me encanta" incompleta enlazada).
+      await _playlists.delete(playlist.id);
+      return Err(failure);
+    }
+    if (await _settings.setLikedPlaylistId(playlist.id) case Err(
+      :final failure,
+    )) {
+      // Sin id guardado no quedaría enlazada: se descarta igual que arriba.
+      await _playlists.delete(playlist.id);
+      return Err(failure);
+    }
+    return Ok(playlist.id);
+  }
+
+  /// Añade todos los "me gusta" actuales, del más antiguo al más reciente.
+  Future<Result<Unit>> _backfill(String playlistId) async {
+    final List<Song> liked;
+    switch (await _songs.getLiked()) {
+      case Ok(:final value):
+        liked = value;
+      case Err(:final failure):
+        return Err(failure);
+    }
+    for (final song in liked.reversed) {
+      if (await _playlists.addSong(playlistId, song) case Err(:final failure)) {
+        return Err(failure);
+      }
+    }
+    return const Ok(unit);
   }
 
   /// Añade o quita [song] según su `isLiked` (ya guardada en la BD).
-  Future<void> sync(Song song) => _locked(() async {
-    final id = await _ensure();
-    if (song.isLiked) {
-      await _playlists.addSong(id, song);
-    } else {
-      await _playlists.removeSong(id, song.id);
+  @override
+  Future<Result<Unit>> sync(Song song) => _locked(() async {
+    switch (await _ensure()) {
+      case Err(:final failure):
+        return Err(failure);
+      case Ok(value: final id):
+        final result = song.isLiked
+            ? await _playlists.addSong(id, song)
+            : await _playlists.removeSong(id, song.id);
+        return result.map((_) => unit);
     }
   });
 }

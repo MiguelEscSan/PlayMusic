@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import '../../../core/models/song.dart';
+import '../../../core/domain/entities/song.dart';
 
 /// Carrusel para cambiar de canción deslizando, como en Spotify: la
 /// canción actual sigue al dedo y por el borde asoma la vecina (la

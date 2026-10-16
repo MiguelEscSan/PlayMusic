@@ -1,4 +1,4 @@
-import '../models/song.dart';
+import '../domain/entities/song.dart';
 
 /// Estados del reproductor expuestos a la UI. Son nuestros, no de
 /// just_audio, para que la UI no dependa del motor de audio.

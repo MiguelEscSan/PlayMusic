@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/models/song.dart';
-import '../../../shared/song_actions.dart';
+import '../../../core/domain/entities/song.dart';
+import '../../../di/providers.dart';
+import '../../../shared/widgets/dialogs.dart';
 import '../../../shared/widgets/song_tile.dart';
 import '../../home/home_sections.dart';
 import 'history_providers.dart';
@@ -30,7 +31,6 @@ class RecentHomeSection extends ConsumerWidget {
     final songs = ref.watch(recentSongsProvider).value ?? const <Song>[];
     if (songs.isEmpty) return const SizedBox.shrink();
     final theme = Theme.of(context);
-    final actions = ref.read(songActionsProvider);
     final shown = songs.take(_maxSongs).toList();
 
     return Column(
@@ -47,7 +47,12 @@ class RecentHomeSection extends ConsumerWidget {
                 ),
               ),
               TextButton(
-                onPressed: () => ref.read(historyDaoProvider).clear(),
+                onPressed: () async {
+                  final result = await ref.read(clearHistoryUseCaseProvider)();
+                  if (result.isErr && context.mounted) {
+                    showSnack(context, 'No se pudo borrar el historial');
+                  }
+                },
                 child: const Text('Borrar'),
               ),
             ],
@@ -57,7 +62,7 @@ class RecentHomeSection extends ConsumerWidget {
           SongTile(
             song: shown[i],
             showDownloadButton: false,
-            onTap: () => actions.playQueue(songs, i),
+            onTap: () => ref.read(playQueueUseCaseProvider)(songs, i),
           ),
       ],
     );

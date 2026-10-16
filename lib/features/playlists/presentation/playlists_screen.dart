@@ -2,17 +2,22 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/models/playlist.dart';
+import '../../../core/domain/entities/playlist.dart';
+import '../../../core/error/result.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../shared/widgets/dialogs.dart';
 import '../../../shared/widgets/empty_state.dart';
-import '../data/youtube_playlist_importer.dart';
+import '../../../shared/widgets/error_view.dart';
+import '../domain/i_playlist_importer.dart';
 import 'playlist_detail_screen.dart';
 import 'playlists_providers.dart';
 import 'widgets/playlist_cover.dart';
 
 class PlaylistsScreen extends ConsumerWidget {
   const PlaylistsScreen({super.key});
+
+  static const _importFailed =
+      'No se pudo importar la playlist. Revisa la conexión.';
 
   Future<void> _create(BuildContext context, WidgetRef ref) async {
     final name = await showTextInputDialog(
@@ -22,8 +27,14 @@ class PlaylistsScreen extends ConsumerWidget {
       confirmLabel: 'Crear',
     );
     if (name == null) return;
-    final playlist = await ref.read(playlistDaoProvider).create(name);
-    if (context.mounted) openPlaylist(context, playlist.id);
+    final created = await ref.read(playlistsProvider.notifier).create(name);
+    if (!context.mounted) return;
+    switch (created) {
+      case Ok(value: final playlist):
+        openPlaylist(context, playlist.id);
+      case Err():
+        showSnack(context, 'No se pudo crear la playlist');
+    }
   }
 
   Future<void> _importFromYoutube(BuildContext context, WidgetRef ref) async {
@@ -35,7 +46,7 @@ class PlaylistsScreen extends ConsumerWidget {
     );
     if (link == null || !context.mounted) return;
 
-    final importer = ref.read(youtubePlaylistImporterProvider);
+    final playlists = ref.read(playlistsProvider.notifier);
     final progress = ValueNotifier<(int, int)?>(null);
     final navigator = Navigator.of(context, rootNavigator: true);
     showDialog<void>(
@@ -48,16 +59,19 @@ class PlaylistsScreen extends ConsumerWidget {
     ImportResult? result;
     String? error;
     try {
-      result = await importer.importFromUrl(
+      switch (await playlists.importFromYoutube(
         link,
         onProgress: (done, total) => progress.value = (done, total),
-      );
-    } on InvalidPlaylistLinkException {
-      error = 'Ese enlace no es de una playlist de YouTube';
-    } on EmptyPlaylistException {
-      error = 'La playlist no tiene canciones que importar';
-    } catch (_) {
-      error = 'No se pudo importar la playlist. Revisa la conexión.';
+      )) {
+        case Ok(:final value):
+          result = value;
+        case Err(failure: InvalidPlaylistLinkFailure()):
+          error = 'Ese enlace no es de una playlist de YouTube';
+        case Err(failure: EmptyPlaylistFailure()):
+          error = 'La playlist no tiene canciones que importar';
+        case Err():
+          error = _importFailed;
+      }
     } finally {
       navigator.pop();
       progress.dispose();
@@ -95,8 +109,14 @@ class PlaylistsScreen extends ConsumerWidget {
         label: const Text('Nueva'),
       ),
       body: playlists.when(
+        // Al recargar (p. ej. termina una descarga) se sigue viendo la lista.
+        skipLoadingOnReload: true,
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => ErrorView(
+          error: e,
+          title: 'No se pudieron cargar las playlists',
+          onRetry: () => ref.invalidate(playlistsProvider),
+        ),
         data: (list) => list.isEmpty
             ? const EmptyState(
                 icon: Icons.queue_music_rounded,
@@ -222,9 +242,8 @@ class _PlaylistCard extends StatelessWidget {
             playlist.name,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
+            style: Theme.of(context).textTheme.titleSmall
+                ?.copyWith(fontWeight: FontWeight.w700),
           ),
           Text(
             _subtitle(playlist),

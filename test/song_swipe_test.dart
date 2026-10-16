@@ -3,18 +3,22 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sponify/core/audio/audio_player_service.dart';
-import 'package:sponify/core/audio/audio_providers.dart';
-import 'package:sponify/core/models/playlist.dart';
-import 'package:sponify/core/models/song.dart';
+import 'package:sponify/di/providers.dart';
+import 'package:sponify/features/player/presentation/player_providers.dart';
+import 'package:sponify/core/domain/entities/playlist.dart';
+import 'package:sponify/core/domain/entities/song.dart';
+import 'package:sponify/core/error/result.dart';
 import 'package:sponify/features/downloads/presentation/downloads_providers.dart';
 import 'package:sponify/features/favorites/presentation/favorites_providers.dart';
 import 'package:sponify/features/player/presentation/queue_sheet.dart';
-import 'package:sponify/features/playlists/data/playlist_dao.dart';
 import 'package:sponify/features/playlists/presentation/playlist_detail_screen.dart';
-import 'package:sponify/features/playlists/presentation/playlists_providers.dart';
-import 'package:sponify/shared/export/song_exporter.dart';
-import 'package:sponify/shared/song_actions.dart';
+import 'package:sponify/features/export/domain/i_song_exporter.dart';
 import 'package:sponify/shared/widgets/song_tile.dart';
+
+import 'domain/fakes/fake_audio_player_service.dart';
+import 'domain/fakes/fake_playlist_repository.dart';
+import 'domain/fakes/fake_song_repository.dart';
+import 'helpers/fixed_notifiers.dart';
 
 Song _song(int i, {String? localPath}) => Song(
   id: 'id$i',
@@ -26,37 +30,37 @@ Song _song(int i, {String? localPath}) => Song(
   localPath: localPath,
 );
 
-/// Acciones falsas: registran lo que se pide sin tocar BD ni audio.
-class _FakeActions extends SongActions {
-  _FakeActions(super.ref);
-
-  final queued = <Song>[];
-
-  @override
-  Future<void> addToQueue(Song song) async => queued.add(song);
-}
-
-class _FakeExporter implements SongExporter {
+class _FakeExporter implements ISongExporter {
   final exported = <Song>[];
-  SongExportException? error;
+  SongExportFailure? error;
 
   @override
-  Future<String> export(Song song) async {
-    if (error != null) throw error!;
+  Future<Result<String>> export(Song song) async {
+    if (error case final e?) return Err(e);
     exported.add(song);
-    return 'Music/Koda/x.m4a';
+    return const Ok('Music/Koda/x.m4a');
   }
 }
 
-class _FakePlaylistDao implements PlaylistDao {
+/// Repositorio en memoria con una sola playlist; registra los quitar.
+class _FakePlaylistRepository extends FakePlaylistRepository {
+  _FakePlaylistRepository(this.playlist);
+
+  Playlist playlist;
   final removed = <int>[];
 
   @override
-  Future<void> removeAt(String playlistId, int index) async =>
-      removed.add(index);
+  Future<Result<Playlist>> findById(String id) async => Ok(playlist);
 
   @override
-  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+  Future<Result<List<Playlist>>> getAll() async => Ok([playlist]);
+
+  @override
+  Future<Result<Unit>> removeSongAt(String playlistId, int index) async {
+    removed.add(index);
+    playlist = playlist.copyWith(songs: [...playlist.songs]..removeAt(index));
+    return const Ok(unit);
+  }
 }
 
 class _FakeAudio implements AudioPlayerService {
@@ -74,24 +78,32 @@ class _FakeAudio implements AudioPlayerService {
 }
 
 void main() {
-  _FakeActions? actions;
+  late FakeAudioPlayerService player;
   late _FakeExporter exporter;
 
   setUp(() {
     exporter = _FakeExporter();
-    actions = null;
+    player = FakeAudioPlayerService();
   });
 
-  List<Override> baseOverrides({PlayerSnapshot? snapshot}) => [
-    songActionsProvider.overrideWith((ref) => actions = _FakeActions(ref)),
+  /// Encolar guarda la canción (tal cual) y la pasa al reproductor: [player]
+  /// registra cada llamada, salvo que se pase otro [audio].
+  List<Override> baseOverrides({
+    PlayerSnapshot? snapshot,
+    AudioPlayerService? audio,
+  }) => [
+    songRepositoryProvider.overrideWithValue(
+      FakeSongRepository()..saveResult = null,
+    ),
+    audioPlayerServiceProvider.overrideWithValue(audio ?? player),
     songExporterProvider.overrideWithValue(exporter),
     playerSnapshotProvider.overrideWith(
       (ref) => snapshot == null
           ? const Stream<PlayerSnapshot>.empty()
           : Stream.value(snapshot),
     ),
-    likedSongsProvider.overrideWith((ref) => Stream.value(const [])),
-    downloadedSongsProvider.overrideWith((ref) => Stream.value(const [])),
+    likedSongsProvider.overrideWith(FixedLikedSongs.new),
+    downloadedSongsProvider.overrideWith(FixedDownloads.new),
     downloadTasksProvider.overrideWith((ref) => Stream.value(const {})),
   ];
 
@@ -123,7 +135,7 @@ void main() {
       await tester.drag(find.text('Canción 0'), const Offset(500, 0));
       await tester.pumpAndSettle();
 
-      expect(actions!.queued, [song]);
+      expect(player.calls, ['addToQueue(id0)']);
       expect(find.text('Añadida a la cola'), findsOneWidget);
       expect(find.text('Canción 0'), findsOneWidget);
     });
@@ -134,7 +146,7 @@ void main() {
       await tester.drag(find.text('Canción 0'), const Offset(-500, 0));
       await tester.pumpAndSettle();
 
-      expect(actions?.queued ?? const [], isEmpty);
+      expect(player.calls, isEmpty);
       expect(find.text('Añadida a la cola'), findsNothing);
     });
 
@@ -154,7 +166,7 @@ void main() {
       await tester.drag(find.text('Canción 0'), const Offset(500, 0));
       await tester.pumpAndSettle();
 
-      expect(actions?.queued ?? const [], isEmpty);
+      expect(player.calls, isEmpty);
       expect(find.byType(Dismissible), findsNothing);
     });
   });
@@ -163,21 +175,25 @@ void main() {
     testWidgets('derecha encola sin quitar; izquierda sigue quitando', (
       tester,
     ) async {
-      final dao = _FakePlaylistDao();
+      // La cabecera (portada de 250) deja las filas fuera de los 600 px por
+      // defecto: con una pantalla más alta se pueden arrastrar las dos.
+      tester.view.physicalSize = const Size(2400, 4800);
+      addTearDown(tester.view.resetPhysicalSize);
       final songs = [_song(0), _song(1)];
-      final playlist = Playlist(
-        id: 'p1',
-        name: 'Mi lista',
-        createdAt: DateTime(2026),
-        updatedAt: DateTime(2026),
-        songs: songs,
+      final repository = _FakePlaylistRepository(
+        Playlist(
+          id: 'p1',
+          name: 'Mi lista',
+          createdAt: DateTime(2026),
+          updatedAt: DateTime(2026),
+          songs: songs,
+        ),
       );
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
             ...baseOverrides(),
-            playlistDaoProvider.overrideWithValue(dao),
-            playlistProvider.overrideWith((ref, id) => Stream.value(playlist)),
+            playlistRepositoryProvider.overrideWithValue(repository),
           ],
           child: const MaterialApp(home: PlaylistDetailScreen(id: 'p1')),
         ),
@@ -186,15 +202,15 @@ void main() {
 
       await tester.drag(find.text('Canción 0'), const Offset(500, 0));
       await tester.pumpAndSettle();
-      expect(actions!.queued, [songs[0]]);
-      expect(dao.removed, isEmpty);
+      expect(player.calls, ['addToQueue(id0)']);
+      expect(repository.removed, isEmpty);
       expect(find.text('Canción 0'), findsOneWidget);
 
       await tester.drag(find.text('Canción 1'), const Offset(-500, 0));
       await tester.pumpAndSettle();
-      expect(dao.removed, [1]);
+      expect(repository.removed, [1]);
       expect(find.text('Canción 1'), findsNothing);
-      expect(actions!.queued, [songs[0]]);
+      expect(player.calls, ['addToQueue(id0)']);
     });
   });
 
@@ -209,8 +225,8 @@ void main() {
           overrides: [
             ...baseOverrides(
               snapshot: PlayerSnapshot(queue: queue, currentSong: queue[0]),
+              audio: audio,
             ),
-            audioPlayerServiceProvider.overrideWithValue(audio),
           ],
           child: MaterialApp(
             home: Scaffold(
@@ -231,7 +247,6 @@ void main() {
       await tester.drag(find.text('Canción 1'), const Offset(500, 0));
       await tester.pumpAndSettle();
       expect(audio.added, isEmpty);
-      expect(actions?.queued ?? const [], isEmpty);
       expect(audio.removed, isEmpty);
 
       await tester.drag(find.text('Canción 1'), const Offset(-500, 0));
@@ -266,9 +281,7 @@ void main() {
     });
 
     testWidgets('si falla muestra el error en español', (tester) async {
-      exporter.error = const SongExportException(
-        SongExportError.permissionDenied,
-      );
+      exporter.error = SongExportFailure(SongExportError.permissionDenied);
       await pumpTiles(tester, [_song(0, localPath: '/data/music/id0.m4a')]);
       await openMenu(tester);
 
@@ -276,9 +289,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
-        find.text(
-          const SongExportException(SongExportError.permissionDenied).message,
-        ),
+        find.text(SongExportFailure(SongExportError.permissionDenied).message),
         findsOneWidget,
       );
       expect(find.text('Guardada en Música/Koda'), findsNothing);

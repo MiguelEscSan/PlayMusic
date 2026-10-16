@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../shared/song_actions.dart';
+import '../../../di/providers.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/song_tile.dart';
 import 'search_controller.dart';
@@ -55,7 +55,6 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(searchControllerProvider);
     final controller = ref.read(searchControllerProvider.notifier);
-    final actions = ref.read(songActionsProvider);
     final suggestions = ref.watch(searchSuggestionsProvider);
     final recents = ref.watch(recentSearchesProvider).value ?? const [];
     final typed = _text.text.trim();
@@ -154,7 +153,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 itemCount: state.results.length,
                 itemBuilder: (context, i) => SongTile(
                   song: state.results[i],
-                  onTap: () => actions.playQueue(state.results, i),
+                  onTap: () => ref.read(playQueueUseCaseProvider)(state.results, i),
                 ),
               ),
               SliverToBoxAdapter(
@@ -181,7 +180,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
   /// "Búsquedas recientes": tocar repite la búsqueda; la X la quita.
   List<Widget> _recentSlivers(BuildContext context, List<String> recents) {
-    final dao = ref.read(searchHistoryDaoProvider);
+    final history = ref.read(recentSearchesProvider.notifier);
     return [
       SliverToBoxAdapter(
         child: Padding(
@@ -195,7 +194,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 ),
               ),
               TextButton(
-                onPressed: dao.clear,
+                onPressed: history.clear,
                 child: const Text('Borrar todo'),
               ),
             ],
@@ -210,7 +209,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           trailing: IconButton(
             tooltip: 'Quitar',
             icon: const Icon(Icons.close_rounded),
-            onPressed: () => dao.remove(recents[i]),
+            onPressed: () => history.remove(recents[i]),
           ),
           onTap: () => _submit(recents[i]),
         ),

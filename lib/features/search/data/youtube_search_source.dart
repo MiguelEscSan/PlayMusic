@@ -1,7 +1,7 @@
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
-import '../../../core/models/song.dart';
-import 'search_source.dart';
+import '../../../core/domain/entities/song.dart';
+import '../domain/search_source.dart';
 
 /// Búsqueda en YouTube con youtube_explode_dart (20 resultados por página).
 class YoutubeSearchSource implements SearchSource {

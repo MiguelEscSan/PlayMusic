@@ -5,10 +5,14 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 
 import '../../../core/audio/playback_source.dart';
-import '../../../core/database/song_dao.dart';
-import '../../../core/models/song.dart';
+import '../../../core/domain/entities/song.dart';
+import '../../../core/domain/repositories/i_song_repository.dart';
+import '../../../core/error/failure.dart';
+import '../../../core/error/result.dart';
 import '../../../core/storage/file_paths.dart';
+import '../../../core/domain/song_key.dart';
 import '../domain/download_task.dart';
+import '../domain/i_download_service.dart';
 
 typedef StorageChangedCallback = Future<void> Function(Song song);
 
@@ -28,10 +32,10 @@ typedef CanDownloadCheck = Future<bool> Function();
 ///
 /// Si una descarga falla, el `.part` se conserva y al reintentar continúa
 /// donde se quedó.
-class DownloadManager {
+class DownloadManager implements IDownloadService {
   DownloadManager({
     required this._dio,
-    required this._songDao,
+    required this._songRepository,
     required this._paths,
     required this._resolver,
     this.onStorageChanged,
@@ -41,7 +45,7 @@ class DownloadManager {
   });
 
   final Dio _dio;
-  final SongDao _songDao;
+  final ISongRepository _songRepository;
   final FilePaths _paths;
   final PlaybackSourceResolver _resolver;
 
@@ -63,11 +67,11 @@ class DownloadManager {
   final Map<String, DateTime> _lastProgressEmit = {};
   final Queue<String> _pending = Queue();
   final _controller = StreamController<Map<String, DownloadTask>>.broadcast();
+  final _downloadsChanged = StreamController<Song>.broadcast();
   int _running = 0;
 
-  /// Clave de una canción: no depende del id de BD, así la UI puede seguir
-  /// el progreso de un resultado de búsqueda que aún no está guardado.
-  static String keyOf(Song song) => '${song.source.name}:${song.sourceId}';
+  /// Clave de una canción en [tasks] (ver [songKey]).
+  static String keyOf(Song song) => songKey(song);
 
   // ---------------------------------------------------------------------------
   // Estado
@@ -76,10 +80,17 @@ class DownloadManager {
   Map<String, DownloadTask> get tasks => Map.unmodifiable(_tasks);
 
   /// Todas las descargas en curso o recientes; emite en cada cambio.
+  @override
   Stream<Map<String, DownloadTask>> get tasksStream async* {
     yield tasks;
     yield* _controller.stream;
   }
+
+  /// Emite la canción (ya actualizada) cada vez que su archivo local aparece
+  /// o desaparece de la BD: descarga terminada, borrada o archivo perdido.
+  /// Las listas de descargas se recargan con él; el progreso no emite aquí.
+  @override
+  Stream<Song> get downloadsChanged => _downloadsChanged.stream;
 
   /// Progreso de una canción concreta (para el botón de descarga).
   Stream<DownloadTask?> watch(Song song) {
@@ -91,13 +102,29 @@ class DownloadManager {
   // Acciones
   // ---------------------------------------------------------------------------
 
-  /// Encola la descarga. Devuelve la canción tal como quedó en la BD.
+  /// Encola la descarga. Devuelve la canción tal como quedó en la BD. Si no
+  /// se puede guardar, la tarea queda fallida y se devuelve [song] tal cual.
+  @override
   Future<Song> download(Song song) async {
     final key = keyOf(song);
     final active = _tasks[key];
     if (active != null && active.isActive) return active.song;
 
-    final saved = await _songDao.upsert(song);
+    final Song saved;
+    switch (await _songRepository.save(song)) {
+      case Ok(:final value):
+        saved = value;
+      case Err(:final failure):
+        _set(
+          key,
+          DownloadTask(
+            song: song,
+            status: DownloadStatus.failed,
+            error: failure.message,
+          ),
+        );
+        return song;
+    }
     if (saved.isDownloaded && await File(saved.localPath!).exists()) {
       _set(key, DownloadTask(song: saved, status: DownloadStatus.completed));
       return saved;
@@ -110,6 +137,7 @@ class DownloadManager {
   }
 
   /// Cancela una descarga en cola o en curso y borra el archivo parcial.
+  @override
   Future<void> cancel(Song song) async {
     final key = keyOf(song);
     final task = _tasks[key];
@@ -123,29 +151,63 @@ class DownloadManager {
   }
 
   /// Borra el archivo descargado; la canción vuelve a reproducirse en
-  /// streaming y sigue en sus playlists.
-  Future<Song> delete(Song song) async {
+  /// streaming y sigue en sus playlists. Si la canción no está guardada
+  /// devuelve `Ok(song)` sin cambios; un fallo de la BD llega como `Err`.
+  @override
+  Future<Result<Song>> delete(Song song) async {
     await cancel(song);
-    final saved = song.id.isEmpty
-        ? await _songDao.findBySource(song.source, song.sourceId)
-        : await _songDao.findById(song.id);
-    if (saved == null) return song;
+    final found = song.id.isEmpty
+        ? await _songRepository.findBySource(song.source, song.sourceId)
+        : await _songRepository.findById(song.id);
+    final Song saved;
+    switch (found) {
+      case Ok(:final value):
+        saved = value;
+      case Err(failure: NotFoundFailure()):
+        return Ok(song);
+      case Err(:final failure):
+        return Err(failure);
+    }
 
     if (saved.localPath case final path?) await _deleteIfExists(File(path));
     await _deleteIfExists(File(_paths.partialFile(saved.id)));
-    await _songDao.clearDownload(saved.id);
+    if (await _songRepository.clearDownload(saved.id) case Err(
+      :final failure,
+    )) {
+      return Err(failure);
+    }
 
     final updated = saved.copyWith(clearLocalFile: true);
     _tasks.remove(keyOf(song));
     _emit();
+    _notifyDownloadsChanged(updated);
     await onStorageChanged?.call(updated);
-    return updated;
+    return Ok(updated);
+  }
+
+  /// El archivo local de [song] ya no existe (p. ej. lo borró el sistema):
+  /// se olvida en la BD para que se reproduzca en streaming y deje de
+  /// aparecer en Descargas. Lo usa el resolver al no encontrar el archivo.
+  Future<Result<Unit>> forgetMissingFile(Song song) async {
+    final cleared = await _songRepository.clearDownload(song.id);
+    if (cleared.isErr) return cleared;
+    if (_tasks.remove(keyOf(song)) != null) _emit();
+    _notifyDownloadsChanged(song.copyWith(clearLocalFile: true));
+    return cleared;
   }
 
   /// Vacía todas las descargas (botón "Borrar todo" de la vista Descargas).
-  Future<void> deleteAll() async {
-    for (final song in await _songDao.downloaded()) {
-      await delete(song);
+  /// Se detiene en el primer fallo y lo devuelve.
+  @override
+  Future<Result<Unit>> deleteAll() async {
+    switch (await _songRepository.getDownloaded()) {
+      case Err(:final failure):
+        return Err(failure);
+      case Ok(value: final songs):
+        for (final song in songs) {
+          if (await delete(song) case Err(:final failure)) return Err(failure);
+        }
+        return const Ok(unit);
     }
   }
 
@@ -154,6 +216,7 @@ class DownloadManager {
       token.cancel('dispose');
     }
     await _controller.close();
+    await _downloadsChanged.close();
   }
 
   // ---------------------------------------------------------------------------
@@ -200,21 +263,30 @@ class DownloadManager {
       final finalPath = _paths.songFile(song.id, _extensionFor(url));
       await part.rename(finalPath);
       final size = await File(finalPath).length();
-      final updated = await _songDao.markDownloaded(
+      final marked = await _songRepository.markDownloaded(
         song.id,
         localPath: finalPath,
         sizeBytes: size,
       );
-      _set(
-        key,
-        DownloadTask(
-          song: updated,
-          status: DownloadStatus.completed,
-          receivedBytes: size,
-          totalBytes: size,
-        ),
-      );
-      await onStorageChanged?.call(updated);
+      switch (marked) {
+        case Err(:final failure):
+          // Sin registro en la BD el archivo quedaría huérfano: se borra y
+          // el reintento descarga de nuevo.
+          await _deleteIfExists(File(finalPath));
+          _set(key, _failed(key, failure.message));
+        case Ok(value: final updated):
+          _set(
+            key,
+            DownloadTask(
+              song: updated,
+              status: DownloadStatus.completed,
+              receivedBytes: size,
+              totalBytes: size,
+            ),
+          );
+          _notifyDownloadsChanged(updated);
+          await onStorageChanged?.call(updated);
+      }
     } on DioException catch (e) {
       if (CancelToken.isCancel(e)) {
         await _deleteIfExists(part);
@@ -437,5 +509,9 @@ class DownloadManager {
 
   void _emit() {
     if (!_controller.isClosed) _controller.add(tasks);
+  }
+
+  void _notifyDownloadsChanged(Song song) {
+    if (!_downloadsChanged.isClosed) _downloadsChanged.add(song);
   }
 }

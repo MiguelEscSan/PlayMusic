@@ -1,10 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sponify/core/database/app_database.dart';
 import 'package:sponify/core/database/song_dao.dart';
-import 'package:sponify/core/models/song.dart';
+import 'package:sponify/core/data/models/song_model.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
-Song _song(String id) => Song(
+SongModel _song(String id) => SongModel(
   id: '',
   title: 'T$id',
   artist: 'A',
@@ -70,10 +70,6 @@ void main() {
     expect(stored.isLiked, isTrue);
   });
 
-  test('setLiked notifica cambios', () async {
-    final s = await dao.upsert(_song('1'));
-    final next = dao.changes.first;
-    await dao.setLiked(s.id, true);
-    await expectLater(next, completes);
-  });
+  // El DAO ya no avisa de cambios: que las favoritas se refresquen al marcar
+  // "me gusta" lo cubre test/favorites/liked_songs_notifier_test.dart.
 }

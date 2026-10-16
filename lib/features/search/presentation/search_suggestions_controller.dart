@@ -1,16 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
-import '../data/suggestion_source.dart';
-import '../data/youtube_suggestion_source.dart';
-
-final suggestionSourceProvider = Provider<SuggestionSource>((ref) {
-  final yt = YoutubeExplode();
-  ref.onDispose(yt.close);
-  return YoutubeSuggestionSource(yt);
-});
+import '../../../di/providers.dart';
 
 final searchSuggestionsProvider =
     NotifierProvider<SearchSuggestionsController, List<String>>(
@@ -54,13 +46,9 @@ class SearchSuggestionsController extends Notifier<List<String>> {
   }
 
   Future<void> _fetch(String query, int generation) async {
-    List<String> result;
-    try {
-      result = await ref.read(suggestionSourceProvider).suggestions(query);
-    } catch (_) {
-      result = const [];
-    }
+    final result = await ref.read(getSuggestionsUseCaseProvider)(query);
     if (generation != _generation) return;
-    state = result.take(maxSuggestions).toList();
+    final suggestions = result.valueOrNull ?? const <String>[];
+    state = suggestions.take(maxSuggestions).toList();
   }
 }

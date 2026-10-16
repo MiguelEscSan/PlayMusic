@@ -3,9 +3,10 @@ import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sponify/core/models/song.dart';
-import 'package:sponify/features/lyrics/data/lrc_parser.dart';
+import 'package:sponify/core/domain/entities/song.dart';
+import 'package:sponify/core/error/failure.dart';
 import 'package:sponify/features/lyrics/data/lyrics_repository.dart';
+import 'package:sponify/features/lyrics/domain/lyrics.dart';
 
 /// Adaptador HTTP falso: responde según la ruta y registra cada petición.
 /// Nunca toca la red.
@@ -48,12 +49,12 @@ const _song = Song(
 
 void main() {
   late _FakeAdapter adapter;
-  late LyricsRepository repo;
+  late LyricsRepositoryImpl repo;
 
   void setUpWith(ResponseBody Function(RequestOptions) handler) {
     adapter = _FakeAdapter(handler);
     final dio = Dio()..httpClientAdapter = adapter;
-    repo = LyricsRepository(dio: dio);
+    repo = LyricsRepositoryImpl(dio: dio);
   }
 
   test('get con letra sincronizada devuelve SyncedLyrics', () async {
@@ -65,7 +66,7 @@ void main() {
       }),
     );
 
-    final lyrics = await repo.getLyrics(_song);
+    final lyrics = (await repo.getLyrics(_song)).valueOrNull;
 
     expect(lyrics, isA<SyncedLyrics>());
     expect((lyrics as SyncedLyrics).lines, const [
@@ -86,14 +87,17 @@ void main() {
     setUpWith(
       (_) => _json({'plainLyrics': 'Solo texto', 'syncedLyrics': null}),
     );
-    final lyrics = await repo.getLyrics(_song);
+    final lyrics = (await repo.getLyrics(_song)).valueOrNull;
     expect(lyrics, isA<PlainLyrics>());
     expect((lyrics as PlainLyrics).text, 'Solo texto');
   });
 
   test('instrumental devuelve InstrumentalLyrics', () async {
     setUpWith((_) => _json({'instrumental': true}));
-    expect(await repo.getLyrics(_song), isA<InstrumentalLyrics>());
+    expect(
+      (await repo.getLyrics(_song)).valueOrNull,
+      isA<InstrumentalLyrics>(),
+    );
   });
 
   test('404 en get → search elige la duración más cercana', () async {
@@ -106,7 +110,7 @@ void main() {
       ]);
     });
 
-    final lyrics = await repo.getLyrics(_song);
+    final lyrics = (await repo.getLyrics(_song)).valueOrNull;
 
     expect((lyrics as PlainLyrics).text, 'cercana');
     expect(adapter.requests.map((r) => r.uri.path), [
@@ -126,7 +130,7 @@ void main() {
         {'duration': 230, 'plainLyrics': 'lejana'},
       ]);
     });
-    expect(await repo.getLyrics(_song), isA<LyricsNotFound>());
+    expect((await repo.getLyrics(_song)).valueOrNull, isA<LyricsNotFound>());
   });
 
   test('nada en get ni en search → notFound', () async {
@@ -134,7 +138,7 @@ void main() {
       if (o.uri.path == '/api/get') return _json({'code': 404}, 404);
       return _json(<Object>[]);
     });
-    expect(await repo.getLyrics(_song), isA<LyricsNotFound>());
+    expect((await repo.getLyrics(_song)).valueOrNull, isA<LyricsNotFound>());
   });
 
   test('la caché evita una segunda petición para la misma canción', () async {
@@ -144,7 +148,7 @@ void main() {
     expect(adapter.requests, hasLength(1));
   });
 
-  test('error de red → LyricsLoadException y no se cachea', () async {
+  test('error de red → NetworkFailure y no se cachea', () async {
     var fail = true;
     setUpWith((o) {
       if (fail) {
@@ -156,20 +160,14 @@ void main() {
       return _json({'plainLyrics': 'ok'});
     });
 
-    await expectLater(
-      repo.getLyrics(_song),
-      throwsA(isA<LyricsLoadException>()),
-    );
+    expect((await repo.getLyrics(_song)).failureOrNull, isA<NetworkFailure>());
 
     fail = false;
-    expect(await repo.getLyrics(_song), isA<PlainLyrics>());
+    expect((await repo.getLyrics(_song)).valueOrNull, isA<PlainLyrics>());
   });
 
-  test('error 500 → LyricsLoadException', () async {
+  test('error 500 → NetworkFailure', () async {
     setUpWith((_) => _json({'error': 'boom'}, 500));
-    await expectLater(
-      repo.getLyrics(_song),
-      throwsA(isA<LyricsLoadException>()),
-    );
+    expect((await repo.getLyrics(_song)).failureOrNull, isA<NetworkFailure>());
   });
 }
