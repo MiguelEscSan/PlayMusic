@@ -61,3 +61,5 @@ Slice 2b:
 - Next: Phase 2 (data layer), pending user go-ahead.
 - 2026-10-16: Slice 2a done (delegated writer). RED: test/data failed to compile before repos existed. GREEN: `flutter test test/data` +19 (parent re-ran with models/playlist_dao tests: +32). Full suite +257/-3; the 3 failures (history_section_test "pinta el título...", song_swipe_test "playlist derecha encola...", widget_test "Me gusta...") fail identically on ef55fb9 → pre-existing, not caused by this slice. analyze: 31 = baseline.
 - Known pre-existing failures: the 3 widget tests above.
+- 2026-10-16: Slice 2a commit c0cdc4e. Review assess: medium (slice_budget_reached, 2340 lines cumulative from main). Native review consent: declined by user; medium off-path = writer self-verification + parent spot check. Reviewed boundary stays at main.
+- Next: slice 2b (P2.4), pending user go-ahead.
