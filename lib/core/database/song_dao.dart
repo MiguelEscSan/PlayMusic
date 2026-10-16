@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:sqflite/sqflite.dart';
 import 'package:uuid/uuid.dart';
 
-import '../models/song.dart';
+import '../data/models/song_model.dart';
 import 'app_database.dart';
 
 /// Acceso a la tabla `songs`. Además de CRUD expone [changes], que emite
@@ -21,7 +21,7 @@ class SongDao {
   /// Guarda una canción (p. ej. un resultado de búsqueda) y devuelve la
   /// versión persistida. Si ya existía por `source + sourceId` conserva su
   /// id y su descarga, y solo refresca los metadatos.
-  Future<Song> upsert(Song song) async {
+  Future<SongModel> upsert(SongModel song) async {
     final existing = await findBySource(song.source, song.sourceId);
     if (existing != null) {
       final merged = existing.copyWith(
@@ -47,28 +47,28 @@ class SongDao {
     return created;
   }
 
-  Future<Song?> findById(String id) async {
+  Future<SongModel?> findById(String id) async {
     final rows = await _db.query('songs', where: 'id = ?', whereArgs: [id]);
-    return rows.isEmpty ? null : Song.fromMap(rows.first);
+    return rows.isEmpty ? null : SongModel.fromMap(rows.first);
   }
 
-  Future<Song?> findBySource(SongSource source, String sourceId) async {
+  Future<SongModel?> findBySource(SongSource source, String sourceId) async {
     final rows = await _db.query(
       'songs',
       where: 'source = ? AND source_id = ?',
       whereArgs: [source.name, sourceId],
     );
-    return rows.isEmpty ? null : Song.fromMap(rows.first);
+    return rows.isEmpty ? null : SongModel.fromMap(rows.first);
   }
 
   /// Canciones descargadas, las más recientes primero.
-  Future<List<Song>> downloaded() async {
+  Future<List<SongModel>> downloaded() async {
     final rows = await _db.query(
       'songs',
       where: 'local_path IS NOT NULL',
       orderBy: 'downloaded_at DESC',
     );
-    return rows.map(Song.fromMap).toList();
+    return rows.map(SongModel.fromMap).toList();
   }
 
   /// Espacio total ocupado por las descargas, en bytes.
@@ -80,7 +80,7 @@ class SongDao {
     return rows.first['total']! as int;
   }
 
-  Future<Song> markDownloaded(
+  Future<SongModel> markDownloaded(
     String id, {
     required String localPath,
     required int sizeBytes,
@@ -121,13 +121,13 @@ class SongDao {
   }
 
   /// Canciones con "me gusta", la última marcada primero.
-  Future<List<Song>> liked() async {
+  Future<List<SongModel>> liked() async {
     final rows = await _db.query(
       'songs',
       where: 'liked_at IS NOT NULL',
       orderBy: 'liked_at DESC',
     );
-    return rows.map(Song.fromMap).toList();
+    return rows.map(SongModel.fromMap).toList();
   }
 
   void _notify() {

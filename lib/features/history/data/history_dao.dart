@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:sqflite/sqflite.dart';
 
 import '../../../core/database/app_database.dart';
-import '../../../core/models/song.dart';
+import '../../../core/data/models/song_model.dart';
 
 /// Tabla `play_history`: una fila por cada vez que empieza a sonar una
 /// canción. Se guarda cada escucha (no solo la última) para poder sacar
@@ -44,7 +44,7 @@ class HistoryDao {
   }
 
   /// Canciones distintas, la escuchada más recientemente primero.
-  Future<List<Song>> recent({int limit = 20}) async {
+  Future<List<SongModel>> recent({int limit = 20}) async {
     final rows = await _db.rawQuery(
       'SELECT s.* FROM songs s JOIN ('
       'SELECT song_id, MAX(played_at) AS last_played, MAX(id) AS last_id '
@@ -53,12 +53,12 @@ class HistoryDao {
       'ORDER BY h.last_played DESC, h.last_id DESC LIMIT ?',
       [limit],
     );
-    return rows.map(Song.fromMap).toList();
+    return rows.map(SongModel.fromMap).toList();
   }
 
   /// Canciones más escuchadas en los últimos [days] días, por número de
   /// escuchas (desempate: la escucha más reciente primero).
-  Future<List<Song>> topSongs({int limit = 50, int days = 30}) async {
+  Future<List<SongModel>> topSongs({int limit = 50, int days = 30}) async {
     final since = _clock()
         .subtract(Duration(days: days))
         .millisecondsSinceEpoch;
@@ -70,7 +70,7 @@ class HistoryDao {
       'ORDER BY plays DESC, last_played DESC LIMIT ?',
       [since, limit],
     );
-    return rows.map(Song.fromMap).toList();
+    return rows.map(SongModel.fromMap).toList();
   }
 
   Future<void> clear() async {

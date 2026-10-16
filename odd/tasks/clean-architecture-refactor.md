@@ -31,12 +31,20 @@ all state mutation.
 
 Route: delegated direct (writer trigger: 2+ non-trivial files).
 
-### Phase 2 — Data layer (pending user go-ahead)
-- [ ] P2.1 `SongModel`/`PlaylistModel` DTOs + mappers to/from domain
-- [ ] P2.2 Remove `StreamController` from `SongDao`/`PlaylistDao` (CRUD only); note: current `changes` consumers must be bridged until Phase 3
-- [ ] P2.3 `SongRepositoryImpl`/`PlaylistRepositoryImpl` returning `Result`
+### Phase 2 — Data layer
+Decision (user, 2026-10-16): DAO `StreamController` removal moved to Phase 3 —
+5 StreamProviders and PlaylistDao→SongDao re-emission depend on `changes`;
+removing it before notifiers own invalidation would break reactivity.
+
+Slice 2a (additive, no consumer edits):
+- [x] P2.1 Move current models to `lib/core/data/models/` as `SongModel`/`PlaylistModel` (same SQLite logic) + `toEntity`/`fromEntity` mappers; legacy `lib/core/models/*.dart` become `typedef` shims so consumers compile unchanged
+- [x] P2.3 `SongRepositoryImpl`/`PlaylistRepositoryImpl` over the DAOs, returning `Result` (sqflite errors → `DatabaseFailure`, missing → `NotFoundFailure`)
+
+Slice 2b:
+- [ ] P2.4 Services (`DownloadManager`, `RadioService`, `LikedPlaylist`, `PlaylistCoverService`, importer, `SongActions`) depend on interfaces + domain `Song`; repository providers; remove legacy shims
 
 ### Phase 3 — Presentation (pending user go-ahead)
+- [ ] P2.2 (moved) Remove `StreamController` from DAOs; reactivity owned by notifiers
 - [ ] P3.1 Notifiers for playlists, playlist detail, favorites, downloads
 - [ ] P3.2 Refactor `PlaylistDetailScreen` and `DownloadsScreen` to notifiers
 - [ ] P3.3 Error states rendered from `Result`
@@ -51,3 +59,5 @@ Route: delegated direct (writer trigger: 2+ non-trivial files).
 - 2026-10-16: Phase 1 done (delegated writer). RED: usecases_test failed to compile before use cases existed. GREEN: `flutter test test/domain` +33 passed (parent re-ran). `flutter analyze` scoped: no issues; whole project 31 issues = baseline. Flutter SDK at C:devlutter (not on PATH); package name `sponify`.
 - 2026-10-16: Phase 1 commit 0fcc512. Review assess: medium (slice_budget_reached, 1005 lines). Native review consent: declined by user; off-path medium tier = writer self-verification + parent spot check (`flutter test test/domain` +33 re-run). Reviewed boundary stays at main.
 - Next: Phase 2 (data layer), pending user go-ahead.
+- 2026-10-16: Slice 2a done (delegated writer). RED: test/data failed to compile before repos existed. GREEN: `flutter test test/data` +19 (parent re-ran with models/playlist_dao tests: +32). Full suite +257/-3; the 3 failures (history_section_test "pinta el título...", song_swipe_test "playlist derecha encola...", widget_test "Me gusta...") fail identically on ef55fb9 → pre-existing, not caused by this slice. analyze: 31 = baseline.
+- Known pre-existing failures: the 3 widget tests above.

@@ -5,8 +5,8 @@ import 'package:uuid/uuid.dart';
 
 import '../../../core/database/app_database.dart';
 import '../../../core/database/song_dao.dart';
-import '../../../core/models/playlist.dart';
-import '../../../core/models/song.dart';
+import '../../../core/data/models/playlist_model.dart';
+import '../../../core/data/models/song_model.dart';
 
 /// Tablas `playlists` + `playlist_songs`.
 ///
@@ -33,37 +33,40 @@ class PlaylistDao {
   // Lectura
   // ---------------------------------------------------------------------------
 
-  Future<List<Playlist>> all() async {
+  Future<List<PlaylistModel>> all() async {
     final rows = await _db.query('playlists', orderBy: 'updated_at DESC');
     return [
       for (final row in rows)
-        Playlist.fromMap(row, songs: await _songsOf(row['id']! as String)),
+        PlaylistModel.fromMap(row, songs: await _songsOf(row['id']! as String)),
     ];
   }
 
-  Future<Playlist?> findById(String id) async {
+  Future<PlaylistModel?> findById(String id) async {
     final rows = await _db.query('playlists', where: 'id = ?', whereArgs: [id]);
     if (rows.isEmpty) return null;
-    return Playlist.fromMap(rows.first, songs: await _songsOf(id));
+    return PlaylistModel.fromMap(rows.first, songs: await _songsOf(id));
   }
 
-  Future<List<Song>> _songsOf(String playlistId, [DatabaseExecutor? db]) async {
+  Future<List<SongModel>> _songsOf(
+    String playlistId, [
+    DatabaseExecutor? db,
+  ]) async {
     final rows = await (db ?? _db).rawQuery(
       'SELECT s.* FROM playlist_songs ps '
       'JOIN songs s ON s.id = ps.song_id '
       'WHERE ps.playlist_id = ? ORDER BY ps.position',
       [playlistId],
     );
-    return rows.map(Song.fromMap).toList();
+    return rows.map(SongModel.fromMap).toList();
   }
 
   // ---------------------------------------------------------------------------
   // Escritura
   // ---------------------------------------------------------------------------
 
-  Future<Playlist> create(String name, {String? description}) async {
+  Future<PlaylistModel> create(String name, {String? description}) async {
     final now = DateTime.now();
-    final playlist = Playlist(
+    final playlist = PlaylistModel(
       id: _uuid.v4(),
       name: name.trim(),
       description: description,
@@ -110,7 +113,7 @@ class PlaylistDao {
   }
 
   /// Añade al final. Devuelve false si la canción ya estaba.
-  Future<bool> addSong(String playlistId, Song song) async {
+  Future<bool> addSong(String playlistId, SongModel song) async {
     final saved = await _songDao.upsert(song);
     final added = await _db.transaction((txn) async {
       final ids = await _songIdsOf(txn, playlistId);
