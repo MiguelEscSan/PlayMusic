@@ -46,6 +46,12 @@ final class PlaylistRepositoryImpl implements IPlaylistRepository {
       });
 
   @override
+  Future<Result<Unit>> setCover(String id, String? coverUrl) => guard(() async {
+    await _dao.setCover(id, coverUrl);
+    return unit;
+  });
+
+  @override
   Future<Result<Unit>> delete(String id) => guard(() async {
     await _dao.delete(id);
     return unit;
@@ -58,6 +64,13 @@ final class PlaylistRepositoryImpl implements IPlaylistRepository {
   @override
   Future<Result<bool>> removeSong(String playlistId, String songId) =>
       guard(() => _dao.removeSong(playlistId, songId));
+
+  @override
+  Future<Result<Unit>> removeSongAt(String playlistId, int index) =>
+      guard(() async {
+        await _dao.removeAt(playlistId, index);
+        return unit;
+      });
 
   @override
   Future<Result<Unit>> moveSong(

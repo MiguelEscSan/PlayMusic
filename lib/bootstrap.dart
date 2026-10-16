@@ -1,12 +1,16 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
 import 'core/audio/audio_bootstrap.dart';
 import 'core/audio/playback_source_resolver_impl.dart';
 import 'core/audio/sponify_audio_handler.dart';
 import 'core/audio/stream_url_provider.dart';
+import 'core/data/repositories/playlist_repository_impl.dart';
+import 'core/data/repositories/song_repository_impl.dart';
 import 'core/database/app_database.dart';
 import 'core/database/song_dao.dart';
+import 'core/error/result.dart';
 import 'core/settings/settings_dao.dart';
 import 'core/storage/file_paths.dart';
 import 'features/downloads/data/download_manager.dart';
@@ -50,6 +54,10 @@ Future<AppDependencies> bootstrap() async {
   final database = await AppDatabase.open();
   final songDao = SongDao(database);
   final playlistDao = PlaylistDao(database, songDao);
+  // Los servicios dependen de las interfaces; los DAOs siguen en
+  // [AppDependencies] porque los StreamProviders escuchan sus `changes`.
+  final songRepository = SongRepositoryImpl(songDao);
+  final playlistRepository = PlaylistRepositoryImpl(playlistDao);
   final paths = await FilePaths.create();
 
   // Un único resolver compartido: reproductor y descargas aprovechan la
@@ -65,7 +73,7 @@ Future<AppDependencies> bootstrap() async {
   // Radio automática: al acabarse la cola sigue con canciones relacionadas.
   audio.onQueueEnded = RadioService.youtube(
     YoutubeExplode(),
-    songDao: songDao,
+    songRepository: songRepository,
     settings: settings,
   ).nextFor;
 
@@ -76,7 +84,7 @@ Future<AppDependencies> bootstrap() async {
         receiveTimeout: const Duration(seconds: 30),
       ),
     ),
-    songDao: songDao,
+    songRepository: songRepository,
     paths: paths,
     resolver: resolver,
     onStorageChanged: audio.onSongStorageChanged,
@@ -85,12 +93,20 @@ Future<AppDependencies> bootstrap() async {
   );
 
   // Los "me gusta" de antes de existir "Me encanta" pasan a la playlist.
-  if ((await songDao.liked()).isNotEmpty) {
-    await LikedPlaylist(
-      playlists: playlistDao,
-      songs: songDao,
+  // Si falla no se bloquea el arranque: se reintenta con el siguiente
+  // "me gusta".
+  final liked = await songRepository.getLiked();
+  if (liked case Ok(value: final songs) when songs.isNotEmpty) {
+    final ensured = await LikedPlaylist(
+      playlists: playlistRepository,
+      songs: songRepository,
       settings: settings,
     ).ensure();
+    if (ensured case Err(:final failure)) {
+      debugPrint('No se pudo preparar "Me encanta": $failure');
+    }
+  } else if (liked case Err(:final failure)) {
+    debugPrint('No se pudieron leer los "me gusta": $failure');
   }
 
   // El historial escucha al reproductor desde el arranque.
@@ -100,7 +116,7 @@ Future<AppDependencies> bootstrap() async {
     database: database,
     songDao: songDao,
     playlistDao: playlistDao,
-    playlistCovers: PlaylistCoverService(playlistDao, paths.coversDir),
+    playlistCovers: PlaylistCoverService(playlistRepository, paths.coversDir),
     audio: audio,
     downloads: downloads,
     historyDao: historyDao,

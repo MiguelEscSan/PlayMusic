@@ -42,6 +42,14 @@ class FakePlaylistRepository implements IPlaylistRepository {
   Future<Result<List<Playlist>>> getAll() async => const Err(_notConfigured);
 
   @override
+  Future<Result<Unit>> removeSongAt(String playlistId, int index) async =>
+      const Err(_notConfigured);
+
+  @override
+  Future<Result<Unit>> setCover(String id, String? coverUrl) async =>
+      const Err(_notConfigured);
+
+  @override
   Future<Result<Unit>> moveSong(
     String playlistId,
     int oldIndex,

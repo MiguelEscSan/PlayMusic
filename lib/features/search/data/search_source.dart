@@ -1,4 +1,4 @@
-import '../../../core/models/song.dart';
+import '../../../core/domain/entities/song.dart';
 
 /// Una página de resultados. [loadMore] es null cuando no hay más.
 class SearchPage {

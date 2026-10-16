@@ -2,9 +2,10 @@ import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sponify/core/audio/audio_player_service.dart';
+import 'package:sponify/core/data/models/song_model.dart';
 import 'package:sponify/core/database/app_database.dart';
 import 'package:sponify/core/database/song_dao.dart';
-import 'package:sponify/core/models/song.dart';
+import 'package:sponify/core/domain/entities/song.dart';
 import 'package:sponify/features/history/data/history_dao.dart';
 import 'package:sponify/features/history/data/history_recorder.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -54,7 +55,8 @@ void main() {
   });
 
   test('guarda cada canción que empieza a sonar', () async {
-    final song = await songs.upsert(_song('a'));
+    final song = (await songs.upsert(SongModel.fromEntity(_song('a'))))
+        .toEntity();
     final changed = dao.changes.first;
     audio.started.add(song);
     await changed;
@@ -68,7 +70,8 @@ void main() {
   });
 
   test('tras dispose deja de escuchar', () async {
-    final song = await songs.upsert(_song('a'));
+    final song = (await songs.upsert(SongModel.fromEntity(_song('a'))))
+        .toEntity();
     await recorder.dispose();
     audio.started.add(song);
     await pumpEventQueue();

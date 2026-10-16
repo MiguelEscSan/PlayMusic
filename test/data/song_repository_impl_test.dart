@@ -73,6 +73,48 @@ void main() {
     expect(_err(await repo.findById('missing')), isA<NotFoundFailure>());
   });
 
+  test('findBySource returns the persisted entity', () async {
+    final saved = _ok(await repo.save(_song('1')));
+
+    final found = _ok(await repo.findBySource(SongSource.youtube, '1'));
+    expect(found, isA<Song>());
+    expect(found.id, saved.id);
+  });
+
+  test(
+    'findBySource of an unknown source id is Err(NotFoundFailure)',
+    () async {
+      expect(
+        _err(await repo.findBySource(SongSource.youtube, 'missing')),
+        isA<NotFoundFailure>(),
+      );
+    },
+  );
+
+  test(
+    'markDownloaded stores the file and returns the updated entity',
+    () async {
+      final saved = _ok(await repo.save(_song('1')));
+
+      final updated = _ok(
+        await repo.markDownloaded(saved.id, localPath: '/a.m4a', sizeBytes: 42),
+      );
+      expect(updated.id, saved.id);
+      expect(updated.localPath, '/a.m4a');
+      expect(updated.fileSizeBytes, 42);
+      expect(updated.downloadedAt, isNotNull);
+      expect(updated.isDownloaded, isTrue);
+      expect(_ok(await repo.getDownloadedBytes()), 42);
+    },
+  );
+
+  test('markDownloaded of a missing id is Err(NotFoundFailure)', () async {
+    expect(
+      _err(await repo.markDownloaded('missing', localPath: '/x', sizeBytes: 1)),
+      isA<NotFoundFailure>(),
+    );
+  });
+
   test('setLiked and getLiked round-trip through the DAO', () async {
     final a = _ok(await repo.save(_song('a')));
     _ok(await repo.save(_song('b')));
@@ -114,6 +156,8 @@ void main() {
         await repo.getLiked(),
         await repo.setLiked('x', liked: true),
         await repo.clearDownload('x'),
+        await repo.findBySource(SongSource.youtube, 'x'),
+        await repo.markDownloaded('x', localPath: '/x', sizeBytes: 1),
       ];
 
       for (final result in results) {

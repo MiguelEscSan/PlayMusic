@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/audio/audio_providers.dart';
-import '../../core/models/song.dart';
+import '../../core/domain/entities/song.dart';
 import '../../core/utils/formatters.dart';
 import '../../features/favorites/presentation/favorites_providers.dart';
 import '../../features/playlists/presentation/widgets/add_to_playlist_sheet.dart';
@@ -44,8 +44,8 @@ Future<bool> queueOnSwipe(
   SongActions actions,
   Song song,
 ) async {
-  await actions.addToQueue(song);
-  if (context.mounted) showSnack(context, 'Añadida a la cola');
+  final result = await actions.addToQueue(song);
+  if (result.isOk && context.mounted) showSnack(context, 'Añadida a la cola');
   return false;
 }
 
@@ -126,15 +126,15 @@ class SongTile extends ConsumerWidget {
                 Icons.playlist_play_rounded,
                 'Reproducir a continuación',
                 () async {
-                  await actions.playNext(song);
-                  if (context.mounted) {
+                  final result = await actions.playNext(song);
+                  if (result.isOk && context.mounted) {
                     showSnack(context, 'Sonará a continuación');
                   }
                 },
               ),
               _item(Icons.queue_music_rounded, 'Añadir a la cola', () async {
-                await actions.addToQueue(song);
-                if (context.mounted) {
+                final result = await actions.addToQueue(song);
+                if (result.isOk && context.mounted) {
                   showSnack(context, 'Añadida a la cola');
                 }
               }),

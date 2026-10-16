@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
-import '../../../core/models/song.dart';
+import '../../../core/domain/entities/song.dart';
 import 'lrc_parser.dart';
 
 /// Resultado de buscar la letra de una canción.

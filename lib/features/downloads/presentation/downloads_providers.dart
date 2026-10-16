@@ -1,7 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/song_dao.dart';
-import '../../../core/models/song.dart';
+import '../../../core/di/repository_providers.dart';
+import '../../../core/domain/entities/song.dart';
 import '../data/download_manager.dart';
 import '../domain/download_task.dart';
 
@@ -29,18 +30,26 @@ final downloadTaskProvider = Provider.family<DownloadTask?, Song>(
 /// Canciones descargadas; se refresca sola al descargar o borrar.
 final downloadedSongsProvider = StreamProvider<List<Song>>((ref) async* {
   final dao = ref.watch(songDaoProvider);
-  yield await dao.downloaded();
+  final repository = ref.watch(songRepositoryProvider);
+  // Un Err se lanza como AsyncError; en la fase 3 lo tratarán los notifiers.
+  Future<List<Song>> load() async =>
+      unwrapOrThrow(await repository.getDownloaded());
+  yield await load();
   await for (final _ in dao.changes) {
-    yield await dao.downloaded();
+    yield await load();
   }
 });
 
 /// Espacio ocupado por las descargas, en bytes.
 final downloadsSizeProvider = StreamProvider<int>((ref) async* {
   final dao = ref.watch(songDaoProvider);
-  yield await dao.downloadedBytes();
+  final repository = ref.watch(songRepositoryProvider);
+  // Un Err se lanza como AsyncError; en la fase 3 lo tratarán los notifiers.
+  Future<int> load() async =>
+      unwrapOrThrow(await repository.getDownloadedBytes());
+  yield await load();
   await for (final _ in dao.changes) {
-    yield await dao.downloadedBytes();
+    yield await load();
   }
 });
 

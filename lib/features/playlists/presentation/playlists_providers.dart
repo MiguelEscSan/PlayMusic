@@ -2,7 +2,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart'
     show YoutubeExplode;
 
-import '../../../core/models/playlist.dart';
+import '../../../core/di/repository_providers.dart';
+import '../../../core/domain/entities/playlist.dart';
+import '../../../core/error/failure.dart';
+import '../../../core/error/result.dart';
 import '../data/playlist_cover_service.dart';
 import '../data/playlist_dao.dart';
 import '../data/youtube_playlist_importer.dart';
@@ -21,9 +24,13 @@ final playlistCoverServiceProvider = Provider<PlaylistCoverService>(
 
 final playlistsProvider = StreamProvider<List<Playlist>>((ref) async* {
   final dao = ref.watch(playlistDaoProvider);
-  yield await dao.all();
+  final repository = ref.watch(playlistRepositoryProvider);
+  // Un Err se lanza como AsyncError; en la fase 3 lo tratarán los notifiers.
+  Future<List<Playlist>> load() async =>
+      unwrapOrThrow(await repository.getAll());
+  yield await load();
   await for (final _ in dao.changes) {
-    yield await dao.all();
+    yield await load();
   }
 });
 
@@ -33,9 +40,17 @@ final playlistProvider = StreamProvider.family<Playlist?, String>((
   id,
 ) async* {
   final dao = ref.watch(playlistDaoProvider);
-  yield await dao.findById(id);
+  final repository = ref.watch(playlistRepositoryProvider);
+  // Un Err distinto de "no existe" se lanza como AsyncError; en la fase 3 lo
+  // tratarán los notifiers.
+  Future<Playlist?> load() async => switch (await repository.findById(id)) {
+    Ok(:final value) => value,
+    Err(failure: NotFoundFailure()) => null,
+    Err(:final failure) => throw failure,
+  };
+  yield await load();
   await for (final _ in dao.changes) {
-    yield await dao.findById(id);
+    yield await load();
   }
 });
 
@@ -48,7 +63,7 @@ final youtubePlaylistImporterProvider = Provider<YoutubePlaylistImporter>((
   YoutubeExplode? yt;
   ref.onDispose(() => yt?.close());
   return YoutubePlaylistImporter.youtube(
-    ref.watch(playlistDaoProvider),
+    ref.watch(playlistRepositoryProvider),
     () => yt ??= YoutubeExplode(),
   );
 });

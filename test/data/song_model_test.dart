@@ -41,6 +41,9 @@ void main() {
       expect(restored.fileSizeBytes, 4096);
       expect(restored.downloadedAt, downloadedAt);
       expect(restored.downloadProgress, isNull, reason: 'not persisted');
+      expect(restored, fullModel(), reason: 'equal by source + sourceId');
+      expect(restored.isDownloaded, isTrue);
+      expect(restored.isLiked, isFalse, reason: 'liked_at is not in toMap');
     });
 
     test('likedAt is read by fromMap but never written by toMap', () {

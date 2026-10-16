@@ -4,8 +4,9 @@ import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sponify/core/audio/audio_player_service.dart';
 import 'package:sponify/core/audio/audio_providers.dart';
-import 'package:sponify/core/models/playlist.dart';
-import 'package:sponify/core/models/song.dart';
+import 'package:sponify/core/domain/entities/playlist.dart';
+import 'package:sponify/core/domain/entities/song.dart';
+import 'package:sponify/core/error/result.dart';
 import 'package:sponify/features/downloads/presentation/downloads_providers.dart';
 import 'package:sponify/features/favorites/presentation/favorites_providers.dart';
 import 'package:sponify/features/player/presentation/queue_sheet.dart';
@@ -33,7 +34,10 @@ class _FakeActions extends SongActions {
   final queued = <Song>[];
 
   @override
-  Future<void> addToQueue(Song song) async => queued.add(song);
+  Future<Result<Unit>> addToQueue(Song song) async {
+    queued.add(song);
+    return const Ok(unit);
+  }
 }
 
 class _FakeExporter implements SongExporter {

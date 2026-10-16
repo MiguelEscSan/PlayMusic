@@ -1,10 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sponify/core/database/app_database.dart';
 import 'package:sponify/core/database/song_dao.dart';
-import 'package:sponify/core/models/song.dart';
+import 'package:sponify/core/data/models/song_model.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
-Song _song(String id) => Song(
+SongModel _song(String id) => SongModel(
   id: '',
   title: 'T$id',
   artist: 'A',

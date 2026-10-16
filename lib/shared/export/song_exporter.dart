@@ -1,7 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/models/song.dart';
+import '../../core/domain/entities/song.dart';
 
 /// Copia una canción descargada a la carpeta pública de Música del móvil,
 /// para que otras apps (reproductores, gestores de archivos) la vean.

@@ -41,7 +41,7 @@ Slice 2a (additive, no consumer edits):
 - [x] P2.3 `SongRepositoryImpl`/`PlaylistRepositoryImpl` over the DAOs, returning `Result` (sqflite errors → `DatabaseFailure`, missing → `NotFoundFailure`)
 
 Slice 2b:
-- [ ] P2.4 Services (`DownloadManager`, `RadioService`, `LikedPlaylist`, `PlaylistCoverService`, importer, `SongActions`) depend on interfaces + domain `Song`; repository providers; remove legacy shims
+- [x] P2.4 Services (`DownloadManager`, `RadioService`, `LikedPlaylist`, `PlaylistCoverService`, importer, `SongActions`) depend on interfaces + domain `Song`; repository providers; remove legacy shims
 
 ### Phase 3 — Presentation (pending user go-ahead)
 - [ ] P2.2 (moved) Remove `StreamController` from DAOs; reactivity owned by notifiers
@@ -62,4 +62,5 @@ Slice 2b:
 - 2026-10-16: Slice 2a done (delegated writer). RED: test/data failed to compile before repos existed. GREEN: `flutter test test/data` +19 (parent re-ran with models/playlist_dao tests: +32). Full suite +257/-3; the 3 failures (history_section_test "pinta el título...", song_swipe_test "playlist derecha encola...", widget_test "Me gusta...") fail identically on ef55fb9 → pre-existing, not caused by this slice. analyze: 31 = baseline.
 - Known pre-existing failures: the 3 widget tests above.
 - 2026-10-16: Slice 2a commit c0cdc4e. Review assess: medium (slice_budget_reached, 2340 lines cumulative from main). Native review consent: declined by user; medium off-path = writer self-verification + parent spot check. Reviewed boundary stays at main.
-- Next: slice 2b (P2.4), pending user go-ahead.
+- 2026-10-17: Slice 2b done (delegated writer, interrupted by machine shutdown; parent reconciled the working tree). Services depend on ISongRepository/IPlaylistRepository + domain Song; DI in lib/core/di/repository_providers.dart; SongActions.toggleLike uses ToggleFavoriteUseCase; StreamProviders fetch via repositories and surface Err as AsyncError via transitional unwrapOrThrow; legacy shims and test/models_test.dart removed. Interfaces gained findBySource, markDownloaded, setCover. Verification (parent): flutter analyze 31 = baseline; full suite +259/-3 (same 3 known pre-existing failures); focused data/domain/download/liked tests +74 after dart format. test/history_dao_test.dart: only import + 2 type lines committed; user reflow left unstaged.
+- Next: Phase 3 (P2.2 stream removal + notifiers), pending user go-ahead.

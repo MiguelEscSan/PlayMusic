@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import '../models/song.dart';
+import '../domain/entities/song.dart';
 import 'playback_source.dart';
 import 'stream_url_provider.dart';
 

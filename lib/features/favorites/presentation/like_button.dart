@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/models/song.dart';
+import '../../../core/domain/entities/song.dart';
 import '../../../shared/song_actions.dart';
 import 'favorites_providers.dart';
 

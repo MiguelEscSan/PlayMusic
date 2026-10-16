@@ -1,8 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sponify/core/data/repositories/playlist_repository_impl.dart';
+import 'package:sponify/core/data/repositories/song_repository_impl.dart';
 import 'package:sponify/core/database/app_database.dart';
 import 'package:sponify/core/database/song_dao.dart';
-import 'package:sponify/core/models/song.dart';
+import 'package:sponify/core/domain/entities/song.dart';
+import 'package:sponify/core/error/result.dart';
 import 'package:sponify/core/settings/settings_dao.dart';
 import 'package:sponify/core/settings/settings_providers.dart';
 import 'package:sponify/features/downloads/presentation/downloads_providers.dart';
@@ -11,6 +14,9 @@ import 'package:sponify/features/playlists/data/playlist_dao.dart';
 import 'package:sponify/features/playlists/presentation/playlists_providers.dart';
 import 'package:sponify/shared/song_actions.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+
+import 'domain/fakes/fake_playlist_repository.dart';
+import 'domain/fakes/fake_song_repository.dart';
 
 Song _song(String id) => Song(
   id: '',
@@ -21,11 +27,18 @@ Song _song(String id) => Song(
   sourceId: id,
 );
 
+T _ok<T>(Result<T> result) {
+  expect(result, isA<Ok<T>>(), reason: 'expected Ok, got $result');
+  return (result as Ok<T>).value;
+}
+
 void main() {
   sqfliteFfiInit();
   late AppDatabase db;
-  late SongDao songs;
-  late PlaylistDao playlists;
+  late SongDao songDao;
+  late PlaylistDao playlistDao;
+  late SongRepositoryImpl songs;
+  late PlaylistRepositoryImpl playlists;
   late SettingsDao settings;
   late LikedPlaylist liked;
 
@@ -34,8 +47,10 @@ void main() {
       factory: databaseFactoryFfi,
       path: inMemoryDatabasePath,
     );
-    songs = SongDao(db);
-    playlists = PlaylistDao(db, songs);
+    songDao = SongDao(db);
+    playlistDao = PlaylistDao(db, songDao);
+    songs = SongRepositoryImpl(songDao);
+    playlists = PlaylistRepositoryImpl(playlistDao);
     settings = SettingsDao(db);
     liked = LikedPlaylist(
       playlists: playlists,
@@ -48,82 +63,101 @@ void main() {
 
   List<String> titles(List<Song> s) => [for (final x in s) x.title];
 
+  Future<String> ensure() async => _ok(await liked.ensure());
+
   Future<List<Song>> likedSongs() async =>
-      (await playlists.findById(await liked.ensure()))!.songs;
+      _ok(await playlists.findById(await ensure())).songs;
+
+  Future<Song> save(String id) async => _ok(await songs.save(_song(id)));
+
+  Future<void> setLiked(Song s, bool value) async =>
+      _ok(await songs.setLiked(s.id, liked: value));
+
+  Future<Song> reload(Song s) async => _ok(await songs.findById(s.id));
 
   test('ensure() crea "Me encanta" una sola vez', () async {
-    final id = await liked.ensure();
-    expect(await liked.ensure(), id);
-    final all = await playlists.all();
+    final id = await ensure();
+    expect(await ensure(), id);
+    final all = _ok(await playlists.getAll());
     expect(all, hasLength(1));
     expect(all.single.name, 'Me encanta');
   });
 
   test('al crearla incluye los "me gusta" previos, del más antiguo', () async {
     for (final id in ['1', '2']) {
-      final s = await songs.upsert(_song(id));
-      await songs.setLiked(s.id, true);
+      await setLiked(await save(id), true);
       await Future<void>.delayed(const Duration(milliseconds: 5));
     }
-    await songs.upsert(_song('3')); // sin "me gusta"
+    await save('3'); // sin "me gusta"
 
     expect(titles(await likedSongs()), ['T1', 'T2']);
   });
 
   test('sync() añade y quita según isLiked', () async {
-    final s = await songs.upsert(_song('1'));
-    await songs.setLiked(s.id, true);
-    await liked.sync((await songs.findById(s.id))!);
+    final s = await save('1');
+    await setLiked(s, true);
+    _ok(await liked.sync(await reload(s)));
     expect(titles(await likedSongs()), ['T1']);
 
-    await songs.setLiked(s.id, false);
-    await liked.sync((await songs.findById(s.id))!);
+    await setLiked(s, false);
+    _ok(await liked.sync(await reload(s)));
     expect(await likedSongs(), isEmpty);
   });
 
   test('renombrada sigue enlazada; borrada se vuelve a crear', () async {
-    final id = await liked.ensure();
-    await playlists.rename(id, 'Favoritas');
-    expect(await liked.ensure(), id);
+    final id = await ensure();
+    _ok(await playlists.rename(id, 'Favoritas'));
+    expect(await ensure(), id);
 
-    await playlists.delete(id);
-    final s = await songs.upsert(_song('1'));
-    await songs.setLiked(s.id, true);
-    await liked.sync((await songs.findById(s.id))!);
-    final newId = await liked.ensure();
+    _ok(await playlists.delete(id));
+    final s = await save('1');
+    await setLiked(s, true);
+    _ok(await liked.sync(await reload(s)));
+    final newId = await ensure();
     expect(newId, isNot(id));
     expect(titles(await likedSongs()), ['T1']);
   });
 
   test('dos sync() a la vez no crean dos playlists', () async {
-    final a = await songs.upsert(_song('1'));
-    final b = await songs.upsert(_song('2'));
-    await songs.setLiked(a.id, true);
-    await songs.setLiked(b.id, true);
+    final a = await save('1');
+    final b = await save('2');
+    await setLiked(a, true);
+    await setLiked(b, true);
     await Future.wait([
-      liked.sync((await songs.findById(a.id))!),
-      liked.sync((await songs.findById(b.id))!),
+      liked.sync(await reload(a)),
+      liked.sync(await reload(b)),
     ]);
-    expect(await playlists.all(), hasLength(1));
+    expect(_ok(await playlists.getAll()), hasLength(1));
     expect(await likedSongs(), hasLength(2));
+  });
+
+  test('un fallo de los repositorios llega como Err, sin lanzar', () async {
+    final failing = LikedPlaylist(
+      playlists: FakePlaylistRepository(),
+      songs: FakeSongRepository(),
+      settings: settings,
+    );
+
+    expect((await failing.ensure()).isErr, isTrue);
+    expect((await failing.sync(_song('1'))).isErr, isTrue);
   });
 
   test('SongActions.toggleLike añade y quita de "Me encanta"', () async {
     final container = ProviderContainer(
       overrides: [
-        songDaoProvider.overrideWithValue(songs),
-        playlistDaoProvider.overrideWithValue(playlists),
+        songDaoProvider.overrideWithValue(songDao),
+        playlistDaoProvider.overrideWithValue(playlistDao),
         settingsDaoProvider.overrideWithValue(settings),
       ],
     );
     addTearDown(container.dispose);
     final actions = container.read(songActionsProvider);
 
-    final likedSong = await actions.toggleLike(_song('1'));
+    final likedSong = _ok(await actions.toggleLike(_song('1')));
     expect(likedSong.isLiked, isTrue);
     expect(titles(await likedSongs()), ['T1']);
 
-    final unliked = await actions.toggleLike(likedSong);
+    final unliked = _ok(await actions.toggleLike(likedSong));
     expect(unliked.isLiked, isFalse);
     expect(await likedSongs(), isEmpty);
   });

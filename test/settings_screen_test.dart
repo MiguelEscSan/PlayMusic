@@ -6,9 +6,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sponify/core/audio/playback_source.dart';
+import 'package:sponify/core/data/models/song_model.dart';
+import 'package:sponify/core/data/repositories/song_repository_impl.dart';
 import 'package:sponify/core/database/app_database.dart';
 import 'package:sponify/core/database/song_dao.dart';
-import 'package:sponify/core/models/song.dart';
+import 'package:sponify/core/domain/entities/song.dart';
 import 'package:sponify/core/settings/settings_dao.dart';
 import 'package:sponify/core/settings/settings_providers.dart';
 import 'package:sponify/core/storage/file_paths.dart';
@@ -56,7 +58,7 @@ void main() {
     settings = SettingsDao(db);
     downloads = DownloadManager(
       dio: Dio(),
-      songDao: songDao,
+      songRepository: SongRepositoryImpl(songDao),
       paths: FilePaths(tmp),
       resolver: _NoNetworkResolver(),
     );
@@ -94,13 +96,14 @@ void main() {
 
   /// Guarda una canción como descargada con un archivo real en disco.
   Future<Song> addDownloaded(String id, int sizeBytes) async {
-    final saved = await songDao.upsert(_song(id));
+    final saved = await songDao.upsert(SongModel.fromEntity(_song(id)));
     final file = File('${tmp.path}/${saved.id}.m4a')..writeAsBytesSync([1]);
-    return songDao.markDownloaded(
+    final marked = await songDao.markDownloaded(
       saved.id,
       localPath: file.path,
       sizeBytes: sizeBytes,
     );
+    return marked!.toEntity();
   }
 
   SwitchListTile switchTile(WidgetTester tester, String title) =>
@@ -189,7 +192,7 @@ void main() {
 
   testWidgets('borrar el historial pide confirmación', (tester) async {
     await tester.runAsync(() async {
-      final song = await songDao.upsert(_song('h'));
+      final song = await songDao.upsert(SongModel.fromEntity(_song('h')));
       await historyDao.record(song.id);
     });
     await pumpSettings(tester);

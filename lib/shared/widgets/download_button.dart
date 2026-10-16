@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/models/song.dart';
+import '../../core/domain/entities/song.dart';
 import '../../features/downloads/data/download_manager.dart';
 import '../../features/downloads/domain/download_task.dart';
 import '../../features/downloads/presentation/downloads_providers.dart';

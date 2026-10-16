@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
-import '../../../core/models/song.dart';
+import '../../../core/domain/entities/song.dart';
 import '../data/search_source.dart';
 import '../data/youtube_search_source.dart';
 import 'search_history_providers.dart';

@@ -29,6 +29,35 @@ final class SongRepositoryImpl implements ISongRepository {
   }
 
   @override
+  Future<Result<domain.Song>> findBySource(
+    domain.SongSource source,
+    String sourceId,
+  ) async {
+    final result = await guard(() => _dao.findBySource(source, sourceId));
+    return switch (result) {
+      Ok(value: final model?) => Ok(model.toEntity()),
+      Ok() => Err(NotFoundFailure('Song ${source.name}:$sourceId not found')),
+      Err(:final failure) => Err(failure),
+    };
+  }
+
+  @override
+  Future<Result<domain.Song>> markDownloaded(
+    String id, {
+    required String localPath,
+    required int sizeBytes,
+  }) async {
+    final result = await guard(
+      () => _dao.markDownloaded(id, localPath: localPath, sizeBytes: sizeBytes),
+    );
+    return switch (result) {
+      Ok(value: final model?) => Ok(model.toEntity()),
+      Ok() => Err(NotFoundFailure('Song $id not found')),
+      Err(:final failure) => Err(failure),
+    };
+  }
+
+  @override
   Future<Result<List<domain.Song>>> getDownloaded() =>
       guard(() async => _toEntities(await _dao.downloaded()));
 

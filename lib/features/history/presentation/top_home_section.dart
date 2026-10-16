@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/models/song.dart';
+import '../../../core/domain/entities/song.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../shared/song_actions.dart';
 import '../../../shared/widgets/artwork_image.dart';
@@ -76,10 +76,7 @@ class TopHomeSection extends ConsumerWidget {
                     style: theme.textTheme.labelMedium?.copyWith(color: muted),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    'Tu top del mes',
-                    style: theme.textTheme.titleLarge,
-                  ),
+                  Text('Tu top del mes', style: theme.textTheme.titleLarge),
                   const SizedBox(height: 4),
                   Text(
                     '${songCount(songs.length)} · últimos 30 días',

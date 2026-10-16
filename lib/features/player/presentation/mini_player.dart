@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/audio/audio_player_service.dart';
 import '../../../core/audio/audio_providers.dart';
-import '../../../core/models/song.dart';
+import '../../../core/domain/entities/song.dart';
 import '../../../shared/widgets/artwork_image.dart';
 import 'now_playing_screen.dart';
 import 'swipe_to_skip.dart';

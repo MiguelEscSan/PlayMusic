@@ -3,7 +3,7 @@ import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sponify/core/models/song.dart';
+import 'package:sponify/core/domain/entities/song.dart';
 import 'package:sponify/features/lyrics/data/lrc_parser.dart';
 import 'package:sponify/features/lyrics/data/lyrics_repository.dart';
 

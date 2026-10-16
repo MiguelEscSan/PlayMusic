@@ -2,7 +2,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/models/playlist.dart';
+import '../../../core/di/repository_providers.dart';
+import '../../../core/domain/entities/playlist.dart';
+import '../../../core/error/result.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../shared/widgets/dialogs.dart';
 import '../../../shared/widgets/empty_state.dart';
@@ -14,6 +16,9 @@ import 'widgets/playlist_cover.dart';
 class PlaylistsScreen extends ConsumerWidget {
   const PlaylistsScreen({super.key});
 
+  static const _importFailed =
+      'No se pudo importar la playlist. Revisa la conexión.';
+
   Future<void> _create(BuildContext context, WidgetRef ref) async {
     final name = await showTextInputDialog(
       context,
@@ -22,8 +27,10 @@ class PlaylistsScreen extends ConsumerWidget {
       confirmLabel: 'Crear',
     );
     if (name == null) return;
-    final playlist = await ref.read(playlistDaoProvider).create(name);
-    if (context.mounted) openPlaylist(context, playlist.id);
+    final created = await ref.read(playlistRepositoryProvider).create(name);
+    if (created case Ok(value: final playlist) when context.mounted) {
+      openPlaylist(context, playlist.id);
+    }
   }
 
   Future<void> _importFromYoutube(BuildContext context, WidgetRef ref) async {
@@ -48,16 +55,21 @@ class PlaylistsScreen extends ConsumerWidget {
     ImportResult? result;
     String? error;
     try {
-      result = await importer.importFromUrl(
+      switch (await importer.importFromUrl(
         link,
         onProgress: (done, total) => progress.value = (done, total),
-      );
+      )) {
+        case Ok(:final value):
+          result = value;
+        case Err():
+          error = _importFailed;
+      }
     } on InvalidPlaylistLinkException {
       error = 'Ese enlace no es de una playlist de YouTube';
     } on EmptyPlaylistException {
       error = 'La playlist no tiene canciones que importar';
     } catch (_) {
-      error = 'No se pudo importar la playlist. Revisa la conexión.';
+      error = _importFailed;
     } finally {
       navigator.pop();
       progress.dispose();
@@ -222,9 +234,8 @@ class _PlaylistCard extends StatelessWidget {
             playlist.name,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
+            style: Theme.of(context).textTheme.titleSmall
+                ?.copyWith(fontWeight: FontWeight.w700),
           ),
           Text(
             _subtitle(playlist),

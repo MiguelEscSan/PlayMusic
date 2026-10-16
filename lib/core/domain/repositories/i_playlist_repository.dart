@@ -14,6 +14,9 @@ abstract interface class IPlaylistRepository {
 
   Future<Result<Unit>> rename(String id, String name, {String? description});
 
+  /// Portada personalizada (ruta local); `null` vuelve a la automática.
+  Future<Result<Unit>> setCover(String id, String? coverUrl);
+
   Future<Result<Unit>> delete(String id);
 
   /// Añade [song] al final. `Ok(false)` si ya estaba en la playlist.
@@ -22,6 +25,10 @@ abstract interface class IPlaylistRepository {
   /// Quita la canción [songId]. `Ok(false)` si no estaba en la playlist.
   Future<Result<bool>> removeSong(String playlistId, String songId);
 
-  /// Mueve una canción (semántica de `ReorderableListView`).
+  /// Quita la canción que ocupa la posición [index].
+  Future<Result<Unit>> removeSongAt(String playlistId, int index);
+
+  /// Mueve la canción de [oldIndex] a [newIndex], que es la posición final
+  /// ya corregida (no la semántica de hueco de `ReorderableListView`).
   Future<Result<Unit>> moveSong(String playlistId, int oldIndex, int newIndex);
 }

@@ -2,11 +2,14 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
+import 'package:sponify/core/data/repositories/playlist_repository_impl.dart';
 import 'package:sponify/core/database/app_database.dart';
 import 'package:sponify/core/database/song_dao.dart';
 import 'package:sponify/features/playlists/data/playlist_cover_service.dart';
 import 'package:sponify/features/playlists/data/playlist_dao.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+
+import 'domain/fakes/fake_playlist_repository.dart';
 
 void main() {
   sqfliteFfiInit();
@@ -24,7 +27,7 @@ void main() {
     dao = PlaylistDao(db, SongDao(db));
     tmp = await Directory.systemTemp.createTemp('sponify_covers');
     coversDir = Directory(p.join(tmp.path, 'covers'));
-    covers = PlaylistCoverService(dao, coversDir);
+    covers = PlaylistCoverService(PlaylistRepositoryImpl(dao), coversDir);
   });
 
   tearDown(() async {
@@ -84,6 +87,16 @@ void main() {
 
     expect(await dao.findById(playlist.id), isNull);
     expect(File(saved).existsSync(), isFalse);
+  });
+
+  test('un fallo del repositorio llega como Err y no borra nada', () async {
+    final failing = PlaylistCoverService(FakePlaylistRepository(), coversDir);
+    final source = await picked('a.jpg', 'one');
+
+    expect((await failing.setFromFile('p1', source)).isErr, isTrue);
+    expect((await failing.clear('p1')).isErr, isTrue);
+    expect((await failing.deletePlaylist('p1')).isErr, isTrue);
+    expect(File(source).existsSync(), isTrue);
   });
 
   test('nunca borra archivos fuera de la carpeta de portadas', () async {

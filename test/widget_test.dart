@@ -9,9 +9,11 @@ import 'package:sponify/app.dart';
 import 'package:sponify/core/audio/audio_player_service.dart';
 import 'package:sponify/core/audio/audio_providers.dart';
 import 'package:sponify/core/audio/playback_source.dart';
+import 'package:sponify/core/data/models/song_model.dart';
+import 'package:sponify/core/data/repositories/song_repository_impl.dart';
 import 'package:sponify/core/database/app_database.dart';
 import 'package:sponify/core/database/song_dao.dart';
-import 'package:sponify/core/models/song.dart';
+import 'package:sponify/core/domain/entities/song.dart';
 import 'package:sponify/core/settings/settings_dao.dart';
 import 'package:sponify/core/settings/settings_providers.dart';
 import 'package:sponify/core/storage/file_paths.dart';
@@ -122,7 +124,7 @@ void main() {
     historyDao = HistoryDao(db);
     downloads = DownloadManager(
       dio: Dio(),
-      songDao: songDao,
+      songRepository: SongRepositoryImpl(songDao),
       paths: FilePaths(tmp),
       resolver: _NoNetworkResolver(),
     );
@@ -198,7 +200,9 @@ void main() {
   testWidgets('lo escuchado aparece en Inicio', (tester) async {
     await pumpApp(tester);
     await tester.runAsync(() async {
-      final song = await songDao.upsert(_song('r', 'Reciente'));
+      final song = await songDao.upsert(
+        SongModel.fromEntity(_song('r', 'Reciente')),
+      );
       await historyDao.record(song.id);
     });
     await settle(tester);
@@ -251,7 +255,10 @@ void main() {
 
     await tester.runAsync(() async {
       final p = (await playlistDao.all()).single;
-      await playlistDao.addSong(p.id, _song('x', 'Canción X'));
+      await playlistDao.addSong(
+        p.id,
+        SongModel.fromEntity(_song('x', 'Canción X')),
+      );
     });
     await settle(tester);
     expect(find.text('Canción X'), findsOneWidget);

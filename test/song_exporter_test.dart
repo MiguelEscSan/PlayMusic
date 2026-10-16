@@ -1,6 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sponify/core/models/song.dart';
+import 'package:sponify/core/domain/entities/song.dart';
 import 'package:sponify/shared/export/song_exporter.dart';
 
 Song _song({String? localPath, String title = 'Título', String artist = 'A'}) =>

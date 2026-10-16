@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sponify/core/audio/audio_player_service.dart';
 import 'package:sponify/core/audio/audio_providers.dart';
-import 'package:sponify/core/models/song.dart';
+import 'package:sponify/core/domain/entities/song.dart';
 import 'package:sponify/features/player/presentation/mini_player.dart';
 import 'package:sponify/features/player/presentation/swipe_to_skip.dart';
 

@@ -1,17 +1,17 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/models/song.dart';
+import '../../../core/di/repository_providers.dart';
+import '../../../core/domain/entities/song.dart';
 import '../../../core/settings/settings_providers.dart';
 import '../../downloads/data/download_manager.dart';
 import '../../downloads/presentation/downloads_providers.dart';
-import '../../playlists/presentation/playlists_providers.dart';
 import '../data/liked_playlist.dart';
 
 /// Sincroniza los "me gusta" con la playlist "Me encanta".
 final likedPlaylistProvider = Provider<LikedPlaylist>(
   (ref) => LikedPlaylist(
-    playlists: ref.watch(playlistDaoProvider),
-    songs: ref.watch(songDaoProvider),
+    playlists: ref.watch(playlistRepositoryProvider),
+    songs: ref.watch(songRepositoryProvider),
     settings: ref.watch(settingsDaoProvider),
   ),
 );
@@ -20,9 +20,12 @@ final likedPlaylistProvider = Provider<LikedPlaylist>(
 /// con cada cambio en la tabla `songs`.
 final likedSongsProvider = StreamProvider<List<Song>>((ref) async* {
   final dao = ref.watch(songDaoProvider);
-  yield await dao.liked();
+  final repository = ref.watch(songRepositoryProvider);
+  // Un Err se lanza como AsyncError; en la fase 3 lo tratarán los notifiers.
+  Future<List<Song>> load() async => unwrapOrThrow(await repository.getLiked());
+  yield await load();
   await for (final _ in dao.changes) {
-    yield await dao.liked();
+    yield await load();
   }
 });
 

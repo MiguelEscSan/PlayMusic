@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/models/playlist.dart';
+import '../../../../core/domain/entities/playlist.dart';
 import '../../../../shared/widgets/artwork_image.dart';
 
 /// Portada de una playlist: imagen única o mosaico 2×2 de carátulas, según

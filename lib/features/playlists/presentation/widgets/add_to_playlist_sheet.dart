@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/models/song.dart';
+import '../../../../core/di/repository_providers.dart';
+import '../../../../core/domain/entities/song.dart';
+import '../../../../core/error/result.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../shared/widgets/dialogs.dart';
 import '../playlists_providers.dart';
@@ -26,10 +28,17 @@ class _AddToPlaylistSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final playlists = ref.watch(playlistsProvider).value ?? const [];
-    final dao = ref.read(playlistDaoProvider);
+    final repository = ref.read(playlistRepositoryProvider);
 
     Future<void> addTo(String id, String name) async {
-      final added = await dao.addSong(id, song);
+      // Un Err deja la hoja abierta y sin aviso; la fase 3 mostrará el error.
+      final bool added;
+      switch (await repository.addSong(id, song)) {
+        case Ok(:final value):
+          added = value;
+        case Err():
+          return;
+      }
       if (context.mounted) Navigator.pop(context);
       if (parent.mounted) {
         showSnack(parent, added ? 'Añadida a "$name"' : 'Ya estaba en "$name"');
@@ -61,8 +70,9 @@ class _AddToPlaylistSheet extends ConsumerWidget {
                 confirmLabel: 'Crear',
               );
               if (name == null) return;
-              final created = await dao.create(name);
-              await addTo(created.id, created.name);
+              if (await repository.create(name) case Ok(value: final created)) {
+                await addTo(created.id, created.name);
+              }
             },
           ),
           for (final p in playlists)

@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../../../core/models/playlist.dart';
-import '../../../core/models/song.dart';
+import '../../../core/di/repository_providers.dart';
+import '../../../core/domain/entities/playlist.dart';
+import '../../../core/domain/entities/song.dart';
+import '../../../core/error/result.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../shared/song_actions.dart';
 import '../../../shared/widgets/artwork_image.dart';
@@ -85,7 +87,7 @@ class _PlaylistViewState extends ConsumerState<_PlaylistView> {
 
   void _removeAt(int i) {
     setState(() => _songs = [..._songs]..removeAt(i));
-    ref.read(playlistDaoProvider).removeAt(widget.playlist.id, i);
+    ref.read(playlistRepositoryProvider).removeSongAt(widget.playlist.id, i);
   }
 
   /// Deshacer un quitar: la BD añade al final y se reubica en [i].
@@ -97,17 +99,17 @@ class _PlaylistViewState extends ConsumerState<_PlaylistView> {
       list.insert(at, song);
       _songs = list;
     });
-    final dao = ref.read(playlistDaoProvider);
-    final added = await dao.addSong(widget.playlist.id, song);
-    if (added && at != last) {
-      await dao.move(widget.playlist.id, last, at);
+    final repository = ref.read(playlistRepositoryProvider);
+    final added = await repository.addSong(widget.playlist.id, song);
+    if (added case Ok(value: true) when at != last) {
+      await repository.moveSong(widget.playlist.id, last, at);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final playlist = widget.playlist;
-    final dao = ref.read(playlistDaoProvider);
+    final repository = ref.read(playlistRepositoryProvider);
     // Solo se lee al usarlo: no hace falta para pintar la pantalla.
     PlaylistCoverService covers() => ref.read(playlistCoverServiceProvider);
     final actions = ref.read(songActionsProvider);
@@ -120,7 +122,7 @@ class _PlaylistViewState extends ConsumerState<_PlaylistView> {
         title: 'Renombrar playlist',
         initialValue: playlist.name,
       );
-      if (name != null) await dao.rename(playlist.id, name);
+      if (name != null) await repository.rename(playlist.id, name);
     }
 
     Future<void> delete() async {
@@ -132,8 +134,8 @@ class _PlaylistViewState extends ConsumerState<_PlaylistView> {
             'se mantienen en Descargas.',
       );
       if (!ok) return;
-      await covers().deletePlaylist(playlist.id);
-      if (context.mounted) Navigator.pop(context);
+      final deleted = await covers().deletePlaylist(playlist.id);
+      if (deleted.isOk && context.mounted) Navigator.pop(context);
     }
 
     Future<void> changeCover() async {
@@ -277,85 +279,85 @@ class _PlaylistViewState extends ConsumerState<_PlaylistView> {
           ),
         ),
         child: songs.isEmpty
-          ? ListView(
-              children: [
-                header,
-                const EmptyState(
-                  icon: Icons.playlist_add_rounded,
-                  title: 'Playlist vacía',
-                  message: 'Añade canciones desde el buscador con el menú ⋮.',
-                ),
-              ],
-            )
-          : ListView.builder(
-              padding: const EdgeInsets.only(bottom: 24),
-              itemCount: songs.length + 1,
-              itemBuilder: (context, index) {
-                if (index == 0) return header;
-                final i = index - 1;
-                final song = songs[i];
-                // Un solo Dismissible para los dos sentidos: derecha encola
-                // (y la fila vuelve), izquierda quita de la playlist.
-                return Dismissible(
-                  key: ValueKey(song.id),
-                  background: const QueueSwipeBackground(),
-                  confirmDismiss: (direction) async =>
-                      direction == DismissDirection.endToStart ||
-                      await queueOnSwipe(context, actions, song),
-                  secondaryBackground: Container(
-                    color: theme.colorScheme.errorContainer,
-                    alignment: Alignment.centerRight,
-                    padding: const EdgeInsets.only(right: 24),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'Quitar',
-                          style: TextStyle(
-                            color: theme.colorScheme.onErrorContainer,
-                            fontWeight: FontWeight.w700,
+            ? ListView(
+                children: [
+                  header,
+                  const EmptyState(
+                    icon: Icons.playlist_add_rounded,
+                    title: 'Playlist vacía',
+                    message: 'Añade canciones desde el buscador con el menú ⋮.',
+                  ),
+                ],
+              )
+            : ListView.builder(
+                padding: const EdgeInsets.only(bottom: 24),
+                itemCount: songs.length + 1,
+                itemBuilder: (context, index) {
+                  if (index == 0) return header;
+                  final i = index - 1;
+                  final song = songs[i];
+                  // Un solo Dismissible para los dos sentidos: derecha encola
+                  // (y la fila vuelve), izquierda quita de la playlist.
+                  return Dismissible(
+                    key: ValueKey(song.id),
+                    background: const QueueSwipeBackground(),
+                    confirmDismiss: (direction) async =>
+                        direction == DismissDirection.endToStart ||
+                        await queueOnSwipe(context, actions, song),
+                    secondaryBackground: Container(
+                      color: theme.colorScheme.errorContainer,
+                      alignment: Alignment.centerRight,
+                      padding: const EdgeInsets.only(right: 24),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Quitar',
+                            style: TextStyle(
+                              color: theme.colorScheme.onErrorContainer,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
+                          const SizedBox(width: 8),
+                          Icon(
+                            Icons.playlist_remove_rounded,
+                            color: theme.colorScheme.onErrorContainer,
+                          ),
+                        ],
+                      ),
+                    ),
+                    onDismissed: (_) {
+                      _removeAt(i);
+                      showSnack(
+                        context,
+                        'Quitada de "${playlist.name}"',
+                        action: SnackBarAction(
+                          label: 'Deshacer',
+                          onPressed: () => _restore(i, song),
                         ),
-                        const SizedBox(width: 8),
-                        Icon(
+                      );
+                    },
+                    child: SongTile(
+                      song: song,
+                      swipeToQueue: false,
+                      onTap: () => actions.playQueue(songs, i),
+                      leading: ArtworkImage(
+                        url: song.artworkUrl,
+                        seed: song.title,
+                        size: 48,
+                        radius: 4,
+                      ),
+                      extraActions: [
+                        SongMenuAction(
+                          'Quitar de la playlist',
                           Icons.playlist_remove_rounded,
-                          color: theme.colorScheme.onErrorContainer,
+                          () => _removeAt(i),
                         ),
                       ],
                     ),
-                  ),
-                  onDismissed: (_) {
-                    _removeAt(i);
-                    showSnack(
-                      context,
-                      'Quitada de "${playlist.name}"',
-                      action: SnackBarAction(
-                        label: 'Deshacer',
-                        onPressed: () => _restore(i, song),
-                      ),
-                    );
-                  },
-                  child: SongTile(
-                    song: song,
-                    swipeToQueue: false,
-                    onTap: () => actions.playQueue(songs, i),
-                    leading: ArtworkImage(
-                      url: song.artworkUrl,
-                      seed: song.title,
-                      size: 48,
-                      radius: 4,
-                    ),
-                    extraActions: [
-                      SongMenuAction(
-                        'Quitar de la playlist',
-                        Icons.playlist_remove_rounded,
-                        () => _removeAt(i),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
+                  );
+                },
+              ),
       ),
     );
   }

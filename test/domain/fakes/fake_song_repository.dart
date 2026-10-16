@@ -26,6 +26,17 @@ class FakeSongRepository implements ISongRepository {
   Future<Result<Song>> findById(String id) async => const Err(_notConfigured);
 
   @override
+  Future<Result<Song>> findBySource(SongSource source, String sourceId) async =>
+      const Err(_notConfigured);
+
+  @override
+  Future<Result<Song>> markDownloaded(
+    String id, {
+    required String localPath,
+    required int sizeBytes,
+  }) async => const Err(_notConfigured);
+
+  @override
   Future<Result<List<Song>>> getDownloaded() async => const Err(_notConfigured);
 
   @override

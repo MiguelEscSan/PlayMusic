@@ -10,11 +10,23 @@ abstract interface class ISongRepository {
   /// `Err(NotFoundFailure)` si no existe.
   Future<Result<Song>> findById(String id);
 
+  /// Busca por origen (`source + sourceId`), p. ej. un resultado de búsqueda
+  /// que aún no tiene id. `Err(NotFoundFailure)` si no está guardada.
+  Future<Result<Song>> findBySource(SongSource source, String sourceId);
+
   /// Canciones con archivo local, de la más reciente a la más antigua.
   Future<Result<List<Song>>> getDownloaded();
 
   /// Suma en bytes de todos los archivos descargados.
   Future<Result<int>> getDownloadedBytes();
+
+  /// Guarda el archivo descargado de la canción [id] (ruta, tamaño y fecha)
+  /// y devuelve la versión actualizada. `Err(NotFoundFailure)` si no existe.
+  Future<Result<Song>> markDownloaded(
+    String id, {
+    required String localPath,
+    required int sizeBytes,
+  });
 
   /// Canciones marcadas con "me gusta".
   Future<Result<List<Song>>> getLiked();

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/audio/audio_providers.dart';
-import '../../../core/models/song.dart';
+import '../../../core/domain/entities/song.dart';
 import '../data/lrc_parser.dart';
 import '../data/lyrics_repository.dart';
 import 'lyrics_providers.dart';

@@ -80,7 +80,9 @@ class SongDao {
     return rows.first['total']! as int;
   }
 
-  Future<SongModel> markDownloaded(
+  /// Guarda el archivo descargado de [id]. Devuelve la canción actualizada,
+  /// o null si [id] no existe.
+  Future<SongModel?> markDownloaded(
     String id, {
     required String localPath,
     required int sizeBytes,
@@ -96,7 +98,7 @@ class SongDao {
       whereArgs: [id],
     );
     _notify();
-    return (await findById(id))!;
+    return findById(id);
   }
 
   Future<void> clearDownload(String id) async {

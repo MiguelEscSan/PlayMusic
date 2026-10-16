@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 import '../../../core/audio/audio_player_service.dart';
-import '../../../core/models/song.dart';
+import '../../../core/domain/entities/song.dart';
 import 'history_dao.dart';
 
 /// Apunta en el historial cada canción que empieza a sonar.

@@ -1,11 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sponify/core/database/app_database.dart';
 import 'package:sponify/core/database/song_dao.dart';
-import 'package:sponify/core/models/song.dart';
+import 'package:sponify/core/data/models/song_model.dart';
 import 'package:sponify/features/history/data/history_dao.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
-Song _song(String id) => Song(
+SongModel _song(String id) => SongModel(
   id: '',
   title: 'T$id',
   artist: 'A',
@@ -37,7 +37,7 @@ void main() {
   tearDown(() => db.close());
 
   Future<String> saved(String id) async => (await songs.upsert(_song(id))).id;
-  List<String> titles(List<Song> s) => [for (final x in s) x.title];
+  List<String> titles(List<SongModel> s) => [for (final x in s) x.title];
 
   test('recent devuelve lo último primero y sin repetidas', () async {
     final a = await saved('a');

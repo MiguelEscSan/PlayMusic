@@ -2,7 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/audio/audio_providers.dart';
-import '../../../core/models/song.dart';
+import '../../../core/domain/entities/song.dart';
 import '../data/lyrics_repository.dart';
 
 /// Repositorio único para que la caché en memoria dure toda la sesión.

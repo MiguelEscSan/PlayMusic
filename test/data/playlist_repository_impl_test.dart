@@ -100,6 +100,26 @@ void main() {
     expect(_ok(await repo.removeSong(p.id, middle.id)), isFalse);
   });
 
+  test('removeSongAt removes the song at the given position', () async {
+    final p = _ok(await repo.create('Mix'));
+    for (final id in ['1', '2', '3']) {
+      _ok(await repo.addSong(p.id, _song(id)));
+    }
+
+    expect(_ok(await repo.removeSongAt(p.id, 1)), unit);
+    expect(_titles(_ok(await repo.findById(p.id))), ['T1', 'T3']);
+  });
+
+  test('setCover stores and clears the custom cover', () async {
+    final p = _ok(await repo.create('Mix'));
+
+    expect(_ok(await repo.setCover(p.id, '/covers/a.jpg')), unit);
+    expect(_ok(await repo.findById(p.id)).coverUrl, '/covers/a.jpg');
+
+    expect(_ok(await repo.setCover(p.id, null)), unit);
+    expect(_ok(await repo.findById(p.id)).coverUrl, isNull);
+  });
+
   test(
     'a database failure becomes Err(DatabaseFailure) and never throws',
     () async {
@@ -115,6 +135,8 @@ void main() {
         await repo.addSong(p.id, _song('1')),
         await repo.removeSong(p.id, 'x'),
         await repo.moveSong(p.id, 0, 1),
+        await repo.removeSongAt(p.id, 0),
+        await repo.setCover(p.id, '/x.jpg'),
       ];
 
       for (final result in results) {

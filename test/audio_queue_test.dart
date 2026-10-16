@@ -9,7 +9,7 @@ import 'package:just_audio/just_audio.dart';
 import 'package:sponify/core/audio/audio_player_service.dart';
 import 'package:sponify/core/audio/playback_source.dart';
 import 'package:sponify/core/audio/sponify_audio_handler.dart';
-import 'package:sponify/core/models/song.dart';
+import 'package:sponify/core/domain/entities/song.dart';
 
 /// just_audio sin plataforma: registra lo que se carga y permite simular el
 /// final de una canción.
