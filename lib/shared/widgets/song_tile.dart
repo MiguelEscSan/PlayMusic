@@ -6,7 +6,8 @@ import '../../core/domain/entities/song.dart';
 import '../../core/utils/formatters.dart';
 import '../../features/favorites/presentation/favorites_providers.dart';
 import '../../features/playlists/presentation/widgets/add_to_playlist_sheet.dart';
-import '../export/song_exporter.dart';
+import '../../core/error/failure.dart';
+import '../../core/error/result.dart';
 import '../song_actions.dart';
 import 'artwork_image.dart';
 import 'dialogs.dart';
@@ -174,13 +175,12 @@ class SongTile extends ConsumerWidget {
   }
 
   Future<void> _export(BuildContext context, SongActions actions) async {
-    String message;
-    try {
-      await actions.exportToMusic(song);
-      message = 'Guardada en Música/Koda';
-    } on SongExportException catch (e) {
-      message = e.message;
-    }
+    final message = switch (await actions.exportToMusic(song)) {
+      Ok() => 'Guardada en Música/Koda',
+      // `SongExportFailure` trae el texto para el usuario según el error.
+      Err(failure: ExportFailure(:final message)) => message,
+      Err() => 'No se pudo exportar la canción',
+    };
     if (context.mounted) showSnack(context, message);
   }
 

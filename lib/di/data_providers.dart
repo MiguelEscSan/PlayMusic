@@ -1,14 +1,20 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/data/repositories/playlist_repository_impl.dart';
+import '../core/data/repositories/settings_repository_impl.dart';
 import '../core/data/repositories/song_repository_impl.dart';
 import '../core/database/playlist_dao.dart';
 import '../core/database/song_dao.dart';
 import '../core/domain/repositories/i_playlist_repository.dart';
+import '../core/domain/repositories/i_settings_repository.dart';
 import '../core/domain/repositories/i_song_repository.dart';
 import '../core/settings/settings_dao.dart';
 import '../features/history/data/history_dao.dart';
+import '../features/history/data/history_repository_impl.dart';
+import '../features/history/domain/i_history_repository.dart';
 import '../features/search/data/search_history_dao.dart';
+import '../features/search/data/search_history_repository_impl.dart';
+import '../features/search/domain/i_search_history_repository.dart';
 
 // Regla de instancias: todo lo que crea `bootstrap()` se inyecta en `main()`
 // con `overrideWithValue` (ver `appOverrides`), así que la app entera usa
@@ -48,4 +54,16 @@ final songRepositoryProvider = Provider<ISongRepository>(
 
 final playlistRepositoryProvider = Provider<IPlaylistRepository>(
   (ref) => PlaylistRepositoryImpl(ref.watch(playlistDaoProvider)),
+);
+
+final settingsRepositoryProvider = Provider<ISettingsRepository>(
+  (ref) => SettingsRepositoryImpl(ref.watch(settingsDaoProvider)),
+);
+
+final historyRepositoryProvider = Provider<IHistoryRepository>(
+  (ref) => HistoryRepositoryImpl(ref.watch(historyDaoProvider)),
+);
+
+final searchHistoryRepositoryProvider = Provider<ISearchHistoryRepository>(
+  (ref) => SearchHistoryRepositoryImpl(ref.watch(searchHistoryDaoProvider)),
 );

@@ -7,7 +7,6 @@ import '../features/downloads/presentation/downloads_providers.dart';
 import '../features/favorites/domain/i_liked_playlist_sync.dart';
 import '../features/favorites/presentation/favorites_providers.dart';
 import '../features/playlists/presentation/playlists_providers.dart';
-import 'export/song_exporter.dart';
 
 final songActionsProvider = Provider<SongActions>(SongActions.new);
 
@@ -76,8 +75,8 @@ class SongActions {
   Future<Result<Song>> deleteDownload(Song song) =>
       _ref.read(downloadedSongsProvider.notifier).delete(song);
 
-  /// Copia el archivo descargado a la carpeta pública de Música. Lanza
-  /// [SongExportException] si no se puede.
-  Future<String> exportToMusic(Song song) =>
-      _ref.read(songExporterProvider).export(song);
+  /// Copia el archivo descargado a la carpeta pública de Música
+  /// (`ExportSongUseCase`). Un fallo llega como `Err(SongExportFailure)`.
+  Future<Result<String>> exportToMusic(Song song) =>
+      _ref.read(exportSongUseCaseProvider)(song);
 }

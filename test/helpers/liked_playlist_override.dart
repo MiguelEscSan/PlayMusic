@@ -10,6 +10,6 @@ final Override likedPlaylistFromRepositories = likedPlaylistProvider
       (ref) => LikedPlaylist(
         playlists: ref.watch(playlistRepositoryProvider),
         songs: ref.watch(songRepositoryProvider),
-        settings: ref.watch(settingsDaoProvider),
+        settings: ref.watch(settingsRepositoryProvider),
       ),
     );

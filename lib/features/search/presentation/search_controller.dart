@@ -2,10 +2,12 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../di/providers.dart';
-
 import '../../../core/domain/entities/song.dart';
-import '../data/search_source.dart';
+import '../../../core/error/failure.dart';
+import '../../../core/error/result.dart';
+import '../../../di/providers.dart';
+import '../domain/search_results_page.dart';
+import 'search_history_providers.dart';
 
 class SearchState {
   const SearchState({
@@ -22,7 +24,7 @@ class SearchState {
   final bool isLoading;
   final bool isLoadingMore;
   final String? error;
-  final Future<SearchPage> Function()? loadMore;
+  final Future<Result<SearchResultsPage>> Function()? loadMore;
 
   bool get hasMore => loadMore != null;
 }
@@ -52,18 +54,16 @@ class SongSearchController extends Notifier<SearchState> {
 
     final generation = ++_generation;
     state = SearchState(query: q, isLoading: true);
-    try {
-      final page = await ref.read(searchSourceProvider).search(q);
-      if (generation != _generation) return;
-      state = SearchState(
+    final result = await ref.read(searchSongsUseCaseProvider)(q);
+    if (generation != _generation) return;
+    state = switch (result) {
+      Ok(value: final page) => SearchState(
         query: q,
         results: page.songs,
         loadMore: page.loadMore,
-      );
-    } catch (e) {
-      if (generation != _generation) return;
-      state = SearchState(query: q, error: _describe(e));
-    }
+      ),
+      Err(:final failure) => SearchState(query: q, error: _describe(failure)),
+    };
   }
 
   Future<void> loadMore() async {
@@ -76,23 +76,23 @@ class SongSearchController extends Notifier<SearchState> {
       isLoadingMore: true,
       loadMore: more,
     );
-    try {
-      final page = await more();
-      if (generation != _generation) return;
-      final seen = state.results.toSet();
-      state = SearchState(
-        query: state.query,
-        results: [...state.results, ...page.songs.where(seen.add)],
-        loadMore: page.loadMore,
-      );
-    } catch (e) {
-      if (generation != _generation) return;
-      state = SearchState(
-        query: state.query,
-        results: state.results,
-        loadMore: more,
-        error: _describe(e),
-      );
+    final result = await more();
+    if (generation != _generation) return;
+    switch (result) {
+      case Ok(value: final page):
+        final seen = state.results.toSet();
+        state = SearchState(
+          query: state.query,
+          results: [...state.results, ...page.songs.where(seen.add)],
+          loadMore: page.loadMore,
+        );
+      case Err(:final failure):
+        state = SearchState(
+          query: state.query,
+          results: state.results,
+          loadMore: more,
+          error: _describe(failure),
+        );
     }
   }
 
@@ -102,18 +102,14 @@ class SongSearchController extends Notifier<SearchState> {
     return search(q);
   }
 
-  /// Guardar el historial nunca debe estropear la búsqueda.
+  /// Guardar el historial nunca debe estropear la búsqueda: un `Err` se
+  /// ignora.
   Future<void> _remember(String query) async {
-    try {
-      await ref.read(searchHistoryDaoProvider).record(query);
-    } catch (_) {}
+    await ref.read(recentSearchesProvider.notifier).record(query);
   }
 
-  String _describe(Object e) {
-    final text = e.toString();
-    if (text.contains('SocketException') || text.contains('ClientException')) {
-      return 'Sin conexión. Tus descargas siguen disponibles.';
-    }
-    return 'No se pudo buscar. Inténtalo de nuevo.';
-  }
+  String _describe(Failure failure) => switch (failure) {
+    NetworkFailure() => 'Sin conexión. Tus descargas siguen disponibles.',
+    _ => 'No se pudo buscar. Inténtalo de nuevo.',
+  };
 }

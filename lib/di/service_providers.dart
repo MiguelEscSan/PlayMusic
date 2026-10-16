@@ -4,16 +4,19 @@ import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
 import '../core/audio/audio_player_service.dart';
 import '../features/downloads/domain/i_download_service.dart';
+import '../features/export/data/method_channel_song_exporter.dart';
+import '../features/export/domain/i_song_exporter.dart';
 import '../features/favorites/domain/i_liked_playlist_sync.dart';
+import '../features/history/domain/history_events.dart';
 import '../features/lyrics/data/lyrics_repository.dart';
+import '../features/lyrics/domain/i_lyrics_repository.dart';
 import '../features/playlists/data/youtube_playlist_importer.dart';
 import '../features/playlists/domain/i_playlist_cover_service.dart';
 import '../features/playlists/domain/i_playlist_importer.dart';
-import '../features/search/data/search_source.dart';
-import '../features/search/data/suggestion_source.dart';
 import '../features/search/data/youtube_search_source.dart';
 import '../features/search/data/youtube_suggestion_source.dart';
-import '../shared/export/song_exporter.dart';
+import '../features/search/domain/search_source.dart';
+import '../features/search/domain/suggestion_source.dart';
 import 'data_providers.dart';
 
 /// Servicio de audio único de la app. Se crea en `bootstrap()`
@@ -60,8 +63,8 @@ final youtubePlaylistImporterProvider = Provider<IPlaylistImporter>((ref) {
 });
 
 /// Repositorio único para que la caché en memoria dure toda la sesión.
-final lyricsRepositoryProvider = Provider<LyricsRepository>(
-  (ref) => LyricsRepository(
+final lyricsRepositoryProvider = Provider<ILyricsRepository>(
+  (ref) => LyricsRepositoryImpl(
     dio: Dio(
       BaseOptions(
         connectTimeout: const Duration(seconds: 10),
@@ -84,6 +87,15 @@ final suggestionSourceProvider = Provider<SuggestionSource>((ref) {
 });
 
 /// Sobrescribible en tests.
-final songExporterProvider = Provider<SongExporter>(
+final songExporterProvider = Provider<ISongExporter>(
   (ref) => MethodChannelSongExporter(),
 );
+
+/// Avisos de cambios en el historial de escucha. Se sobrescribe en `main()`
+/// con la instancia de `bootstrap()` (la misma que usa el
+/// `HistoryRecorder`); sin override (tests) se crea una propia.
+final historyEventsProvider = Provider<HistoryEvents>((ref) {
+  final events = HistoryEvents();
+  ref.onDispose(events.dispose);
+  return events;
+});

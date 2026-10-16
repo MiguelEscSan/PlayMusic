@@ -62,6 +62,15 @@ final class PlaybackFailure extends Failure {
   const PlaybackFailure(super.message, {super.cause, super.stackTrace});
 }
 
+/// No se pudo exportar un archivo fuera de la app (p. ej. a la carpeta
+/// pública de Música).
+///
+/// No es `final`: cada exportación lo concreta con el tipo de error para
+/// que la UI elija su mensaje.
+class ExportFailure extends Failure {
+  const ExportFailure(super.message, {super.cause, super.stackTrace});
+}
+
 /// Cualquier error no previsto por los demás subtipos.
 final class UnexpectedFailure extends Failure {
   const UnexpectedFailure(super.message, {super.cause, super.stackTrace});

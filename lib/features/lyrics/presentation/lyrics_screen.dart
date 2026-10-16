@@ -4,8 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../di/providers.dart';
 import '../../../features/player/presentation/player_providers.dart';
 import '../../../core/domain/entities/song.dart';
-import '../data/lrc_parser.dart';
-import '../data/lyrics_repository.dart';
+import '../domain/lyrics.dart';
 import 'lyrics_providers.dart';
 
 /// Pantalla de letra de la canción actual. Si la canción cambia mientras

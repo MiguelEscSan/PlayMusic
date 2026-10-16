@@ -7,6 +7,7 @@ import 'package:sponify/bootstrap.dart';
 import 'package:sponify/core/audio/audio_player_service.dart';
 import 'package:sponify/core/audio/playback_source.dart';
 import 'package:sponify/core/data/repositories/playlist_repository_impl.dart';
+import 'package:sponify/core/data/repositories/settings_repository_impl.dart';
 import 'package:sponify/core/data/repositories/song_repository_impl.dart';
 import 'package:sponify/core/database/app_database.dart';
 import 'package:sponify/core/database/playlist_dao.dart';
@@ -20,6 +21,8 @@ import 'package:sponify/features/downloads/data/download_manager.dart';
 import 'package:sponify/features/favorites/data/liked_playlist.dart';
 import 'package:sponify/features/history/data/history_dao.dart';
 import 'package:sponify/features/history/data/history_recorder.dart';
+import 'package:sponify/features/history/data/history_repository_impl.dart';
+import 'package:sponify/features/history/domain/history_events.dart';
 import 'package:sponify/features/playlists/data/playlist_cover_service.dart';
 import 'package:sponify/features/search/data/search_history_dao.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -52,8 +55,11 @@ void main() {
     final songs = SongRepositoryImpl(songDao);
     final playlists = PlaylistRepositoryImpl(playlistDao);
     final settings = SettingsDao(db);
+    final settingsRepository = SettingsRepositoryImpl(settings);
     final audio = _FakeAudio();
     final historyDao = HistoryDao(db);
+    final historyRepository = HistoryRepositoryImpl(historyDao);
+    final historyEvents = HistoryEvents();
     final paths = FilePaths(tmp);
     final deps = AppDependencies(
       database: db,
@@ -64,7 +70,7 @@ void main() {
       likedPlaylist: LikedPlaylist(
         playlists: playlists,
         songs: songs,
-        settings: settings,
+        settings: settingsRepository,
       ),
       playlistCovers: PlaylistCoverService(playlists, paths.coversDir),
       audio: audio,
@@ -75,8 +81,15 @@ void main() {
         resolver: _NoNetworkResolver(),
       ),
       historyDao: historyDao,
-      historyRecorder: HistoryRecorder(audio: audio, dao: historyDao),
+      historyRepository: historyRepository,
+      historyEvents: historyEvents,
+      historyRecorder: HistoryRecorder(
+        audio: audio,
+        history: historyRepository,
+        events: historyEvents,
+      ),
       settings: settings,
+      settingsRepository: settingsRepository,
       searchHistory: SearchHistoryDao(db),
     );
     final container = ProviderContainer(overrides: appOverrides(deps));
@@ -84,7 +97,7 @@ void main() {
       container.dispose();
       await deps.historyRecorder.dispose();
       await deps.downloads.dispose();
-      await settings.dispose();
+      await historyEvents.dispose();
       await db.close();
       tmp.deleteSync(recursive: true);
     });
@@ -97,6 +110,15 @@ void main() {
       same(deps.playlistRepository),
     );
     expect(container.read(audioPlayerServiceProvider), same(deps.audio));
+    expect(
+      container.read(settingsRepositoryProvider),
+      same(deps.settingsRepository),
+    );
+    expect(
+      container.read(historyRepositoryProvider),
+      same(deps.historyRepository),
+    );
+    expect(container.read(historyEventsProvider), same(deps.historyEvents));
     expect(container.read(downloadServiceProvider), same(deps.downloads));
     expect(
       container.read(playlistCoverServiceProvider),

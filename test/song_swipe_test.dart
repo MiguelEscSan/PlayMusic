@@ -12,7 +12,7 @@ import 'package:sponify/features/downloads/presentation/downloads_providers.dart
 import 'package:sponify/features/favorites/presentation/favorites_providers.dart';
 import 'package:sponify/features/player/presentation/queue_sheet.dart';
 import 'package:sponify/features/playlists/presentation/playlist_detail_screen.dart';
-import 'package:sponify/shared/export/song_exporter.dart';
+import 'package:sponify/features/export/domain/i_song_exporter.dart';
 import 'package:sponify/shared/song_actions.dart';
 import 'package:sponify/shared/widgets/song_tile.dart';
 
@@ -42,15 +42,15 @@ class _FakeActions extends SongActions {
   }
 }
 
-class _FakeExporter implements SongExporter {
+class _FakeExporter implements ISongExporter {
   final exported = <Song>[];
-  SongExportException? error;
+  SongExportFailure? error;
 
   @override
-  Future<String> export(Song song) async {
-    if (error != null) throw error!;
+  Future<Result<String>> export(Song song) async {
+    if (error case final e?) return Err(e);
     exported.add(song);
-    return 'Music/Koda/x.m4a';
+    return const Ok('Music/Koda/x.m4a');
   }
 }
 
@@ -286,9 +286,7 @@ void main() {
     });
 
     testWidgets('si falla muestra el error en español', (tester) async {
-      exporter.error = const SongExportException(
-        SongExportError.permissionDenied,
-      );
+      exporter.error = SongExportFailure(SongExportError.permissionDenied);
       await pumpTiles(tester, [_song(0, localPath: '/data/music/id0.m4a')]);
       await openMenu(tester);
 
@@ -296,9 +294,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
-        find.text(
-          const SongExportException(SongExportError.permissionDenied).message,
-        ),
+        find.text(SongExportFailure(SongExportError.permissionDenied).message),
         findsOneWidget,
       );
       expect(find.text('Guardada en Música/Koda'), findsNothing);

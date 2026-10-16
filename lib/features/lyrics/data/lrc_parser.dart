@@ -1,23 +1,6 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart' show mergeSort;
 
-/// Una línea de letra sincronizada: [time] es el instante en que empieza.
-@immutable
-class LyricLine {
-  const LyricLine(this.time, this.text);
-
-  final Duration time;
-  final String text;
-
-  @override
-  bool operator ==(Object other) =>
-      other is LyricLine && other.time == time && other.text == text;
-
-  @override
-  int get hashCode => Object.hash(time, text);
-
-  @override
-  String toString() => 'LyricLine($time, "$text")';
-}
+import '../domain/lyrics.dart';
 
 /// Marca de tiempo LRC: `[mm:ss]`, `[mm:ss.xx]` o `[mm:ss.xxx]`.
 final _timeTag = RegExp(r'\[(\d{1,3}):(\d{1,2})(?:[.:](\d{1,3}))?\]');
@@ -92,23 +75,4 @@ Duration _toDuration(Match match) {
     millis = int.parse(fraction.padRight(3, '0'));
   }
   return Duration(minutes: minutes, seconds: seconds, milliseconds: millis);
-}
-
-/// Índice de la línea que suena en [position] (la última cuyo tiempo ya
-/// pasó), o -1 si aún no ha empezado ninguna. Búsqueda binaria: se llama
-/// varias veces por segundo.
-int currentLineIndex(List<LyricLine> lines, Duration position) {
-  var low = 0;
-  var high = lines.length - 1;
-  var found = -1;
-  while (low <= high) {
-    final mid = (low + high) >> 1;
-    if (lines[mid].time <= position) {
-      found = mid;
-      low = mid + 1;
-    } else {
-      high = mid - 1;
-    }
-  }
-  return found;
 }

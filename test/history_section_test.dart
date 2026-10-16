@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sponify/core/domain/entities/song.dart';
 import 'package:sponify/core/error/result.dart';
-import 'package:sponify/features/history/presentation/history_providers.dart';
+import 'package:sponify/di/providers.dart';
 import 'package:sponify/features/history/presentation/recent_home_section.dart';
 import 'package:sponify/shared/song_actions.dart';
+
+import 'domain/fakes/fake_feature_repositories.dart';
 
 Song _song(String id) => Song(
   id: id,
@@ -41,7 +43,9 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          recentSongsProvider.overrideWith((ref) => Stream.value(recent)),
+          historyRepositoryProvider.overrideWithValue(
+            FakeHistoryRepository(recent: recent),
+          ),
           songActionsProvider.overrideWithValue(actions),
         ],
         child: const MaterialApp(home: Scaffold(body: RecentHomeSection())),

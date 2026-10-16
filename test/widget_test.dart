@@ -21,8 +21,8 @@ import 'package:sponify/features/history/data/history_dao.dart';
 import 'package:sponify/core/database/playlist_dao.dart';
 import 'package:sponify/features/playlists/presentation/playlists_providers.dart';
 import 'package:sponify/features/search/data/search_history_dao.dart';
-import 'package:sponify/features/search/data/search_source.dart';
-import 'package:sponify/features/search/data/suggestion_source.dart';
+import 'package:sponify/features/search/domain/search_source.dart';
+import 'package:sponify/features/search/domain/suggestion_source.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import 'helpers/liked_playlist_override.dart';
@@ -210,12 +210,18 @@ void main() {
 
   testWidgets('lo escuchado aparece en Inicio', (tester) async {
     await pumpApp(tester);
+    // El DAO ya no avisa por sí solo: quien escribe (el `HistoryRecorder`
+    // en la app) lo anuncia en `HistoryEvents` y las listas se recargan.
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(MaterialApp).first),
+    );
     await tester.runAsync(() async {
       final song = await songDao.upsert(
         SongModel.fromEntity(_song('r', 'Reciente')),
       );
       await historyDao.record(song.id);
     });
+    container.read(historyEventsProvider).announce();
     await settle(tester);
     expect(find.text('Escuchado recientemente'), findsOneWidget);
     expect(find.text('Reciente'), findsOneWidget);

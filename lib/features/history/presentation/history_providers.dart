@@ -1,29 +1,53 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/domain/entities/song.dart';
+import '../../../core/error/result.dart';
 import '../../../di/providers.dart';
+import '../../../shared/no_automatic_retry.dart';
 
-/// Más escuchadas de los últimos 30 días; se vuelve a consultar con cada cambio.
-/// El historial no tiene repositorio: se mapean aquí los DTO a entidades.
-final topSongsProvider = StreamProvider<List<Song>>((ref) async* {
-  final dao = ref.watch(historyDaoProvider);
-  Future<List<Song>> load() async => [
-    for (final model in await dao.topSongs()) model.toEntity(),
-  ];
-  yield await load();
-  await for (final _ in dao.changes) {
-    yield await load();
-  }
-});
+/// Más escuchadas de los últimos 30 días.
+final topSongsProvider = AsyncNotifierProvider<TopSongsNotifier, List<Song>>(
+  TopSongsNotifier.new,
+  retry: noAutomaticRetry,
+);
 
-/// Lo escuchado recientemente; se vuelve a consultar con cada cambio.
-final recentSongsProvider = StreamProvider<List<Song>>((ref) async* {
-  final dao = ref.watch(historyDaoProvider);
-  Future<List<Song>> load() async => [
-    for (final model in await dao.recent()) model.toEntity(),
-  ];
-  yield await load();
-  await for (final _ in dao.changes) {
-    yield await load();
+/// Lo escuchado recientemente.
+final recentSongsProvider =
+    AsyncNotifierProvider<RecentSongsNotifier, List<Song>>(
+      RecentSongsNotifier.new,
+      retry: noAutomaticRetry,
+    );
+
+/// Base de las listas del historial: carga con su caso de uso y se recarga
+/// cada vez que el historial cambia (`WatchHistoryChangedUseCase`: una
+/// escucha guardada al empezar a sonar una canción, o el historial
+/// borrado con `ClearHistoryUseCase`).
+///
+/// Un `Err` al cargar se lanza como su `Failure` tipado: la UI lo recibe
+/// como `AsyncError`.
+abstract class _HistoryListNotifier extends AsyncNotifier<List<Song>> {
+  Future<Result<List<Song>>> load();
+
+  @override
+  Future<List<Song>> build() async {
+    final changes = ref
+        .watch(watchHistoryChangedUseCaseProvider)()
+        .listen((_) => ref.invalidateSelf());
+    ref.onDispose(changes.cancel);
+    return switch (await load()) {
+      Ok(:final value) => value,
+      Err(:final failure) => throw failure,
+    };
   }
-});
+}
+
+class TopSongsNotifier extends _HistoryListNotifier {
+  @override
+  Future<Result<List<Song>>> load() => ref.watch(getTopSongsUseCaseProvider)();
+}
+
+class RecentSongsNotifier extends _HistoryListNotifier {
+  @override
+  Future<Result<List<Song>>> load() =>
+      ref.watch(getRecentSongsUseCaseProvider)();
+}

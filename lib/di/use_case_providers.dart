@@ -8,8 +8,14 @@ import '../features/downloads/domain/usecases/download_song_use_case.dart';
 import '../features/downloads/domain/usecases/get_downloaded_songs_use_case.dart';
 import '../features/downloads/domain/usecases/watch_download_tasks_use_case.dart';
 import '../features/downloads/domain/usecases/watch_downloads_changed_use_case.dart';
+import '../features/export/domain/usecases/export_song_use_case.dart';
 import '../features/favorites/domain/usecases/get_liked_songs_use_case.dart';
 import '../features/favorites/domain/usecases/toggle_like_use_case.dart';
+import '../features/history/domain/usecases/clear_history_use_case.dart';
+import '../features/history/domain/usecases/get_recent_songs_use_case.dart';
+import '../features/history/domain/usecases/get_top_songs_use_case.dart';
+import '../features/history/domain/usecases/watch_history_changed_use_case.dart';
+import '../features/lyrics/domain/usecases/get_lyrics_use_case.dart';
 import '../features/player/domain/usecases/add_to_queue_use_case.dart';
 import '../features/player/domain/usecases/cycle_repeat_mode_use_case.dart';
 import '../features/player/domain/usecases/move_in_queue_use_case.dart';
@@ -40,6 +46,16 @@ import '../features/playlists/domain/usecases/remove_song_at_use_case.dart';
 import '../features/playlists/domain/usecases/rename_playlist_use_case.dart';
 import '../features/playlists/domain/usecases/restore_song_at_use_case.dart';
 import '../features/playlists/domain/usecases/set_playlist_cover_from_file_use_case.dart';
+import '../features/search/domain/usecases/clear_recent_searches_use_case.dart';
+import '../features/search/domain/usecases/get_recent_searches_use_case.dart';
+import '../features/search/domain/usecases/get_suggestions_use_case.dart';
+import '../features/search/domain/usecases/record_search_use_case.dart';
+import '../features/search/domain/usecases/remove_recent_search_use_case.dart';
+import '../features/search/domain/usecases/search_songs_use_case.dart';
+import '../features/settings/domain/usecases/get_download_only_wifi_use_case.dart';
+import '../features/settings/domain/usecases/get_radio_enabled_use_case.dart';
+import '../features/settings/domain/usecases/set_download_only_wifi_use_case.dart';
+import '../features/settings/domain/usecases/set_radio_enabled_use_case.dart';
 import 'data_providers.dart';
 import 'service_providers.dart';
 
@@ -246,4 +262,89 @@ final pausePlaybackUseCaseProvider = Provider<PausePlaybackUseCase>(
 
 final setStopAfterCurrentUseCaseProvider = Provider<SetStopAfterCurrentUseCase>(
   (ref) => SetStopAfterCurrentUseCase(ref.watch(audioPlayerServiceProvider)),
+);
+
+// ---------------------------------------------------------------------------
+// Ajustes
+// ---------------------------------------------------------------------------
+
+final getRadioEnabledUseCaseProvider = Provider<GetRadioEnabledUseCase>(
+  (ref) => GetRadioEnabledUseCase(ref.watch(settingsRepositoryProvider)),
+);
+
+final setRadioEnabledUseCaseProvider = Provider<SetRadioEnabledUseCase>(
+  (ref) => SetRadioEnabledUseCase(ref.watch(settingsRepositoryProvider)),
+);
+
+final getDownloadOnlyWifiUseCaseProvider = Provider<GetDownloadOnlyWifiUseCase>(
+  (ref) => GetDownloadOnlyWifiUseCase(ref.watch(settingsRepositoryProvider)),
+);
+
+final setDownloadOnlyWifiUseCaseProvider = Provider<SetDownloadOnlyWifiUseCase>(
+  (ref) => SetDownloadOnlyWifiUseCase(ref.watch(settingsRepositoryProvider)),
+);
+
+// ---------------------------------------------------------------------------
+// Historial de escucha
+// ---------------------------------------------------------------------------
+
+final getTopSongsUseCaseProvider = Provider<GetTopSongsUseCase>(
+  (ref) => GetTopSongsUseCase(ref.watch(historyRepositoryProvider)),
+);
+
+final getRecentSongsUseCaseProvider = Provider<GetRecentSongsUseCase>(
+  (ref) => GetRecentSongsUseCase(ref.watch(historyRepositoryProvider)),
+);
+
+final clearHistoryUseCaseProvider = Provider<ClearHistoryUseCase>(
+  (ref) => ClearHistoryUseCase(
+    ref.watch(historyRepositoryProvider),
+    ref.watch(historyEventsProvider),
+  ),
+);
+
+final watchHistoryChangedUseCaseProvider = Provider<WatchHistoryChangedUseCase>(
+  (ref) => WatchHistoryChangedUseCase(ref.watch(historyEventsProvider)),
+);
+
+// ---------------------------------------------------------------------------
+// Búsqueda
+// ---------------------------------------------------------------------------
+
+final searchSongsUseCaseProvider = Provider<SearchSongsUseCase>(
+  (ref) => SearchSongsUseCase(ref.watch(searchSourceProvider)),
+);
+
+final getSuggestionsUseCaseProvider = Provider<GetSuggestionsUseCase>(
+  (ref) => GetSuggestionsUseCase(ref.watch(suggestionSourceProvider)),
+);
+
+final getRecentSearchesUseCaseProvider = Provider<GetRecentSearchesUseCase>(
+  (ref) => GetRecentSearchesUseCase(ref.watch(searchHistoryRepositoryProvider)),
+);
+
+final recordSearchUseCaseProvider = Provider<RecordSearchUseCase>(
+  (ref) => RecordSearchUseCase(ref.watch(searchHistoryRepositoryProvider)),
+);
+
+final removeRecentSearchUseCaseProvider = Provider<RemoveRecentSearchUseCase>(
+  (ref) =>
+      RemoveRecentSearchUseCase(ref.watch(searchHistoryRepositoryProvider)),
+);
+
+final clearRecentSearchesUseCaseProvider = Provider<ClearRecentSearchesUseCase>(
+  (ref) =>
+      ClearRecentSearchesUseCase(ref.watch(searchHistoryRepositoryProvider)),
+);
+
+// ---------------------------------------------------------------------------
+// Letras y exportar
+// ---------------------------------------------------------------------------
+
+final getLyricsUseCaseProvider = Provider<GetLyricsUseCase>(
+  (ref) => GetLyricsUseCase(ref.watch(lyricsRepositoryProvider)),
+);
+
+final exportSongUseCaseProvider = Provider<ExportSongUseCase>(
+  (ref) => ExportSongUseCase(ref.watch(songExporterProvider)),
 );

@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sponify/core/audio/playback_source.dart';
 import 'package:sponify/core/data/models/song_model.dart';
+import 'package:sponify/core/data/repositories/settings_repository_impl.dart';
 import 'package:sponify/core/data/repositories/song_repository_impl.dart';
 import 'package:sponify/core/database/app_database.dart';
 import 'package:sponify/core/database/song_dao.dart';
@@ -64,7 +65,6 @@ void main() {
 
   tearDown(() async {
     await downloads.dispose();
-    await settings.dispose();
     await db.close();
     tmp.deleteSync(recursive: true);
   });
@@ -209,7 +209,7 @@ void main() {
     test('sin "solo wifi" deja descargar sin mirar la conexión', () async {
       var checked = false;
       final canDownload = downloadPolicy(
-        settings,
+        SettingsRepositoryImpl(settings),
         connectivity: () async {
           checked = true;
           return [ConnectivityResult.mobile];
@@ -223,7 +223,7 @@ void main() {
       await settings.setBool(SettingsKeys.downloadOnlyWifi, true);
       var current = [ConnectivityResult.mobile];
       final canDownload = downloadPolicy(
-        settings,
+        SettingsRepositoryImpl(settings),
         connectivity: () async => current,
       );
       expect(await canDownload(), isFalse);

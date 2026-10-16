@@ -1,7 +1,9 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sponify/core/domain/entities/song.dart';
-import 'package:sponify/shared/export/song_exporter.dart';
+import 'package:sponify/core/error/result.dart';
+import 'package:sponify/features/export/data/method_channel_song_exporter.dart';
+import 'package:sponify/features/export/domain/i_song_exporter.dart';
 
 Song _song({String? localPath, String title = 'Título', String artist = 'A'}) =>
     Song(
@@ -44,7 +46,7 @@ void main() {
       ),
     );
 
-    expect(location, 'Music/Koda/Bad Bunny - Tití.m4a');
+    expect(location, const Ok('Music/Koda/Bad Bunny - Tití.m4a'));
     expect(calls.single.method, 'exportAudio');
     expect(calls.single.arguments, {
       'path': '/data/music/id1.m4a',
@@ -74,14 +76,12 @@ void main() {
 
   test('una canción sin descargar no llama a la plataforma', () async {
     mock((_) async => 'x');
-    await expectLater(
-      exporter.export(_song()),
-      throwsA(
-        isA<SongExportException>().having(
-          (e) => e.error,
-          'error',
-          SongExportError.notDownloaded,
-        ),
+    expect(
+      (await exporter.export(_song())).failureOrNull,
+      isA<SongExportFailure>().having(
+        (e) => e.error,
+        'error',
+        SongExportError.notDownloaded,
       ),
     );
     expect(calls, isEmpty);
@@ -95,36 +95,28 @@ void main() {
     };
     for (final entry in cases.entries) {
       mock((_) async => throw PlatformException(code: entry.key));
-      await expectLater(
-        exporter.export(_song(localPath: '/m/a.m4a')),
-        throwsA(
-          isA<SongExportException>().having(
-            (e) => e.error,
-            'error',
-            entry.value,
-          ),
-        ),
+      expect(
+        (await exporter.export(_song(localPath: '/m/a.m4a'))).failureOrNull,
+        isA<SongExportFailure>().having((e) => e.error, 'error', entry.value),
       );
     }
   });
 
   test('sin implementación nativa avisa de que no es compatible', () async {
     // Sin handler el canal lanza MissingPluginException.
-    await expectLater(
-      exporter.export(_song(localPath: '/m/a.m4a')),
-      throwsA(
-        isA<SongExportException>().having(
-          (e) => e.error,
-          'error',
-          SongExportError.unsupported,
-        ),
+    expect(
+      (await exporter.export(_song(localPath: '/m/a.m4a'))).failureOrNull,
+      isA<SongExportFailure>().having(
+        (e) => e.error,
+        'error',
+        SongExportError.unsupported,
       ),
     );
   });
 
   test('todos los errores tienen mensaje en español', () {
     for (final error in SongExportError.values) {
-      expect(SongExportException(error).message, isNotEmpty);
+      expect(SongExportFailure(error).message, isNotEmpty);
     }
   });
 }

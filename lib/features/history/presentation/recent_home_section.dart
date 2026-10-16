@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/domain/entities/song.dart';
 import '../../../di/providers.dart';
 import '../../../shared/song_actions.dart';
+import '../../../shared/widgets/dialogs.dart';
 import '../../../shared/widgets/song_tile.dart';
 import '../../home/home_sections.dart';
 import 'history_providers.dart';
@@ -48,7 +49,12 @@ class RecentHomeSection extends ConsumerWidget {
                 ),
               ),
               TextButton(
-                onPressed: () => ref.read(historyDaoProvider).clear(),
+                onPressed: () async {
+                  final result = await ref.read(clearHistoryUseCaseProvider)();
+                  if (result.isErr && context.mounted) {
+                    showSnack(context, 'No se pudo borrar el historial');
+                  }
+                },
                 child: const Text('Borrar'),
               ),
             ],

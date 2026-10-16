@@ -1,10 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sponify/core/data/repositories/playlist_repository_impl.dart';
+import 'package:sponify/core/data/repositories/settings_repository_impl.dart';
 import 'package:sponify/core/data/repositories/song_repository_impl.dart';
 import 'package:sponify/core/database/app_database.dart';
 import 'package:sponify/core/database/song_dao.dart';
 import 'package:sponify/core/domain/entities/song.dart';
+import 'package:sponify/core/error/failure.dart';
 import 'package:sponify/core/error/result.dart';
 import 'package:sponify/core/settings/settings_dao.dart';
 import 'package:sponify/di/providers.dart';
@@ -13,6 +15,7 @@ import 'package:sponify/core/database/playlist_dao.dart';
 import 'package:sponify/shared/song_actions.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
+import 'domain/fakes/fake_feature_repositories.dart';
 import 'domain/fakes/fake_playlist_repository.dart';
 import 'domain/fakes/fake_song_repository.dart';
 import 'helpers/liked_playlist_override.dart';
@@ -54,7 +57,7 @@ void main() {
     liked = LikedPlaylist(
       playlists: playlists,
       songs: songs,
-      settings: settings,
+      settings: SettingsRepositoryImpl(settings),
     );
   });
 
@@ -134,12 +137,27 @@ void main() {
     final failing = LikedPlaylist(
       playlists: FakePlaylistRepository(),
       songs: FakeSongRepository(),
-      settings: settings,
+      settings: SettingsRepositoryImpl(settings),
     );
 
     expect((await failing.ensure()).isErr, isTrue);
     expect((await failing.sync(_song('1'))).isErr, isTrue);
   });
+
+  test(
+    'si no se pueden leer los ajustes devuelve Err sin crear nada',
+    () async {
+      const failure = DatabaseFailure('disk full');
+      final failing = LikedPlaylist(
+        playlists: playlists,
+        songs: songs,
+        settings: FakeSettingsRepository()..failure = failure,
+      );
+
+      expect(await failing.ensure(), const Err<String>(failure));
+      expect(_ok(await playlists.getAll()), isEmpty);
+    },
+  );
 
   test(
     'si el relleno inicial falla, el siguiente ensure() lo completa',
@@ -152,7 +170,7 @@ void main() {
       final flaky = LikedPlaylist(
         playlists: flakyRepo,
         songs: songs,
-        settings: settings,
+        settings: SettingsRepositoryImpl(settings),
       );
 
       expect((await flaky.ensure()).isErr, isTrue);

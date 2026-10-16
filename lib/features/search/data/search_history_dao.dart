@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:sqflite/sqflite.dart';
 
 import '../../../core/database/app_database.dart';
@@ -19,10 +17,6 @@ class SearchHistoryDao {
 
   /// Búsquedas que se conservan como máximo.
   final int maxEntries;
-
-  final _changes = StreamController<void>.broadcast();
-
-  Stream<void> get changes => _changes.stream;
 
   /// Apunta [query] (sin espacios sobrantes) como la búsqueda más reciente.
   /// Si ya existía con otras mayúsculas se sustituye por la nueva forma.
@@ -47,7 +41,6 @@ class SearchHistoryDao {
         [maxEntries],
       );
     });
-    _notify();
   }
 
   /// Búsquedas recientes, la última primero.
@@ -62,15 +55,9 @@ class SearchHistoryDao {
 
   Future<void> remove(String query) async {
     await _db.delete('search_history', where: 'query = ?', whereArgs: [query]);
-    _notify();
   }
 
   Future<void> clear() async {
     await _db.delete('search_history');
-    _notify();
-  }
-
-  void _notify() {
-    if (!_changes.isClosed) _changes.add(null);
   }
 }

@@ -7,10 +7,12 @@ import 'core/audio/playback_source_resolver_impl.dart';
 import 'core/audio/audio_player_service.dart';
 import 'core/audio/stream_url_provider.dart';
 import 'core/data/repositories/playlist_repository_impl.dart';
+import 'core/data/repositories/settings_repository_impl.dart';
 import 'core/data/repositories/song_repository_impl.dart';
 import 'core/database/app_database.dart';
 import 'core/database/song_dao.dart';
 import 'core/domain/repositories/i_playlist_repository.dart';
+import 'core/domain/repositories/i_settings_repository.dart';
 import 'core/domain/repositories/i_song_repository.dart';
 import 'core/error/result.dart';
 import 'core/settings/settings_dao.dart';
@@ -20,9 +22,13 @@ import 'features/downloads/data/local_file_missing_handler.dart';
 import 'features/favorites/data/liked_playlist.dart';
 import 'features/history/data/history_dao.dart';
 import 'features/history/data/history_recorder.dart';
+import 'features/history/data/history_repository_impl.dart';
+import 'features/history/domain/history_events.dart';
+import 'features/history/domain/i_history_repository.dart';
 import 'features/playlists/data/playlist_cover_service.dart';
 import 'core/database/playlist_dao.dart';
-import 'features/radio/radio_service.dart';
+import 'features/radio/data/youtube_related_songs.dart';
+import 'features/radio/domain/radio_service.dart';
 import 'features/search/data/search_history_dao.dart';
 import 'features/settings/data/download_policy.dart';
 
@@ -39,8 +45,11 @@ class AppDependencies {
     required this.audio,
     required this.downloads,
     required this.historyDao,
+    required this.historyRepository,
+    required this.historyEvents,
     required this.historyRecorder,
     required this.settings,
+    required this.settingsRepository,
     required this.searchHistory,
   });
 
@@ -57,8 +66,14 @@ class AppDependencies {
   final AudioPlayerService audio;
   final DownloadManager downloads;
   final HistoryDao historyDao;
+  final IHistoryRepository historyRepository;
+
+  /// Única instancia: la que anuncia el `HistoryRecorder` y escuchan las
+  /// listas de Inicio.
+  final HistoryEvents historyEvents;
   final HistoryRecorder historyRecorder;
   final SettingsDao settings;
+  final ISettingsRepository settingsRepository;
   final SearchHistoryDao searchHistory;
 }
 
@@ -89,12 +104,13 @@ Future<AppDependencies> bootstrap() async {
 
   final audio = await initAudio(resolver);
   final settings = SettingsDao(database);
+  final settingsRepository = SettingsRepositoryImpl(settings);
 
   // Radio automática: al acabarse la cola sigue con canciones relacionadas.
-  audio.onQueueEnded = RadioService.youtube(
-    YoutubeExplode(),
+  audio.onQueueEnded = RadioService(
+    fetchRelated: youtubeRelatedSongs(YoutubeExplode()),
     songRepository: songRepository,
-    settings: settings,
+    settings: settingsRepository,
   ).nextFor;
 
   final downloads = DownloadManager(
@@ -109,7 +125,7 @@ Future<AppDependencies> bootstrap() async {
     resolver: resolver,
     onStorageChanged: audio.onSongStorageChanged,
     // Ajuste "Descargar solo con wifi".
-    canDownload: downloadPolicy(settings),
+    canDownload: downloadPolicy(settingsRepository),
   );
   onLocalFileMissing.manager = downloads;
 
@@ -119,7 +135,7 @@ Future<AppDependencies> bootstrap() async {
   final likedPlaylist = LikedPlaylist(
     playlists: playlistRepository,
     songs: songRepository,
-    settings: settings,
+    settings: settingsRepository,
   );
   final liked = await songRepository.getLiked();
   if (liked case Ok(value: final songs) when songs.isNotEmpty) {
@@ -133,6 +149,8 @@ Future<AppDependencies> bootstrap() async {
 
   // El historial escucha al reproductor desde el arranque.
   final historyDao = HistoryDao(database);
+  final historyRepository = HistoryRepositoryImpl(historyDao);
+  final historyEvents = HistoryEvents();
 
   return AppDependencies(
     database: database,
@@ -145,8 +163,15 @@ Future<AppDependencies> bootstrap() async {
     audio: audio,
     downloads: downloads,
     historyDao: historyDao,
-    historyRecorder: HistoryRecorder(audio: audio, dao: historyDao),
+    historyRepository: historyRepository,
+    historyEvents: historyEvents,
+    historyRecorder: HistoryRecorder(
+      audio: audio,
+      history: historyRepository,
+      events: historyEvents,
+    ),
     settings: settings,
+    settingsRepository: settingsRepository,
     searchHistory: SearchHistoryDao(database),
   );
 }

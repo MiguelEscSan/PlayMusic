@@ -1,10 +1,10 @@
 import '../../../core/domain/entities/playlist.dart';
 import '../../../core/domain/entities/song.dart';
 import '../../../core/domain/repositories/i_playlist_repository.dart';
+import '../../../core/domain/repositories/i_settings_repository.dart';
 import '../../../core/domain/repositories/i_song_repository.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/error/result.dart';
-import '../../../core/settings/settings_dao.dart';
 import '../domain/i_liked_playlist_sync.dart';
 
 /// Mantiene la playlist "Me encanta" igual que los "me gusta".
@@ -25,7 +25,7 @@ class LikedPlaylist implements ILikedPlaylistSync {
 
   final IPlaylistRepository _playlists;
   final ISongRepository _songs;
-  final SettingsDao _settings;
+  final ISettingsRepository _settings;
 
   // Serializa las operaciones: dos "me gusta" seguidos no deben crear dos
   // playlists.
@@ -42,7 +42,13 @@ class LikedPlaylist implements ILikedPlaylistSync {
   Future<Result<String>> ensure() => _locked(_ensure);
 
   Future<Result<String>> _ensure() async {
-    final id = await _settings.get(SettingsKeys.likedPlaylistId);
+    final String? id;
+    switch (await _settings.getLikedPlaylistId()) {
+      case Ok(:final value):
+        id = value;
+      case Err(:final failure):
+        return Err(failure);
+    }
     if (id != null) {
       switch (await _playlists.findById(id)) {
         case Ok():
@@ -73,7 +79,13 @@ class LikedPlaylist implements ILikedPlaylistSync {
       await _playlists.delete(playlist.id);
       return Err(failure);
     }
-    await _settings.set(SettingsKeys.likedPlaylistId, playlist.id);
+    if (await _settings.setLikedPlaylistId(playlist.id) case Err(
+      :final failure,
+    )) {
+      // Sin id guardado no quedaría enlazada: se descarta igual que arriba.
+      await _playlists.delete(playlist.id);
+      return Err(failure);
+    }
     return Ok(playlist.id);
   }
 

@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:sqflite/sqflite.dart';
 
 import '../../../core/database/app_database.dart';
@@ -22,10 +20,6 @@ class HistoryDao {
   /// Escuchas que se conservan como máximo.
   final int maxEntries;
 
-  final _changes = StreamController<void>.broadcast();
-
-  Stream<void> get changes => _changes.stream;
-
   /// Apunta una escucha de [songId] ahora y recorta el historial.
   Future<void> record(String songId) async {
     await _db.transaction((txn) async {
@@ -40,7 +34,6 @@ class HistoryDao {
         [maxEntries],
       );
     });
-    _notify();
   }
 
   /// Canciones distintas, la escuchada más recientemente primero.
@@ -75,10 +68,5 @@ class HistoryDao {
 
   Future<void> clear() async {
     await _db.delete('play_history');
-    _notify();
-  }
-
-  void _notify() {
-    if (!_changes.isClosed) _changes.add(null);
   }
 }

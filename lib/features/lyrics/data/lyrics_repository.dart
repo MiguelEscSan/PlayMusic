@@ -1,39 +1,17 @@
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 
 import '../../../core/domain/entities/song.dart';
+import '../../../core/error/failure.dart';
+import '../../../core/error/result.dart';
+import '../domain/i_lyrics_repository.dart';
+import '../domain/lyrics.dart';
 import 'lrc_parser.dart';
 
-/// Resultado de buscar la letra de una canción.
-@immutable
-sealed class Lyrics {
-  const Lyrics();
-}
-
-/// Letra con marcas de tiempo (karaoke).
-class SyncedLyrics extends Lyrics {
-  const SyncedLyrics(this.lines);
-  final List<LyricLine> lines;
-}
-
-/// Letra sin sincronizar.
-class PlainLyrics extends Lyrics {
-  const PlainLyrics(this.text);
-  final String text;
-}
-
-class InstrumentalLyrics extends Lyrics {
-  const InstrumentalLyrics();
-}
-
-class LyricsNotFound extends Lyrics {
-  const LyricsNotFound();
-}
-
-/// Fallo al consultar el servicio (red, timeout, error 5xx…). No se cachea:
-/// la UI ofrece "Reintentar".
-class LyricsLoadException implements Exception {
-  const LyricsLoadException(this.message);
+/// Fallo al consultar el servicio (red, timeout, error 5xx…). Solo vive
+/// dentro de la capa de datos: [LyricsRepositoryImpl.getLyrics] lo
+/// devuelve como `Err(NetworkFailure)`.
+class _LyricsLoadException implements Exception {
+  const _LyricsLoadException(this.message);
   final String message;
 
   @override
@@ -44,9 +22,10 @@ class LyricsLoadException implements Exception {
 ///
 /// Estrategia: `/api/get` con título, artista y duración exactos; si da 404,
 /// `/api/search` y nos quedamos con el resultado de duración más cercana
-/// (±5 s). Los resultados se cachean en memoria por canción.
-class LyricsRepository {
-  LyricsRepository({required this.dio});
+/// (±5 s). Los resultados se cachean en memoria por canción; los fallos no
+/// (la UI ofrece "Reintentar").
+class LyricsRepositoryImpl implements ILyricsRepository {
+  LyricsRepositoryImpl({required this.dio});
 
   static const _baseUrl = 'https://lrclib.net/api';
   static const _userAgent =
@@ -58,14 +37,21 @@ class LyricsRepository {
   final Dio dio;
   final _cache = <String, Lyrics>{};
 
-  Future<Lyrics> getLyrics(Song song) async {
+  @override
+  Future<Result<Lyrics>> getLyrics(Song song) async {
     final key = '${song.source.name}:${song.sourceId}';
     final cached = _cache[key];
-    if (cached != null) return cached;
+    if (cached != null) return Ok(cached);
 
-    final lyrics = await _fetch(song);
-    _cache[key] = lyrics;
-    return lyrics;
+    try {
+      final lyrics = await _fetch(song);
+      _cache[key] = lyrics;
+      return Ok(lyrics);
+    } on _LyricsLoadException catch (e, st) {
+      return Err(NetworkFailure(e.message, cause: e, stackTrace: st));
+    } on Exception catch (e, st) {
+      return Err(UnexpectedFailure(e.toString(), cause: e, stackTrace: st));
+    }
   }
 
   Future<Lyrics> _fetch(Song song) async {
@@ -116,11 +102,11 @@ class LyricsRepository {
       );
       if (response.statusCode == 404) return null;
       if (response.statusCode != 200) {
-        throw LyricsLoadException('HTTP ${response.statusCode}');
+        throw _LyricsLoadException('HTTP ${response.statusCode}');
       }
       return response.data;
     } on DioException catch (e) {
-      throw LyricsLoadException(e.message ?? e.type.name);
+      throw _LyricsLoadException(e.message ?? e.type.name);
     }
   }
 

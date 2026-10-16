@@ -78,7 +78,6 @@ void main() {
 
   tearDown(() async {
     await downloads.dispose();
-    await settings.dispose();
     await db.close();
     tmp.deleteSync(recursive: true);
   });

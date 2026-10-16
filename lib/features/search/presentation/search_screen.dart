@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../di/providers.dart';
 import '../../../shared/song_actions.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/song_tile.dart';
@@ -182,7 +181,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
   /// "Búsquedas recientes": tocar repite la búsqueda; la X la quita.
   List<Widget> _recentSlivers(BuildContext context, List<String> recents) {
-    final dao = ref.read(searchHistoryDaoProvider);
+    final history = ref.read(recentSearchesProvider.notifier);
     return [
       SliverToBoxAdapter(
         child: Padding(
@@ -196,7 +195,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 ),
               ),
               TextButton(
-                onPressed: dao.clear,
+                onPressed: history.clear,
                 child: const Text('Borrar todo'),
               ),
             ],
@@ -211,7 +210,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           trailing: IconButton(
             tooltip: 'Quitar',
             icon: const Icon(Icons.close_rounded),
-            onPressed: () => dao.remove(recents[i]),
+            onPressed: () => history.remove(recents[i]),
           ),
           onTap: () => _submit(recents[i]),
         ),

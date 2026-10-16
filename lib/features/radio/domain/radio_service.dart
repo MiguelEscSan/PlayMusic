@@ -1,16 +1,18 @@
-import 'package:youtube_explode_dart/youtube_explode_dart.dart';
+import 'package:sponify/core/domain/entities/song.dart';
+import 'package:sponify/core/domain/repositories/i_settings_repository.dart';
+import 'package:sponify/core/domain/repositories/i_song_repository.dart';
+import 'package:sponify/core/error/result.dart';
 
-import '../../core/domain/entities/song.dart';
-import '../../core/domain/repositories/i_song_repository.dart';
-import '../../core/error/result.dart';
-import '../../core/settings/settings_dao.dart';
-import '../search/data/youtube_search_source.dart';
-
-/// Busca canciones relacionadas con [seed] (sin guardar todavía).
+/// Busca canciones relacionadas con [seed] (sin guardar todavía). Puede
+/// lanzar si falla la red. La versión real (YouTube) vive en
+/// `radio/data/youtube_related_songs.dart`.
 typedef RelatedSongsFetcher = Future<List<Song>> Function(Song seed);
 
 /// Radio automática: cuando la cola termina, propone canciones
 /// relacionadas con la última para seguir sonando.
+///
+/// No tiene botón: `bootstrap()` lo engancha a `onQueueEnded` del
+/// reproductor.
 class RadioService {
   RadioService({
     required this.fetchRelated,
@@ -18,36 +20,23 @@ class RadioService {
     required this.settings,
   });
 
-  /// Versión real: relacionadas de YouTube (solo metadatos, sin streams).
-  RadioService.youtube(
-    YoutubeExplode yt, {
-    required ISongRepository songRepository,
-    required SettingsDao settings,
-  }) : this(
-         fetchRelated: (seed) => _youtubeRelated(yt, seed),
-         songRepository: songRepository,
-         settings: settings,
-       );
-
   /// Máximo de canciones que se añaden cada vez que se acaba la cola.
   static const maxSongs = 10;
 
   final RelatedSongsFetcher fetchRelated;
   final ISongRepository songRepository;
-  final SettingsDao settings;
+  final ISettingsRepository settings;
 
   /// Canciones para continuar tras [queue]; vacío si no hay radio.
-  /// Nunca lanza: un fallo (incluido un `Err` al guardar) no debe romper la
-  /// reproducción.
+  /// Nunca lanza: un fallo (incluido un `Err` al leer el ajuste o al
+  /// guardar) no debe romper la reproducción.
   Future<List<Song>> nextFor(List<Song> queue) async {
     try {
       if (queue.isEmpty) return const [];
       final seed = queue.last;
       if (seed.source != SongSource.youtube) return const [];
-      final enabled = await settings.getBool(
-        SettingsKeys.radioEnabled,
-        fallback: true,
-      );
+      // Desactivada, o sin poder leer el ajuste: no se añade nada.
+      final enabled = (await settings.getRadioEnabled()).valueOrNull ?? false;
       if (!enabled) return const [];
 
       final seen = {for (final s in queue) _key(s)};
@@ -71,17 +60,4 @@ class RadioService {
   }
 
   static String _key(Song s) => '${s.source.name}:${s.sourceId}';
-
-  static Future<List<Song>> _youtubeRelated(
-    YoutubeExplode yt,
-    Song seed,
-  ) async {
-    final video = await yt.videos.get(seed.sourceId);
-    final related = await yt.videos.getRelatedVideos(video);
-    if (related == null) return const [];
-    return related
-        .map(YoutubeSearchSource.songFromVideo)
-        .whereType<Song>()
-        .toList();
-  }
 }

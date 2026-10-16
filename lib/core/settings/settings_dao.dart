@@ -1,11 +1,10 @@
-import 'dart:async';
-
 import 'package:sqflite/sqflite.dart';
 
 import '../database/app_database.dart';
 
-/// Claves de los ajustes. Centralizadas aquí para que la pantalla de
-/// Ajustes y cada funcionalidad usen exactamente la misma.
+/// Claves de los ajustes. Solo las usa la capa de datos
+/// (`SettingsRepositoryImpl`): el resto de la app lee los ajustes con
+/// métodos tipados de `ISettingsRepository`.
 abstract final class SettingsKeys {
   /// Radio automática al terminar la cola (por defecto activada).
   static const radioEnabled = 'radio.enabled';
@@ -22,9 +21,6 @@ class SettingsDao {
   SettingsDao(AppDatabase database) : _db = database.db;
 
   final Database _db;
-  final _changes = StreamController<void>.broadcast();
-
-  Stream<void> get changes => _changes.stream;
 
   Future<String?> get(String key) async {
     final rows = await _db.query(
@@ -41,7 +37,6 @@ class SettingsDao {
       'key': key,
       'value': value,
     }, conflictAlgorithm: ConflictAlgorithm.replace);
-    if (!_changes.isClosed) _changes.add(null);
   }
 
   Future<bool> getBool(String key, {required bool fallback}) async =>
@@ -52,6 +47,4 @@ class SettingsDao {
       };
 
   Future<void> setBool(String key, bool value) => set(key, '$value');
-
-  Future<void> dispose() => _changes.close();
 }

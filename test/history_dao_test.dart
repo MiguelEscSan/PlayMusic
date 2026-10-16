@@ -67,18 +67,9 @@ void main() {
     expect(titles(await small.recent()), ['T5', 'T4', 'T3']);
   });
 
-  test('record notifica cambios', () async {
-    final id = await saved('a');
-    final notified = dao.changes.first;
-    await dao.record(id);
-    await notified;
-  });
-
-  test('clear vacía el historial y notifica', () async {
+  test('clear vacía el historial', () async {
     await dao.record(await saved('a'));
-    final notified = dao.changes.first;
     await dao.clear();
-    await notified;
     expect(await dao.recent(), isEmpty);
   });
 
