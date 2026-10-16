@@ -1,16 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
-import '../data/suggestion_source.dart';
-import '../data/youtube_suggestion_source.dart';
-
-final suggestionSourceProvider = Provider<SuggestionSource>((ref) {
-  final yt = YoutubeExplode();
-  ref.onDispose(yt.close);
-  return YoutubeSuggestionSource(yt);
-});
+import '../../../di/providers.dart';
 
 final searchSuggestionsProvider =
     NotifierProvider<SearchSuggestionsController, List<String>>(

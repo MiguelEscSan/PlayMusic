@@ -9,7 +9,7 @@ import 'package:sponify/core/audio/playback_source.dart';
 import 'package:sponify/core/data/repositories/song_repository_impl.dart';
 import 'package:sponify/core/database/app_database.dart';
 import 'package:sponify/core/database/song_dao.dart';
-import 'package:sponify/core/di/repository_providers.dart';
+import 'package:sponify/di/providers.dart';
 import 'package:sponify/core/domain/entities/song.dart';
 import 'package:sponify/core/error/result.dart';
 import 'package:sponify/core/storage/file_paths.dart';

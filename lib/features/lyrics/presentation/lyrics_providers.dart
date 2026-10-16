@@ -1,21 +1,9 @@
-import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/audio/audio_providers.dart';
+import '../../../di/providers.dart';
+import '../../player/presentation/player_providers.dart';
 import '../../../core/domain/entities/song.dart';
 import '../data/lyrics_repository.dart';
-
-/// Repositorio único para que la caché en memoria dure toda la sesión.
-final lyricsRepositoryProvider = Provider<LyricsRepository>(
-  (ref) => LyricsRepository(
-    dio: Dio(
-      BaseOptions(
-        connectTimeout: const Duration(seconds: 10),
-        receiveTimeout: const Duration(seconds: 15),
-      ),
-    ),
-  ),
-);
 
 /// Canción que suena ahora (solo cambia cuando cambia la canción, no en
 /// cada evento del reproductor).

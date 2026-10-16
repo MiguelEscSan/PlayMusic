@@ -1,10 +1,10 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:uuid/uuid.dart';
 
-import '../../../core/database/app_database.dart';
-import '../../../core/database/song_dao.dart';
-import '../../../core/data/models/playlist_model.dart';
-import '../../../core/data/models/song_model.dart';
+import 'app_database.dart';
+import 'song_dao.dart';
+import '../data/models/playlist_model.dart';
+import '../data/models/song_model.dart';
 
 /// Tablas `playlists` + `playlist_songs`.
 ///

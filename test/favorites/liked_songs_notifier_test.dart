@@ -9,20 +9,20 @@ import 'package:sponify/core/data/repositories/playlist_repository_impl.dart';
 import 'package:sponify/core/data/repositories/song_repository_impl.dart';
 import 'package:sponify/core/database/app_database.dart';
 import 'package:sponify/core/database/song_dao.dart';
-import 'package:sponify/core/di/repository_providers.dart';
+import 'package:sponify/di/providers.dart';
 import 'package:sponify/core/domain/entities/song.dart';
 import 'package:sponify/core/error/result.dart';
 import 'package:sponify/core/settings/settings_dao.dart';
-import 'package:sponify/core/settings/settings_providers.dart';
 import 'package:sponify/core/storage/file_paths.dart';
 import 'package:sponify/features/downloads/data/download_manager.dart';
 import 'package:sponify/features/downloads/presentation/downloads_providers.dart';
 import 'package:sponify/features/favorites/presentation/favorites_providers.dart';
-import 'package:sponify/features/playlists/data/playlist_dao.dart';
+import 'package:sponify/core/database/playlist_dao.dart';
 import 'package:sponify/shared/song_actions.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import '../domain/fakes/fake_song_repository.dart';
+import '../helpers/liked_playlist_override.dart';
 
 class _FakeResolver implements PlaybackSourceResolver {
   @override
@@ -81,6 +81,7 @@ void main() {
           PlaylistRepositoryImpl(PlaylistDao(db, songDao)),
         ),
         settingsDaoProvider.overrideWithValue(SettingsDao(db)),
+        likedPlaylistFromRepositories,
         downloadedKeysProvider.overrideWithValue(const {}),
       ],
     );

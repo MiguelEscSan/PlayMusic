@@ -1,10 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/di/repository_providers.dart';
+import '../../../di/providers.dart';
+import '../../../shared/no_automatic_retry.dart';
 import '../../../core/domain/entities/song.dart';
 import '../../../core/error/result.dart';
 import '../../downloads/data/download_manager.dart';
-import '../../downloads/presentation/downloads_providers.dart';
 
 /// Canciones con "me gusta", la última marcada primero.
 final likedSongsProvider =

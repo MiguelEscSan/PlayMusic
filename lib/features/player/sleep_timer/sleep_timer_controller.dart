@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/audio/audio_player_service.dart';
-import '../../../core/audio/audio_providers.dart';
+import '../../../di/providers.dart';
 
 /// Estado del temporizador de apagado.
 sealed class SleepTimerState {

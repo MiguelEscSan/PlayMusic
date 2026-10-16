@@ -7,16 +7,15 @@ import 'package:sponify/core/database/song_dao.dart';
 import 'package:sponify/core/domain/entities/song.dart';
 import 'package:sponify/core/error/result.dart';
 import 'package:sponify/core/settings/settings_dao.dart';
-import 'package:sponify/core/settings/settings_providers.dart';
-import 'package:sponify/features/downloads/presentation/downloads_providers.dart';
+import 'package:sponify/di/providers.dart';
 import 'package:sponify/features/favorites/data/liked_playlist.dart';
-import 'package:sponify/features/playlists/data/playlist_dao.dart';
-import 'package:sponify/features/playlists/presentation/playlists_providers.dart';
+import 'package:sponify/core/database/playlist_dao.dart';
 import 'package:sponify/shared/song_actions.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import 'domain/fakes/fake_playlist_repository.dart';
 import 'domain/fakes/fake_song_repository.dart';
+import 'helpers/liked_playlist_override.dart';
 
 Song _song(String id) => Song(
   id: '',
@@ -173,6 +172,7 @@ void main() {
         songDaoProvider.overrideWithValue(songDao),
         playlistDaoProvider.overrideWithValue(playlistDao),
         settingsDaoProvider.overrideWithValue(settings),
+        likedPlaylistFromRepositories,
       ],
     );
     addTearDown(container.dispose);

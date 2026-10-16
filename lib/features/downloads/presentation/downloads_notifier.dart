@@ -1,10 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/di/repository_providers.dart';
+import '../../../di/providers.dart';
+import '../../../shared/no_automatic_retry.dart';
 import '../../../core/domain/entities/song.dart';
 import '../../../core/error/result.dart';
 import '../data/download_manager.dart';
-import 'downloads_providers.dart';
 
 /// Canciones descargadas, las más recientes primero.
 final downloadedSongsProvider =

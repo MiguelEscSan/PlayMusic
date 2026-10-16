@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../core/audio/audio_providers.dart';
-import '../core/di/repository_providers.dart';
+import '../di/providers.dart';
 import '../core/domain/entities/song.dart';
 import '../core/error/result.dart';
 import '../features/downloads/presentation/downloads_providers.dart';

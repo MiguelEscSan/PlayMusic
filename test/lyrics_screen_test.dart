@@ -4,11 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sponify/core/audio/audio_player_service.dart';
-import 'package:sponify/core/audio/audio_providers.dart';
+import 'package:sponify/di/providers.dart';
+import 'package:sponify/features/player/presentation/player_providers.dart';
 import 'package:sponify/core/domain/entities/song.dart';
 import 'package:sponify/features/lyrics/data/lrc_parser.dart';
 import 'package:sponify/features/lyrics/data/lyrics_repository.dart';
-import 'package:sponify/features/lyrics/presentation/lyrics_providers.dart';
 import 'package:sponify/features/lyrics/presentation/lyrics_screen.dart';
 
 /// Repositorio falso: cada llamada consume la siguiente respuesta preparada.

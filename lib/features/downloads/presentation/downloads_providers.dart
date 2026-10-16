@@ -1,23 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/database/song_dao.dart';
 import '../../../core/domain/entities/song.dart';
+import '../../../di/providers.dart';
 import '../data/download_manager.dart';
 import '../domain/download_task.dart';
 import 'downloads_notifier.dart';
 
 export 'downloads_notifier.dart';
-
-/// Se sobrescriben en `main()` con las instancias de `bootstrap()`. Solo lo
-/// usa `songRepositoryProvider`: la UI pasa por los notifiers.
-final songDaoProvider = Provider<SongDao>(
-  (ref) => throw UnimplementedError('songDaoProvider se define en main()'),
-);
-
-final downloadManagerProvider = Provider<DownloadManager>(
-  (ref) =>
-      throw UnimplementedError('downloadManagerProvider se define en main()'),
-);
 
 /// Todas las descargas activas o recientes.
 final downloadTasksProvider = StreamProvider<Map<String, DownloadTask>>(

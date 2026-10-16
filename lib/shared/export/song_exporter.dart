@@ -1,5 +1,4 @@
 import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/domain/entities/song.dart';
 
@@ -10,11 +9,6 @@ abstract interface class SongExporter {
   /// Lanza [SongExportException] si no se puede exportar.
   Future<String> export(Song song);
 }
-
-/// Sobrescribible en tests.
-final songExporterProvider = Provider<SongExporter>(
-  (ref) => MethodChannelSongExporter(),
-);
 
 enum SongExportError {
   notDownloaded,

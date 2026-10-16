@@ -1,18 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:youtube_explode_dart/youtube_explode_dart.dart';
+
+import '../../../di/providers.dart';
 
 import '../../../core/domain/entities/song.dart';
 import '../data/search_source.dart';
-import '../data/youtube_search_source.dart';
-import 'search_history_providers.dart';
-
-final searchSourceProvider = Provider<SearchSource>((ref) {
-  final yt = YoutubeExplode();
-  ref.onDispose(yt.close);
-  return YoutubeSearchSource(yt);
-});
 
 class SearchState {
   const SearchState({

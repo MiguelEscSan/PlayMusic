@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/audio/audio_player_service.dart';
-import '../../../core/audio/audio_providers.dart';
+import '../../../di/providers.dart';
+import 'player_providers.dart';
 import '../../../core/domain/entities/song.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../shared/widgets/artwork_image.dart';

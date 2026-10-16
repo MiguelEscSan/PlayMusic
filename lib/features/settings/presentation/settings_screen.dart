@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/settings/settings_dao.dart';
-import '../../../core/settings/settings_providers.dart';
+import '../../../di/providers.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../shared/widgets/dialogs.dart';
 import '../../downloads/presentation/downloads_providers.dart';
-import '../../history/presentation/history_providers.dart';
 import 'settings_providers.dart';
 
 /// Ajustes de la app: radio automática, descargas (solo wifi, espacio

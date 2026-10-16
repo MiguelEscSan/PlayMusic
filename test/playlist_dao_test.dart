@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sponify/core/database/app_database.dart';
 import 'package:sponify/core/database/song_dao.dart';
 import 'package:sponify/core/data/models/song_model.dart';
-import 'package:sponify/features/playlists/data/playlist_dao.dart';
+import 'package:sponify/core/database/playlist_dao.dart';
 import 'package:sponify/features/search/data/youtube_search_source.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 

@@ -7,7 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sponify/app.dart';
 import 'package:sponify/core/audio/audio_player_service.dart';
-import 'package:sponify/core/audio/audio_providers.dart';
+import 'package:sponify/di/providers.dart';
 import 'package:sponify/core/audio/playback_source.dart';
 import 'package:sponify/core/data/models/song_model.dart';
 import 'package:sponify/core/data/repositories/song_repository_impl.dart';
@@ -15,21 +15,17 @@ import 'package:sponify/core/database/app_database.dart';
 import 'package:sponify/core/database/song_dao.dart';
 import 'package:sponify/core/domain/entities/song.dart';
 import 'package:sponify/core/settings/settings_dao.dart';
-import 'package:sponify/core/settings/settings_providers.dart';
 import 'package:sponify/core/storage/file_paths.dart';
 import 'package:sponify/features/downloads/data/download_manager.dart';
-import 'package:sponify/features/downloads/presentation/downloads_providers.dart';
 import 'package:sponify/features/history/data/history_dao.dart';
-import 'package:sponify/features/history/presentation/history_providers.dart';
-import 'package:sponify/features/playlists/data/playlist_dao.dart';
+import 'package:sponify/core/database/playlist_dao.dart';
 import 'package:sponify/features/playlists/presentation/playlists_providers.dart';
 import 'package:sponify/features/search/data/search_history_dao.dart';
 import 'package:sponify/features/search/data/search_source.dart';
 import 'package:sponify/features/search/data/suggestion_source.dart';
-import 'package:sponify/features/search/presentation/search_controller.dart';
-import 'package:sponify/features/search/presentation/search_history_providers.dart';
-import 'package:sponify/features/search/presentation/search_suggestions_controller.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+
+import 'helpers/liked_playlist_override.dart';
 
 Song _song(String id, String title) => Song(
   id: '',
@@ -147,6 +143,7 @@ void main() {
           downloadManagerProvider.overrideWithValue(downloads),
           historyDaoProvider.overrideWithValue(historyDao),
           settingsDaoProvider.overrideWithValue(SettingsDao(db)),
+          likedPlaylistFromRepositories,
           searchSourceProvider.overrideWithValue(search),
           searchHistoryDaoProvider.overrideWithValue(SearchHistoryDao(db)),
           suggestionSourceProvider.overrideWithValue(_NoSuggestions()),

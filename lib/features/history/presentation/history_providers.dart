@@ -1,12 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/domain/entities/song.dart';
-import '../data/history_dao.dart';
-
-/// Se sobrescribe en `main()` con la instancia de `bootstrap()`.
-final historyDaoProvider = Provider<HistoryDao>(
-  (ref) => throw UnimplementedError('historyDaoProvider se define en main()'),
-);
+import '../../../di/providers.dart';
 
 /// Más escuchadas de los últimos 30 días; se vuelve a consultar con cada cambio.
 /// El historial no tiene repositorio: se mapean aquí los DTO a entidades.

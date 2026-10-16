@@ -6,7 +6,7 @@ import 'package:sponify/core/domain/entities/song.dart' as domain;
 import 'package:sponify/core/domain/repositories/i_playlist_repository.dart';
 import 'package:sponify/core/error/failure.dart';
 import 'package:sponify/core/error/result.dart';
-import 'package:sponify/features/playlists/data/playlist_dao.dart';
+import 'package:sponify/core/database/playlist_dao.dart';
 
 /// [IPlaylistRepository] sobre [PlaylistDao]: traduce entre las entidades de
 /// dominio y [PlaylistModel]/[SongModel], y convierte toda excepción en un

@@ -6,13 +6,13 @@ import 'package:sponify/core/data/repositories/playlist_repository_impl.dart';
 import 'package:sponify/core/data/repositories/song_repository_impl.dart';
 import 'package:sponify/core/database/app_database.dart';
 import 'package:sponify/core/database/song_dao.dart';
-import 'package:sponify/core/di/repository_providers.dart';
+import 'package:sponify/di/providers.dart';
 import 'package:sponify/core/domain/entities/playlist.dart';
 import 'package:sponify/core/domain/entities/song.dart';
 import 'package:sponify/core/error/failure.dart';
 import 'package:sponify/core/error/result.dart';
 import 'package:sponify/features/downloads/presentation/downloads_providers.dart';
-import 'package:sponify/features/playlists/data/playlist_dao.dart';
+import 'package:sponify/core/database/playlist_dao.dart';
 import 'package:sponify/features/playlists/presentation/playlists_providers.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 

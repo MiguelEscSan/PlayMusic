@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/di/repository_providers.dart';
+import '../../../di/providers.dart';
+import '../../../shared/no_automatic_retry.dart';
 import '../../../core/domain/entities/playlist.dart';
 import '../../../core/domain/entities/song.dart';
 import '../../../core/domain/repositories/i_playlist_repository.dart';

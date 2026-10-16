@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/settings/settings_dao.dart';
-import '../../../core/settings/settings_providers.dart';
+import '../../../di/providers.dart';
 import '../../downloads/presentation/downloads_providers.dart';
 
 /// Un ajuste booleano que se vuelve a leer con cada cambio en `settings`.

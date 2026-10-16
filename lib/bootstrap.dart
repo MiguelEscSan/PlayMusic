@@ -4,12 +4,14 @@ import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
 import 'core/audio/audio_bootstrap.dart';
 import 'core/audio/playback_source_resolver_impl.dart';
-import 'core/audio/sponify_audio_handler.dart';
+import 'core/audio/audio_player_service.dart';
 import 'core/audio/stream_url_provider.dart';
 import 'core/data/repositories/playlist_repository_impl.dart';
 import 'core/data/repositories/song_repository_impl.dart';
 import 'core/database/app_database.dart';
 import 'core/database/song_dao.dart';
+import 'core/domain/repositories/i_playlist_repository.dart';
+import 'core/domain/repositories/i_song_repository.dart';
 import 'core/error/result.dart';
 import 'core/settings/settings_dao.dart';
 import 'core/storage/file_paths.dart';
@@ -19,7 +21,7 @@ import 'features/favorites/data/liked_playlist.dart';
 import 'features/history/data/history_dao.dart';
 import 'features/history/data/history_recorder.dart';
 import 'features/playlists/data/playlist_cover_service.dart';
-import 'features/playlists/data/playlist_dao.dart';
+import 'core/database/playlist_dao.dart';
 import 'features/radio/radio_service.dart';
 import 'features/search/data/search_history_dao.dart';
 import 'features/settings/data/download_policy.dart';
@@ -30,6 +32,9 @@ class AppDependencies {
     required this.database,
     required this.songDao,
     required this.playlistDao,
+    required this.songRepository,
+    required this.playlistRepository,
+    required this.likedPlaylist,
     required this.playlistCovers,
     required this.audio,
     required this.downloads,
@@ -42,8 +47,14 @@ class AppDependencies {
   final AppDatabase database;
   final SongDao songDao;
   final PlaylistDao playlistDao;
+  final ISongRepository songRepository;
+  final IPlaylistRepository playlistRepository;
+
+  /// Única instancia: la misma que prepara "Me encanta" al arrancar y la que
+  /// usa la app, para que compartan su cerrojo.
+  final LikedPlaylist likedPlaylist;
   final PlaylistCoverService playlistCovers;
-  final SponifyAudioHandler audio;
+  final AudioPlayerService audio;
   final DownloadManager downloads;
   final HistoryDao historyDao;
   final HistoryRecorder historyRecorder;
@@ -55,9 +66,9 @@ Future<AppDependencies> bootstrap() async {
   final database = await AppDatabase.open();
   final songDao = SongDao(database);
   final playlistDao = PlaylistDao(database, songDao);
-  // Los servicios dependen de las interfaces; los DAOs siguen en
-  // [AppDependencies] porque los providers de los repositorios se derivan
-  // de ellos.
+  // Los servicios dependen de las interfaces. DAOs y repositorios van a
+  // [AppDependencies] y `main()` los inyecta en los providers: una sola
+  // instancia de cada uno para el arranque y la app.
   final songRepository = SongRepositoryImpl(songDao);
   final playlistRepository = PlaylistRepositoryImpl(playlistDao);
   final paths = await FilePaths.create();
@@ -105,13 +116,14 @@ Future<AppDependencies> bootstrap() async {
   // Los "me gusta" de antes de existir "Me encanta" pasan a la playlist.
   // Si falla no se bloquea el arranque: la playlist a medias se descarta y
   // se vuelve a crear y rellenar en el siguiente arranque o "me gusta".
+  final likedPlaylist = LikedPlaylist(
+    playlists: playlistRepository,
+    songs: songRepository,
+    settings: settings,
+  );
   final liked = await songRepository.getLiked();
   if (liked case Ok(value: final songs) when songs.isNotEmpty) {
-    final ensured = await LikedPlaylist(
-      playlists: playlistRepository,
-      songs: songRepository,
-      settings: settings,
-    ).ensure();
+    final ensured = await likedPlaylist.ensure();
     if (ensured case Err(:final failure)) {
       debugPrint('No se pudo preparar "Me encanta": $failure');
     }
@@ -126,6 +138,9 @@ Future<AppDependencies> bootstrap() async {
     database: database,
     songDao: songDao,
     playlistDao: playlistDao,
+    songRepository: songRepository,
+    playlistRepository: playlistRepository,
+    likedPlaylist: likedPlaylist,
     playlistCovers: PlaylistCoverService(playlistRepository, paths.coversDir),
     audio: audio,
     downloads: downloads,
