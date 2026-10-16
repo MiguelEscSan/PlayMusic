@@ -13,8 +13,8 @@ import '../../../core/error/result.dart';
 /// copia lleva un nombre nuevo para que la caché de imágenes no muestre la
 /// anterior, y el archivo viejo se borra al cambiarla o quitarla.
 ///
-/// Un fallo del repositorio se devuelve como `Err` (no se lanza) y deja el
-/// archivo anterior en su sitio.
+/// Un fallo del repositorio se devuelve como `Err` (no se lanza), deja el
+/// archivo anterior en su sitio y descarta la copia nueva.
 class PlaylistCoverService {
   PlaylistCoverService(this._playlists, this._dir);
 
@@ -28,7 +28,13 @@ class PlaylistCoverService {
     final target = p.join(_dir.path, '$playlistId-$stamp$extension');
     await File(sourcePath).copy(target);
 
-    return _replace(playlistId, () => _playlists.setCover(playlistId, target));
+    final result = await _replace(
+      playlistId,
+      () => _playlists.setCover(playlistId, target),
+    );
+    // La copia nueva no llegó a guardarse: se borra (nunca el original).
+    if (result.isErr) await _deleteOwned(target);
+    return result;
   }
 
   Future<Result<Unit>> clear(String playlistId) =>

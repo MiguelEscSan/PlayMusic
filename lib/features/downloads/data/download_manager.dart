@@ -244,6 +244,9 @@ class DownloadManager {
       );
       switch (marked) {
         case Err(:final failure):
+          // Sin registro en la BD el archivo quedaría huérfano: se borra y
+          // el reintento descarga de nuevo.
+          await _deleteIfExists(File(finalPath));
           _set(key, _failed(key, failure.message));
         case Ok(value: final updated):
           _set(

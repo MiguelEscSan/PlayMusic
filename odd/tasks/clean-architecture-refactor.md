@@ -45,9 +45,9 @@ Slice 2b:
 
 ### Phase 3 — Presentation (pending user go-ahead)
 - [ ] F1 (review 2b) `playlist_detail_screen.dart` swallows Err from removeSongAt/addSong/moveSong (optimistic UI desync) — resolve via notifier + error state (P3.2/P3.3)
-- [ ] F2 (review 2b) `DownloadManager`: markDownloaded Err leaves the renamed file on disk untracked — delete it on Err + test
-- [ ] F3 (review 2b) `PlaylistCoverService.setFromFile`: copied cover leaks when findById/setCover returns Err — delete it on Err + test
-- [ ] F4 (review 2b) `LikedPlaylist._ensure`: playlist id persisted before backfill; getLiked/addSong Err leaves "Me encanta" permanently incomplete — persist id after backfill + test
+- [x] F2 (review 2b) `DownloadManager`: markDownloaded Err leaves the renamed file on disk untracked — delete it on Err + test
+- [x] F3 (review 2b) `PlaylistCoverService.setFromFile`: copied cover leaks when findById/setCover returns Err — delete it on Err + test
+- [x] F4 (review 2b) `LikedPlaylist._ensure`: playlist id persisted before backfill; getLiked/addSong Err leaves "Me encanta" permanently incomplete — persist id after backfill + test
 - [ ] F5 (review 2b, suggestion) `SongActions.toggleLike`: Err after like already changed is ambiguous — document or return partial result
 - [ ] P2.2 (moved) Remove `StreamController` from DAOs; reactivity owned by notifiers
 - [ ] P3.1 Notifiers for playlists, playlist detail, favorites, downloads
@@ -70,3 +70,4 @@ Slice 2b:
 - 2026-10-17: Slice 2b done (delegated writer, interrupted by machine shutdown; parent reconciled the working tree). Services depend on ISongRepository/IPlaylistRepository + domain Song; DI in lib/core/di/repository_providers.dart; SongActions.toggleLike uses ToggleFavoriteUseCase; StreamProviders fetch via repositories and surface Err as AsyncError via transitional unwrapOrThrow; legacy shims and test/models_test.dart removed. Interfaces gained findBySource, markDownloaded, setCover. Verification (parent): flutter analyze 31 = baseline; full suite +259/-3 (same 3 known pre-existing failures); focused data/domain/download/liked tests +74 after dart format. test/history_dao_test.dart: only import + 2 type lines committed; user reflow left unstaged.
 - Next: Phase 3 (P2.2 stream removal + notifiers), pending user go-ahead.
 - 2026-10-17: Slice 2b commit 8f6cf46. Full-range candidate (main..HEAD, 3727 lines) stopped with lens_context_budget_exceeded (no authority created); reduced to slice 2b only (base d559ebc, 1421 lines): consent granted, 1 lens (review-reliability), APPROVED, acknowledged (lineage review-848903210a6720eb, authority burned). Reviewed boundary advances to 8f6cf46. 4 WARNING + 1 SUGGESTION informational findings recorded as F1-F5 in Phase 3.
+- 2026-10-17: Slice 3a (F2-F4) done (delegated writer). RED/GREEN observed per bug: F2 file left on disk after markDownloaded Err -> deleted; F3 copied cover leaked on Err -> deleted via _deleteOwned; F4 id persisted before backfill -> persisted after, created playlist deleted on backfill Err (residual: if that delete fails an unlinked playlist remains). Parent re-ran the 3 test files: +25. Full suite +262/-3 (known failures). analyze 31 = baseline.

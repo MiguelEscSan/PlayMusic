@@ -93,8 +93,8 @@ Future<AppDependencies> bootstrap() async {
   );
 
   // Los "me gusta" de antes de existir "Me encanta" pasan a la playlist.
-  // Si falla no se bloquea el arranque: se reintenta con el siguiente
-  // "me gusta".
+  // Si falla no se bloquea el arranque: la playlist a medias se descarta y
+  // se vuelve a crear y rellenar en el siguiente arranque o "me gusta".
   final liked = await songRepository.getLiked();
   if (liked case Ok(value: final songs) when songs.isNotEmpty) {
     final ensured = await LikedPlaylist(

@@ -10,6 +10,9 @@ import 'package:sponify/core/data/repositories/song_repository_impl.dart';
 import 'package:sponify/core/database/app_database.dart';
 import 'package:sponify/core/database/song_dao.dart';
 import 'package:sponify/core/domain/entities/song.dart';
+import 'package:sponify/core/domain/repositories/i_song_repository.dart';
+import 'package:sponify/core/error/failure.dart';
+import 'package:sponify/core/error/result.dart';
 import 'package:sponify/core/storage/file_paths.dart';
 import 'package:sponify/features/downloads/data/download_manager.dart';
 import 'package:sponify/features/downloads/domain/download_task.dart';
@@ -69,6 +72,47 @@ class _FakeResolver implements PlaybackSourceResolver {
       Uri.parse('https://cdn.example/${song.sourceId}?mime=audio%2Fmp4'),
     );
   }
+}
+
+/// Repositorio real salvo [markDownloaded], que siempre falla.
+class _MarkDownloadedFails implements ISongRepository {
+  _MarkDownloadedFails(this._inner);
+
+  final ISongRepository _inner;
+
+  @override
+  Future<Result<Song>> markDownloaded(
+    String id, {
+    required String localPath,
+    required int sizeBytes,
+  }) async => const Err(UnexpectedFailure('disco lleno'));
+
+  @override
+  Future<Result<Song>> save(Song song) => _inner.save(song);
+
+  @override
+  Future<Result<Song>> findById(String id) => _inner.findById(id);
+
+  @override
+  Future<Result<Song>> findBySource(SongSource source, String sourceId) =>
+      _inner.findBySource(source, sourceId);
+
+  @override
+  Future<Result<List<Song>>> getDownloaded() => _inner.getDownloaded();
+
+  @override
+  Future<Result<int>> getDownloadedBytes() => _inner.getDownloadedBytes();
+
+  @override
+  Future<Result<List<Song>>> getLiked() => _inner.getLiked();
+
+  @override
+  Future<Result<Unit>> setLiked(String songId, {required bool liked}) =>
+      _inner.setLiked(songId, liked: liked);
+
+  @override
+  Future<Result<Unit>> clearDownload(String songId) =>
+      _inner.clearDownload(songId);
 }
 
 Song _song(String sourceId) => Song(
@@ -239,6 +283,32 @@ void main() {
 
     expect((await failing.delete(song)).isErr, isTrue);
     expect((await failing.deleteAll()).isErr, isTrue);
+  });
+
+  test('si la BD no registra el archivo, se borra del disco', () async {
+    final failing = DownloadManager(
+      dio: Dio()..httpClientAdapter = server,
+      songRepository: _MarkDownloadedFails(SongRepositoryImpl(dao)),
+      paths: FilePaths(tmp),
+      resolver: resolver,
+      chunkSize: 10000,
+    );
+    addTearDown(failing.dispose);
+    final song = _song('untracked');
+
+    final failed = failing
+        .watch(song)
+        .firstWhere((t) => t?.status == DownloadStatus.failed);
+    await failing.download(song);
+    final task = (await failed)!;
+
+    expect(task.error, 'disco lleno');
+    expect(
+      tmp.listSync().map((e) => e.path),
+      isEmpty,
+      reason: 'ni el archivo final ni el .part quedan sin registrar',
+    );
+    expect(await dao.downloaded(), isEmpty);
   });
 
   group('solo con wifi (canDownload)', () {

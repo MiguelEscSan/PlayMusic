@@ -63,3 +63,65 @@ class FakePlaylistRepository implements IPlaylistRepository {
     String? description,
   }) async => const Err(_notConfigured);
 }
+
+/// Delega en un repositorio real, pero [setCover] y [addSong] devuelven un
+/// `Err` las próximas [setCoverFailures]/[addSongFailures] veces.
+class FlakyPlaylistRepository implements IPlaylistRepository {
+  FlakyPlaylistRepository(this._inner);
+
+  final IPlaylistRepository _inner;
+  int setCoverFailures = 0;
+  int addSongFailures = 0;
+
+  static const failure = UnexpectedFailure('flaky repository');
+
+  @override
+  Future<Result<Unit>> setCover(String id, String? coverUrl) async {
+    if (setCoverFailures > 0) {
+      setCoverFailures--;
+      return const Err(failure);
+    }
+    return _inner.setCover(id, coverUrl);
+  }
+
+  @override
+  Future<Result<bool>> addSong(String playlistId, Song song) async {
+    if (addSongFailures > 0) {
+      addSongFailures--;
+      return const Err(failure);
+    }
+    return _inner.addSong(playlistId, song);
+  }
+
+  @override
+  Future<Result<bool>> removeSong(String playlistId, String songId) =>
+      _inner.removeSong(playlistId, songId);
+
+  @override
+  Future<Result<Playlist>> create(String name, {String? description}) =>
+      _inner.create(name, description: description);
+
+  @override
+  Future<Result<Unit>> delete(String id) => _inner.delete(id);
+
+  @override
+  Future<Result<Playlist>> findById(String id) => _inner.findById(id);
+
+  @override
+  Future<Result<List<Playlist>>> getAll() => _inner.getAll();
+
+  @override
+  Future<Result<Unit>> removeSongAt(String playlistId, int index) =>
+      _inner.removeSongAt(playlistId, index);
+
+  @override
+  Future<Result<Unit>> moveSong(
+    String playlistId,
+    int oldIndex,
+    int newIndex,
+  ) => _inner.moveSong(playlistId, oldIndex, newIndex);
+
+  @override
+  Future<Result<Unit>> rename(String id, String name, {String? description}) =>
+      _inner.rename(id, name, description: description);
+}

@@ -142,6 +142,31 @@ void main() {
     expect((await failing.sync(_song('1'))).isErr, isTrue);
   });
 
+  test(
+    'si el relleno inicial falla, el siguiente ensure() lo completa',
+    () async {
+      for (final id in ['1', '2']) {
+        await setLiked(await save(id), true);
+        await Future<void>.delayed(const Duration(milliseconds: 5));
+      }
+      final flakyRepo = FlakyPlaylistRepository(playlists)..addSongFailures = 1;
+      final flaky = LikedPlaylist(
+        playlists: flakyRepo,
+        songs: songs,
+        settings: settings,
+      );
+
+      expect((await flaky.ensure()).isErr, isTrue);
+
+      final id = _ok(await flaky.ensure());
+      final all = _ok(await playlists.getAll());
+      expect(all, hasLength(1), reason: 'una sola "Me encanta"');
+      expect(all.single.id, id);
+      expect(titles(_ok(await playlists.findById(id)).songs), ['T1', 'T2']);
+      expect(await settings.get(SettingsKeys.likedPlaylistId), id);
+    },
+  );
+
   test('SongActions.toggleLike añade y quita de "Me encanta"', () async {
     final container = ProviderContainer(
       overrides: [

@@ -97,7 +97,33 @@ void main() {
     expect((await failing.clear('p1')).isErr, isTrue);
     expect((await failing.deletePlaylist('p1')).isErr, isTrue);
     expect(File(source).existsSync(), isTrue);
+    expect(
+      coversDir.listSync(),
+      isEmpty,
+      reason: 'la copia de una portada fallida no se queda en disco',
+    );
   });
+
+  test(
+    'si setCover falla, se borra la copia y se mantiene la anterior',
+    () async {
+      final repo = FlakyPlaylistRepository(PlaylistRepositoryImpl(dao));
+      final flaky = PlaylistCoverService(repo, coversDir);
+      final playlist = await dao.create('Mix');
+      final first = await picked('a.jpg', 'one');
+      expect((await flaky.setFromFile(playlist.id, first)).isOk, isTrue);
+      final previous = (await dao.findById(playlist.id))!.coverUrl!;
+      final source = await picked('b.jpg', 'two');
+
+      repo.setCoverFailures = 1;
+      expect((await flaky.setFromFile(playlist.id, source)).isErr, isTrue);
+
+      expect(File(source).existsSync(), isTrue, reason: 'no toca el original');
+      expect((await dao.findById(playlist.id))!.coverUrl, previous);
+      expect(File(previous).existsSync(), isTrue);
+      expect(coversDir.listSync().map((e) => e.path), [previous]);
+    },
+  );
 
   test('nunca borra archivos fuera de la carpeta de portadas', () async {
     final playlist = await dao.create('Mix');

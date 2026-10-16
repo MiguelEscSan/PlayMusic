@@ -61,8 +61,23 @@ class LikedPlaylist {
       case Err(:final failure):
         return Err(failure);
     }
-    await _settings.set(SettingsKeys.likedPlaylistId, playlist.id);
 
+    // El id se guarda solo cuando el relleno termina: si se guardara antes,
+    // un fallo aquí dejaría la playlist incompleta para siempre (el
+    // siguiente ensure() la encontraría y no volvería a rellenarla).
+    if (await _backfill(playlist.id) case Err(:final failure)) {
+      // Sin id guardado, el próximo ensure() la crea de nuevo; se borra esta
+      // para no acabar con dos "Me encanta" (si el borrado falla, queda una
+      // playlist suelta, pero nunca una "Me encanta" incompleta enlazada).
+      await _playlists.delete(playlist.id);
+      return Err(failure);
+    }
+    await _settings.set(SettingsKeys.likedPlaylistId, playlist.id);
+    return Ok(playlist.id);
+  }
+
+  /// Añade todos los "me gusta" actuales, del más antiguo al más reciente.
+  Future<Result<Unit>> _backfill(String playlistId) async {
     final List<Song> liked;
     switch (await _songs.getLiked()) {
       case Ok(:final value):
@@ -71,13 +86,11 @@ class LikedPlaylist {
         return Err(failure);
     }
     for (final song in liked.reversed) {
-      if (await _playlists.addSong(playlist.id, song) case Err(
-        :final failure,
-      )) {
+      if (await _playlists.addSong(playlistId, song) case Err(:final failure)) {
         return Err(failure);
       }
     }
-    return Ok(playlist.id);
+    return const Ok(unit);
   }
 
   /// Añade o quita [song] según su `isLiked` (ya guardada en la BD).
