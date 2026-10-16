@@ -165,6 +165,15 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  /// Como [settle], pero repite hasta que aparece [finder]: con toda la
+  /// suite en paralelo, la recarga tras una escritura puede tardar más de
+  /// una vuelta.
+  Future<void> settleUntil(WidgetTester tester, Finder finder) async {
+    for (var i = 0; i < 40 && finder.evaluate().isEmpty; i++) {
+      await settle(tester);
+    }
+  }
+
   testWidgets('la app arranca en Inicio', (tester) async {
     await pumpApp(tester);
     expect(find.widgetWithText(AppBar, 'Inicio'), findsOneWidget);
@@ -175,7 +184,9 @@ void main() {
     expect(find.text('Escuchado recientemente'), findsNothing);
   });
 
-  testWidgets('"Me gusta" en un resultado lo lleva a Inicio', (tester) async {
+  testWidgets('"Me gusta" en un resultado lo añade a "Me encanta" en Inicio', (
+    tester,
+  ) async {
     await pumpApp(tester);
     await tester.tap(find.text('Buscar'));
     await settle(tester);
@@ -191,10 +202,13 @@ void main() {
     final liked = await tester.runAsync(songDao.liked);
     expect([for (final s in liked!) s.title], ['Segunda']);
 
+    // Inicio ya no tiene sección "Te gusta": las favoritas viven en la
+    // playlist "Me encanta", que aparece entre las playlists de Inicio.
     await tester.tap(find.text('Inicio'));
-    await settle(tester);
-    expect(find.text('Te gusta'), findsOneWidget);
-    expect(find.text('Segunda'), findsOneWidget);
+    await settleUntil(tester, find.text('Me encanta'));
+    expect(find.text('Te gusta'), findsNothing);
+    expect(find.text('Me encanta'), findsOneWidget);
+    expect(find.text('1 canción'), findsOneWidget);
   });
 
   testWidgets('lo escuchado aparece en Inicio', (tester) async {
@@ -264,7 +278,7 @@ void main() {
           .read(playlistsProvider.notifier)
           .addSong(p.id, _song('x', 'Canción X'));
     });
-    await settle(tester);
+    await settleUntil(tester, find.text('Canción X'));
     expect(find.text('Canción X'), findsOneWidget);
     expect(find.text('1 canción · 3:20'), findsOneWidget);
   });
