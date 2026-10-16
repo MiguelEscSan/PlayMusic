@@ -253,12 +253,16 @@ void main() {
     expect(find.text('Para correr'), findsOneWidget);
     expect(find.text('Playlist vacía'), findsOneWidget);
 
+    // Las escrituras pasan por el notifier, que refresca lista y detalle (la
+    // BD ya no avisa de los cambios por sí sola).
+    final container = ProviderScope.containerOf(
+      tester.element(find.text('Playlist vacía')),
+    );
     await tester.runAsync(() async {
       final p = (await playlistDao.all()).single;
-      await playlistDao.addSong(
-        p.id,
-        SongModel.fromEntity(_song('x', 'Canción X')),
-      );
+      await container
+          .read(playlistsProvider.notifier)
+          .addSong(p.id, _song('x', 'Canción X'));
     });
     await settle(tester);
     expect(find.text('Canción X'), findsOneWidget);

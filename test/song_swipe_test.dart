@@ -4,18 +4,19 @@ import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sponify/core/audio/audio_player_service.dart';
 import 'package:sponify/core/audio/audio_providers.dart';
+import 'package:sponify/core/di/repository_providers.dart';
 import 'package:sponify/core/domain/entities/playlist.dart';
 import 'package:sponify/core/domain/entities/song.dart';
 import 'package:sponify/core/error/result.dart';
 import 'package:sponify/features/downloads/presentation/downloads_providers.dart';
 import 'package:sponify/features/favorites/presentation/favorites_providers.dart';
 import 'package:sponify/features/player/presentation/queue_sheet.dart';
-import 'package:sponify/features/playlists/data/playlist_dao.dart';
 import 'package:sponify/features/playlists/presentation/playlist_detail_screen.dart';
-import 'package:sponify/features/playlists/presentation/playlists_providers.dart';
 import 'package:sponify/shared/export/song_exporter.dart';
 import 'package:sponify/shared/song_actions.dart';
 import 'package:sponify/shared/widgets/song_tile.dart';
+
+import 'domain/fakes/fake_playlist_repository.dart';
 
 Song _song(int i, {String? localPath}) => Song(
   id: 'id$i',
@@ -52,15 +53,25 @@ class _FakeExporter implements SongExporter {
   }
 }
 
-class _FakePlaylistDao implements PlaylistDao {
+/// Repositorio en memoria con una sola playlist; registra los quitar.
+class _FakePlaylistRepository extends FakePlaylistRepository {
+  _FakePlaylistRepository(this.playlist);
+
+  Playlist playlist;
   final removed = <int>[];
 
   @override
-  Future<void> removeAt(String playlistId, int index) async =>
-      removed.add(index);
+  Future<Result<Playlist>> findById(String id) async => Ok(playlist);
 
   @override
-  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+  Future<Result<List<Playlist>>> getAll() async => Ok([playlist]);
+
+  @override
+  Future<Result<Unit>> removeSongAt(String playlistId, int index) async {
+    removed.add(index);
+    playlist = playlist.copyWith(songs: [...playlist.songs]..removeAt(index));
+    return const Ok(unit);
+  }
 }
 
 class _FakeAudio implements AudioPlayerService {
@@ -167,21 +178,25 @@ void main() {
     testWidgets('derecha encola sin quitar; izquierda sigue quitando', (
       tester,
     ) async {
-      final dao = _FakePlaylistDao();
+      // La cabecera (portada de 250) deja las filas fuera de los 600 px por
+      // defecto: con una pantalla más alta se pueden arrastrar las dos.
+      tester.view.physicalSize = const Size(2400, 4800);
+      addTearDown(tester.view.resetPhysicalSize);
       final songs = [_song(0), _song(1)];
-      final playlist = Playlist(
-        id: 'p1',
-        name: 'Mi lista',
-        createdAt: DateTime(2026),
-        updatedAt: DateTime(2026),
-        songs: songs,
+      final repository = _FakePlaylistRepository(
+        Playlist(
+          id: 'p1',
+          name: 'Mi lista',
+          createdAt: DateTime(2026),
+          updatedAt: DateTime(2026),
+          songs: songs,
+        ),
       );
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
             ...baseOverrides(),
-            playlistDaoProvider.overrideWithValue(dao),
-            playlistProvider.overrideWith((ref, id) => Stream.value(playlist)),
+            playlistRepositoryProvider.overrideWithValue(repository),
           ],
           child: const MaterialApp(home: PlaylistDetailScreen(id: 'p1')),
         ),
@@ -191,12 +206,12 @@ void main() {
       await tester.drag(find.text('Canción 0'), const Offset(500, 0));
       await tester.pumpAndSettle();
       expect(actions!.queued, [songs[0]]);
-      expect(dao.removed, isEmpty);
+      expect(repository.removed, isEmpty);
       expect(find.text('Canción 0'), findsOneWidget);
 
       await tester.drag(find.text('Canción 1'), const Offset(-500, 0));
       await tester.pumpAndSettle();
-      expect(dao.removed, [1]);
+      expect(repository.removed, [1]);
       expect(find.text('Canción 1'), findsNothing);
       expect(actions!.queued, [songs[0]]);
     });

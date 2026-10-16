@@ -3,14 +3,16 @@ import 'package:youtube_explode_dart/youtube_explode_dart.dart'
     show YoutubeExplode;
 
 import '../../../core/di/repository_providers.dart';
-import '../../../core/domain/entities/playlist.dart';
-import '../../../core/error/failure.dart';
-import '../../../core/error/result.dart';
+import '../../downloads/presentation/downloads_providers.dart';
 import '../data/playlist_cover_service.dart';
 import '../data/playlist_dao.dart';
 import '../data/youtube_playlist_importer.dart';
 
-/// Se sobrescribe en `main()` con la instancia de `bootstrap()`.
+export 'playlist_detail_notifier.dart';
+export 'playlists_notifier.dart';
+
+/// Se sobrescribe en `main()` con la instancia de `bootstrap()`. Solo lo usa
+/// `playlistRepositoryProvider`: la UI pasa por los notifiers.
 final playlistDaoProvider = Provider<PlaylistDao>(
   (ref) => throw UnimplementedError('playlistDaoProvider se define en main()'),
 );
@@ -21,38 +23,6 @@ final playlistCoverServiceProvider = Provider<PlaylistCoverService>(
     'playlistCoverServiceProvider se define en main()',
   ),
 );
-
-final playlistsProvider = StreamProvider<List<Playlist>>((ref) async* {
-  final dao = ref.watch(playlistDaoProvider);
-  final repository = ref.watch(playlistRepositoryProvider);
-  // Un Err se lanza como AsyncError; en la fase 3 lo tratarán los notifiers.
-  Future<List<Playlist>> load() async =>
-      unwrapOrThrow(await repository.getAll());
-  yield await load();
-  await for (final _ in dao.changes) {
-    yield await load();
-  }
-});
-
-/// Una playlist con sus canciones; null si se ha borrado.
-final playlistProvider = StreamProvider.family<Playlist?, String>((
-  ref,
-  id,
-) async* {
-  final dao = ref.watch(playlistDaoProvider);
-  final repository = ref.watch(playlistRepositoryProvider);
-  // Un Err distinto de "no existe" se lanza como AsyncError; en la fase 3 lo
-  // tratarán los notifiers.
-  Future<Playlist?> load() async => switch (await repository.findById(id)) {
-    Ok(:final value) => value,
-    Err(failure: NotFoundFailure()) => null,
-    Err(:final failure) => throw failure,
-  };
-  yield await load();
-  await for (final _ in dao.changes) {
-    yield await load();
-  }
-});
 
 /// Importador de playlists de YouTube. El cliente de YouTube se crea al
 /// importar por primera vez (construir la pantalla no toca la red) y se
@@ -67,3 +37,20 @@ final youtubePlaylistImporterProvider = Provider<YoutubePlaylistImporter>((
     () => yt ??= YoutubeExplode(),
   );
 });
+
+/// Un fallo de la BD local no es transitorio: se muestra con su botón de
+/// reintentar en vez de reintentarlo en segundo plano (y dejar la pantalla
+/// cargando mientras tanto).
+Duration? noAutomaticRetry(int retryCount, Object error) => null;
+
+/// Reconstruye el provider de [ref] cuando cambia el conjunto de canciones
+/// descargadas: una descarga que termina o se borra cambia cómo se pintan
+/// sus playlists (icono, "Descargada", contador).
+///
+/// Se observa una firma ordenada de las claves, no el `Set`: cada evento de
+/// la tabla `songs` crea un `Set` nuevo aunque el contenido sea el mismo, y
+/// eso no debe recargar las playlists.
+void rebuildOnDownloadsChange(Ref ref) =>
+    ref.watch(downloadedKeysProvider.select(_signature));
+
+String _signature(Set<String> keys) => (keys.toList()..sort()).join('\n');

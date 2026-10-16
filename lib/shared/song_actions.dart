@@ -6,6 +6,7 @@ import '../core/domain/entities/song.dart';
 import '../core/error/result.dart';
 import '../features/downloads/presentation/downloads_providers.dart';
 import '../features/favorites/presentation/favorites_providers.dart';
+import '../features/playlists/presentation/playlists_providers.dart';
 import 'export/song_exporter.dart';
 
 final songActionsProvider = Provider<SongActions>(SongActions.new);
@@ -31,7 +32,8 @@ class SongActions {
   /// Alterna "me gusta". Guarda antes la canción (los resultados de búsqueda
   /// llegan con id vacío) y decide con el estado de la BD, no con el de
   /// [song], que puede estar desfasado. También la añade o quita de la
-  /// playlist "Me encanta".
+  /// playlist "Me encanta" y recarga las playlists (también si la
+  /// sincronización devuelve `Err`: puede haber cambiado a medias).
   Future<Result<Song>> toggleLike(Song song) async {
     final Song saved;
     switch (await _persist(song)) {
@@ -48,6 +50,12 @@ class SongActions {
         return Err(failure);
     }
     final synced = await _ref.read(likedPlaylistProvider).sync(updated);
+    // "Me encanta" es una playlist normal: su lista y su detalle se recargan.
+    // No se sabe su id aquí, así que se invalida toda la familia de detalles
+    // (solo se reconstruyen los que estén abiertos).
+    _ref
+      ..invalidate(playlistsProvider)
+      ..invalidate(playlistProvider);
     return synced.map((_) => updated);
   }
 

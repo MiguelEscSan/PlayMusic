@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:sqflite/sqflite.dart';
 import 'package:uuid/uuid.dart';
 
@@ -14,20 +12,15 @@ import '../../../core/data/models/song_model.dart';
 /// reescribe el orden completo de esa playlist dentro de una transacción:
 /// es simple, siempre consistente, y una playlist personal rara vez supera
 /// unos cientos de filas.
+///
+/// Solo lee y escribe: no avisa de los cambios. Quien modifica una playlist
+/// (los notifiers de presentación) refresca lo que dependa de ella.
 class PlaylistDao {
-  PlaylistDao(AppDatabase database, this._songDao) : _db = database.db {
-    // Si cambia una canción (p. ej. termina su descarga) las playlists que
-    // la contienen también deben repintarse.
-    _songSub = _songDao.changes.listen((_) => _notify());
-  }
+  PlaylistDao(AppDatabase database, this._songDao) : _db = database.db;
 
   final Database _db;
   final SongDao _songDao;
-  late final StreamSubscription<void> _songSub;
-  final _changes = StreamController<void>.broadcast();
   static const _uuid = Uuid();
-
-  Stream<void> get changes => _changes.stream;
 
   // ---------------------------------------------------------------------------
   // Lectura
@@ -74,7 +67,6 @@ class PlaylistDao {
       updatedAt: now,
     );
     await _db.insert('playlists', playlist.toMap());
-    _notify();
     return playlist;
   }
 
@@ -89,7 +81,6 @@ class PlaylistDao {
       where: 'id = ?',
       whereArgs: [id],
     );
-    _notify();
   }
 
   /// Portada personalizada (ruta local); null vuelve a la automática.
@@ -103,26 +94,22 @@ class PlaylistDao {
       where: 'id = ?',
       whereArgs: [id],
     );
-    _notify();
   }
 
   /// Borra la playlist; las canciones y sus descargas no se tocan.
   Future<void> delete(String id) async {
     await _db.delete('playlists', where: 'id = ?', whereArgs: [id]);
-    _notify();
   }
 
   /// Añade al final. Devuelve false si la canción ya estaba.
   Future<bool> addSong(String playlistId, SongModel song) async {
     final saved = await _songDao.upsert(song);
-    final added = await _db.transaction((txn) async {
+    return _db.transaction((txn) async {
       final ids = await _songIdsOf(txn, playlistId);
       if (ids.contains(saved.id)) return false;
       await _writeOrder(txn, playlistId, [...ids, saved.id]);
       return true;
     });
-    if (added) _notify();
-    return added;
   }
 
   Future<void> removeAt(String playlistId, int index) async {
@@ -131,19 +118,16 @@ class PlaylistDao {
       ids.removeAt(index);
       await _writeOrder(txn, playlistId, ids);
     });
-    _notify();
   }
 
   /// Quita la canción con id [songId]. Devuelve false si no estaba.
   Future<bool> removeSong(String playlistId, String songId) async {
-    final removed = await _db.transaction((txn) async {
+    return _db.transaction((txn) async {
       final ids = await _songIdsOf(txn, playlistId);
       if (!ids.remove(songId)) return false;
       await _writeOrder(txn, playlistId, ids);
       return true;
     });
-    if (removed) _notify();
-    return removed;
   }
 
   /// [newIndex] es la posición final (ya corregida).
@@ -154,7 +138,6 @@ class PlaylistDao {
       ids.insert(newIndex, id);
       await _writeOrder(txn, playlistId, ids);
     });
-    _notify();
   }
 
   Future<List<String>> _songIdsOf(Transaction txn, String playlistId) async {
@@ -193,14 +176,5 @@ class PlaylistDao {
       whereArgs: [playlistId],
     );
     await batch.commit(noResult: true);
-  }
-
-  void _notify() {
-    if (!_changes.isClosed) _changes.add(null);
-  }
-
-  Future<void> dispose() async {
-    await _songSub.cancel();
-    await _changes.close();
   }
 }

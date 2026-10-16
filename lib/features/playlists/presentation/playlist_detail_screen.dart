@@ -2,17 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../../../core/di/repository_providers.dart';
 import '../../../core/domain/entities/playlist.dart';
 import '../../../core/domain/entities/song.dart';
+import '../../../core/error/failure.dart';
 import '../../../core/error/result.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../shared/song_actions.dart';
 import '../../../shared/widgets/artwork_image.dart';
 import '../../../shared/widgets/dialogs.dart';
 import '../../../shared/widgets/empty_state.dart';
+import '../../../shared/widgets/error_view.dart';
 import '../../../shared/widgets/song_tile.dart';
-import '../data/playlist_cover_service.dart';
 import 'playlists_providers.dart';
 import 'widgets/playlist_cover.dart';
 
@@ -29,18 +29,24 @@ class PlaylistDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(playlistProvider(id));
     return async.when(
+      // Al recargar (p. ej. termina una descarga) se sigue viendo la lista.
+      skipLoadingOnReload: true,
       loading: () =>
           const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (e, _) => Scaffold(body: Center(child: Text('Error: $e'))),
-      data: (playlist) => playlist == null
-          ? Scaffold(
-              appBar: AppBar(),
-              body: const EmptyState(
+      error: (e, _) => Scaffold(
+        appBar: AppBar(),
+        body: e is NotFoundFailure
+            ? const EmptyState(
                 icon: Icons.delete_outline_rounded,
                 title: 'Esta playlist ya no existe',
+              )
+            : ErrorView(
+                error: e,
+                title: 'No se pudo abrir la playlist',
+                onRetry: () => ref.invalidate(playlistProvider(id)),
               ),
-            )
-          : _PlaylistView(playlist: playlist),
+      ),
+      data: (playlist) => _PlaylistView(playlist: playlist),
     );
   }
 }
@@ -63,6 +69,9 @@ class _MenuRow extends StatelessWidget {
   );
 }
 
+/// Pinta la playlist tal y como la expone [playlistProvider]. Quitar,
+/// deshacer y el resto de acciones son métodos de los notifiers: el estado
+/// optimista y su vuelta atrás viven allí, no en el widget.
 class _PlaylistView extends ConsumerStatefulWidget {
   const _PlaylistView({required this.playlist});
 
@@ -73,48 +82,38 @@ class _PlaylistView extends ConsumerStatefulWidget {
 }
 
 class _PlaylistViewState extends ConsumerState<_PlaylistView> {
-  /// Copia local para aplicar al instante quitar/reordenar; la BD confirma
-  /// después y [didUpdateWidget] la sustituye por la versión guardada.
-  late List<Song> _songs = widget.playlist.songs;
-
-  @override
-  void didUpdateWidget(_PlaylistView old) {
-    super.didUpdateWidget(old);
-    if (!identical(old.playlist, widget.playlist)) {
-      _songs = widget.playlist.songs;
-    }
-  }
-
-  void _removeAt(int i) {
-    setState(() => _songs = [..._songs]..removeAt(i));
-    ref.read(playlistRepositoryProvider).removeSongAt(widget.playlist.id, i);
-  }
-
-  /// Deshacer un quitar: la BD añade al final y se reubica en [i].
-  Future<void> _restore(int i, Song song) async {
-    final last = _songs.length;
-    final at = i > last ? last : i;
-    setState(() {
-      final list = [..._songs];
-      list.insert(at, song);
-      _songs = list;
-    });
-    final repository = ref.read(playlistRepositoryProvider);
-    final added = await repository.addSong(widget.playlist.id, song);
-    if (added case Ok(value: true) when at != last) {
-      await repository.moveSong(widget.playlist.id, last, at);
-    }
-  }
+  /// Solo visual: entra en la clave de las filas y cambia con cada
+  /// deslizamiento. Si la BD falla y el notifier devuelve la canción antes
+  /// de que se pinte el frame sin ella, la fila vuelve como un Dismissible
+  /// nuevo (el deslizado no puede seguir en el árbol).
+  int _dismissals = 0;
 
   @override
   Widget build(BuildContext context) {
     final playlist = widget.playlist;
-    final repository = ref.read(playlistRepositoryProvider);
-    // Solo se lee al usarlo: no hace falta para pintar la pantalla.
-    PlaylistCoverService covers() => ref.read(playlistCoverServiceProvider);
+    final detail = ref.read(playlistProvider(playlist.id).notifier);
+    final playlists = ref.read(playlistsProvider.notifier);
     final actions = ref.read(songActionsProvider);
     final theme = Theme.of(context);
-    final songs = _songs;
+    final songs = playlist.songs;
+
+    /// Avisa si [result] es un `Err` y la pantalla sigue abierta.
+    void reportErr(Result<Object?> result, String message) {
+      if (result.isErr && context.mounted) showSnack(context, message);
+    }
+
+    Future<void> removeAt(int i) async =>
+        reportErr(await detail.removeSongAt(i), 'No se pudo quitar la canción');
+
+    /// Deshacer un quitar: la vuelve a poner en la posición [i].
+    Future<void> restore(int i, Song song) async {
+      // Con la pantalla cerrada ya no hay detalle que restaurar.
+      if (!context.mounted) return;
+      reportErr(
+        await detail.addSong(song, at: i),
+        'No se pudo volver a añadir la canción',
+      );
+    }
 
     Future<void> rename() async {
       final name = await showTextInputDialog(
@@ -122,7 +121,8 @@ class _PlaylistViewState extends ConsumerState<_PlaylistView> {
         title: 'Renombrar playlist',
         initialValue: playlist.name,
       );
-      if (name != null) await repository.rename(playlist.id, name);
+      if (name == null) return;
+      reportErr(await detail.rename(name), 'No se pudo renombrar la playlist');
     }
 
     Future<void> delete() async {
@@ -134,8 +134,13 @@ class _PlaylistViewState extends ConsumerState<_PlaylistView> {
             'se mantienen en Descargas.',
       );
       if (!ok) return;
-      final deleted = await covers().deletePlaylist(playlist.id);
-      if (deleted.isOk && context.mounted) Navigator.pop(context);
+      final deleted = await playlists.delete(playlist.id);
+      if (!context.mounted) return;
+      if (deleted.isOk) {
+        Navigator.pop(context);
+      } else {
+        showSnack(context, 'No se pudo borrar la playlist');
+      }
     }
 
     Future<void> changeCover() async {
@@ -145,10 +150,17 @@ class _PlaylistViewState extends ConsumerState<_PlaylistView> {
         maxHeight: 1024,
         imageQuality: 90,
       );
-      if (image != null) await covers().setFromFile(playlist.id, image.path);
+      if (image == null) return;
+      reportErr(
+        await playlists.setCoverFromFile(playlist.id, image.path),
+        'No se pudo cambiar la portada',
+      );
     }
 
-    Future<void> removeCover() => covers().clear(playlist.id);
+    Future<void> removeCover() async => reportErr(
+      await playlists.clearCover(playlist.id),
+      'No se pudo quitar la portada',
+    );
 
     final meta = [
       if (playlist.isFullyDownloaded) 'Descargada',
@@ -299,7 +311,7 @@ class _PlaylistViewState extends ConsumerState<_PlaylistView> {
                   // Un solo Dismissible para los dos sentidos: derecha encola
                   // (y la fila vuelve), izquierda quita de la playlist.
                   return Dismissible(
-                    key: ValueKey(song.id),
+                    key: ValueKey((song.id, _dismissals)),
                     background: const QueueSwipeBackground(),
                     confirmDismiss: (direction) async =>
                         direction == DismissDirection.endToStart ||
@@ -327,13 +339,16 @@ class _PlaylistViewState extends ConsumerState<_PlaylistView> {
                       ),
                     ),
                     onDismissed: (_) {
-                      _removeAt(i);
+                      // El estado optimista quita la fila en este mismo
+                      // frame; si la BD falla, vuelve y se avisa.
+                      setState(() => _dismissals++);
+                      removeAt(i);
                       showSnack(
                         context,
                         'Quitada de "${playlist.name}"',
                         action: SnackBarAction(
                           label: 'Deshacer',
-                          onPressed: () => _restore(i, song),
+                          onPressed: () => restore(i, song),
                         ),
                       );
                     },
@@ -351,7 +366,7 @@ class _PlaylistViewState extends ConsumerState<_PlaylistView> {
                         SongMenuAction(
                           'Quitar de la playlist',
                           Icons.playlist_remove_rounded,
-                          () => _removeAt(i),
+                          () => removeAt(i),
                         ),
                       ],
                     ),

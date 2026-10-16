@@ -2,12 +2,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/di/repository_providers.dart';
 import '../../../core/domain/entities/playlist.dart';
 import '../../../core/error/result.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../shared/widgets/dialogs.dart';
 import '../../../shared/widgets/empty_state.dart';
+import '../../../shared/widgets/error_view.dart';
 import '../data/youtube_playlist_importer.dart';
 import 'playlist_detail_screen.dart';
 import 'playlists_providers.dart';
@@ -27,9 +27,13 @@ class PlaylistsScreen extends ConsumerWidget {
       confirmLabel: 'Crear',
     );
     if (name == null) return;
-    final created = await ref.read(playlistRepositoryProvider).create(name);
-    if (created case Ok(value: final playlist) when context.mounted) {
-      openPlaylist(context, playlist.id);
+    final created = await ref.read(playlistsProvider.notifier).create(name);
+    if (!context.mounted) return;
+    switch (created) {
+      case Ok(value: final playlist):
+        openPlaylist(context, playlist.id);
+      case Err():
+        showSnack(context, 'No se pudo crear la playlist');
     }
   }
 
@@ -42,7 +46,7 @@ class PlaylistsScreen extends ConsumerWidget {
     );
     if (link == null || !context.mounted) return;
 
-    final importer = ref.read(youtubePlaylistImporterProvider);
+    final playlists = ref.read(playlistsProvider.notifier);
     final progress = ValueNotifier<(int, int)?>(null);
     final navigator = Navigator.of(context, rootNavigator: true);
     showDialog<void>(
@@ -55,7 +59,7 @@ class PlaylistsScreen extends ConsumerWidget {
     ImportResult? result;
     String? error;
     try {
-      switch (await importer.importFromUrl(
+      switch (await playlists.importFromYoutube(
         link,
         onProgress: (done, total) => progress.value = (done, total),
       )) {
@@ -107,8 +111,14 @@ class PlaylistsScreen extends ConsumerWidget {
         label: const Text('Nueva'),
       ),
       body: playlists.when(
+        // Al recargar (p. ej. termina una descarga) se sigue viendo la lista.
+        skipLoadingOnReload: true,
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => ErrorView(
+          error: e,
+          title: 'No se pudieron cargar las playlists',
+          onRetry: () => ref.invalidate(playlistsProvider),
+        ),
         data: (list) => list.isEmpty
             ? const EmptyState(
                 icon: Icons.queue_music_rounded,

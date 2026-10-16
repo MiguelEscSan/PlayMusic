@@ -48,7 +48,6 @@ void main() {
   });
 
   tearDown(() async {
-    await dao.dispose();
     await songDao.dispose();
     await db.close();
   });
