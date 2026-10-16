@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../shared/song_actions.dart';
+import '../../../di/providers.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/error_view.dart';
 import '../../../shared/widgets/song_tile.dart';
@@ -18,8 +18,6 @@ class LikedSongsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final actions = ref.read(songActionsProvider);
-
     return Scaffold(
       appBar: AppBar(title: const Text('Canciones que te gustan')),
       body: ref
@@ -46,7 +44,7 @@ class LikedSongsScreen extends ConsumerWidget {
                     itemCount: songs.length,
                     itemBuilder: (context, i) => SongTile(
                       song: songs[i],
-                      onTap: () => actions.playQueue(songs, i),
+                      onTap: () => ref.read(playQueueUseCaseProvider)(songs, i),
                     ),
                   ),
           ),

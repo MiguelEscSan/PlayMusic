@@ -13,10 +13,11 @@ import 'package:sponify/features/favorites/presentation/favorites_providers.dart
 import 'package:sponify/features/player/presentation/queue_sheet.dart';
 import 'package:sponify/features/playlists/presentation/playlist_detail_screen.dart';
 import 'package:sponify/features/export/domain/i_song_exporter.dart';
-import 'package:sponify/shared/song_actions.dart';
 import 'package:sponify/shared/widgets/song_tile.dart';
 
+import 'domain/fakes/fake_audio_player_service.dart';
 import 'domain/fakes/fake_playlist_repository.dart';
+import 'domain/fakes/fake_song_repository.dart';
 import 'helpers/fixed_notifiers.dart';
 
 Song _song(int i, {String? localPath}) => Song(
@@ -28,19 +29,6 @@ Song _song(int i, {String? localPath}) => Song(
   sourceId: 'yt$i',
   localPath: localPath,
 );
-
-/// Acciones falsas: registran lo que se pide sin tocar BD ni audio.
-class _FakeActions extends SongActions {
-  _FakeActions(super.ref);
-
-  final queued = <Song>[];
-
-  @override
-  Future<Result<Unit>> addToQueue(Song song) async {
-    queued.add(song);
-    return const Ok(unit);
-  }
-}
 
 class _FakeExporter implements ISongExporter {
   final exported = <Song>[];
@@ -90,16 +78,24 @@ class _FakeAudio implements AudioPlayerService {
 }
 
 void main() {
-  _FakeActions? actions;
+  late FakeAudioPlayerService player;
   late _FakeExporter exporter;
 
   setUp(() {
     exporter = _FakeExporter();
-    actions = null;
+    player = FakeAudioPlayerService();
   });
 
-  List<Override> baseOverrides({PlayerSnapshot? snapshot}) => [
-    songActionsProvider.overrideWith((ref) => actions = _FakeActions(ref)),
+  /// Encolar guarda la canción (tal cual) y la pasa al reproductor: [player]
+  /// registra cada llamada, salvo que se pase otro [audio].
+  List<Override> baseOverrides({
+    PlayerSnapshot? snapshot,
+    AudioPlayerService? audio,
+  }) => [
+    songRepositoryProvider.overrideWithValue(
+      FakeSongRepository()..saveResult = null,
+    ),
+    audioPlayerServiceProvider.overrideWithValue(audio ?? player),
     songExporterProvider.overrideWithValue(exporter),
     playerSnapshotProvider.overrideWith(
       (ref) => snapshot == null
@@ -139,7 +135,7 @@ void main() {
       await tester.drag(find.text('Canción 0'), const Offset(500, 0));
       await tester.pumpAndSettle();
 
-      expect(actions!.queued, [song]);
+      expect(player.calls, ['addToQueue(id0)']);
       expect(find.text('Añadida a la cola'), findsOneWidget);
       expect(find.text('Canción 0'), findsOneWidget);
     });
@@ -150,7 +146,7 @@ void main() {
       await tester.drag(find.text('Canción 0'), const Offset(-500, 0));
       await tester.pumpAndSettle();
 
-      expect(actions?.queued ?? const [], isEmpty);
+      expect(player.calls, isEmpty);
       expect(find.text('Añadida a la cola'), findsNothing);
     });
 
@@ -170,7 +166,7 @@ void main() {
       await tester.drag(find.text('Canción 0'), const Offset(500, 0));
       await tester.pumpAndSettle();
 
-      expect(actions?.queued ?? const [], isEmpty);
+      expect(player.calls, isEmpty);
       expect(find.byType(Dismissible), findsNothing);
     });
   });
@@ -206,7 +202,7 @@ void main() {
 
       await tester.drag(find.text('Canción 0'), const Offset(500, 0));
       await tester.pumpAndSettle();
-      expect(actions!.queued, [songs[0]]);
+      expect(player.calls, ['addToQueue(id0)']);
       expect(repository.removed, isEmpty);
       expect(find.text('Canción 0'), findsOneWidget);
 
@@ -214,7 +210,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(repository.removed, [1]);
       expect(find.text('Canción 1'), findsNothing);
-      expect(actions!.queued, [songs[0]]);
+      expect(player.calls, ['addToQueue(id0)']);
     });
   });
 
@@ -229,8 +225,8 @@ void main() {
           overrides: [
             ...baseOverrides(
               snapshot: PlayerSnapshot(queue: queue, currentSong: queue[0]),
+              audio: audio,
             ),
-            audioPlayerServiceProvider.overrideWithValue(audio),
           ],
           child: MaterialApp(
             home: Scaffold(
@@ -251,7 +247,6 @@ void main() {
       await tester.drag(find.text('Canción 1'), const Offset(500, 0));
       await tester.pumpAndSettle();
       expect(audio.added, isEmpty);
-      expect(actions?.queued ?? const [], isEmpty);
       expect(audio.removed, isEmpty);
 
       await tester.drag(find.text('Canción 1'), const Offset(-500, 0));

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/domain/entities/song.dart';
-import '../../../shared/song_actions.dart';
 import '../../../shared/widgets/dialogs.dart';
 import 'favorites_providers.dart';
 
@@ -20,7 +19,7 @@ class LikeButton extends ConsumerWidget {
       tooltip: isLiked ? 'Quitar de Me gusta' : 'Me gusta',
       iconSize: size,
       onPressed: () async {
-        final result = await ref.read(songActionsProvider).toggleLike(song);
+        final result = await ref.read(likedSongsProvider.notifier).toggle(song);
         if (result.isErr && context.mounted) {
           showSnack(context, 'No se pudo actualizar "Me gusta"');
         }

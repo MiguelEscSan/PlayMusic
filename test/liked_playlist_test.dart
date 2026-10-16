@@ -11,8 +11,8 @@ import 'package:sponify/core/error/result.dart';
 import 'package:sponify/core/settings/settings_dao.dart';
 import 'package:sponify/di/providers.dart';
 import 'package:sponify/features/favorites/data/liked_playlist.dart';
+import 'package:sponify/features/favorites/presentation/favorites_providers.dart';
 import 'package:sponify/core/database/playlist_dao.dart';
-import 'package:sponify/shared/song_actions.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import 'domain/fakes/fake_feature_repositories.dart';
@@ -184,7 +184,7 @@ void main() {
     },
   );
 
-  test('SongActions.toggleLike añade y quita de "Me encanta"', () async {
+  test('LikedSongsNotifier.toggle añade y quita de "Me encanta"', () async {
     final container = ProviderContainer(
       overrides: [
         songDaoProvider.overrideWithValue(songDao),
@@ -194,13 +194,13 @@ void main() {
       ],
     );
     addTearDown(container.dispose);
-    final actions = container.read(songActionsProvider);
+    final likedNotifier = container.read(likedSongsProvider.notifier);
 
-    final likedSong = _ok(await actions.toggleLike(_song('1')));
+    final likedSong = _ok(await likedNotifier.toggle(_song('1')));
     expect(likedSong.isLiked, isTrue);
     expect(titles(await likedSongs()), ['T1']);
 
-    final unliked = _ok(await actions.toggleLike(likedSong));
+    final unliked = _ok(await likedNotifier.toggle(likedSong));
     expect(unliked.isLiked, isFalse);
     expect(await likedSongs(), isEmpty);
   });

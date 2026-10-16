@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../di/providers.dart';
 import '../../features/player/presentation/player_providers.dart';
 import '../../core/domain/entities/song.dart';
 import '../../core/utils/formatters.dart';
@@ -8,7 +9,6 @@ import '../../features/favorites/presentation/favorites_providers.dart';
 import '../../features/playlists/presentation/widgets/add_to_playlist_sheet.dart';
 import '../../core/error/failure.dart';
 import '../../core/error/result.dart';
-import '../song_actions.dart';
 import 'artwork_image.dart';
 import 'dialogs.dart';
 import 'download_button.dart';
@@ -42,10 +42,10 @@ class QueueSwipeBackground extends StatelessWidget {
 /// y devuelve `false` para que la fila vuelva a su sitio.
 Future<bool> queueOnSwipe(
   BuildContext context,
-  SongActions actions,
+  WidgetRef ref,
   Song song,
 ) async {
-  final result = await actions.addToQueue(song);
+  final result = await ref.read(addToQueueUseCaseProvider)(song);
   if (result.isOk && context.mounted) showSnack(context, 'Añadida a la cola');
   return false;
 }
@@ -83,7 +83,6 @@ class SongTile extends ConsumerWidget {
     );
     final isLiked = ref.watch(isLikedProvider(song));
     final theme = Theme.of(context);
-    final actions = ref.read(songActionsProvider);
 
     final tile = ListTile(
       onTap: onTap,
@@ -122,7 +121,9 @@ class SongTile extends ConsumerWidget {
                     : Icons.favorite_border_rounded,
                 isLiked ? 'Quitar de Me gusta' : 'Me gusta',
                 () async {
-                  final result = await actions.toggleLike(song);
+                  final result = await ref
+                      .read(likedSongsProvider.notifier)
+                      .toggle(song);
                   if (result.isErr && context.mounted) {
                     showSnack(context, 'No se pudo actualizar "Me gusta"');
                   }
@@ -132,14 +133,14 @@ class SongTile extends ConsumerWidget {
                 Icons.playlist_play_rounded,
                 'Reproducir a continuación',
                 () async {
-                  final result = await actions.playNext(song);
+                  final result = await ref.read(playNextUseCaseProvider)(song);
                   if (result.isOk && context.mounted) {
                     showSnack(context, 'Sonará a continuación');
                   }
                 },
               ),
               _item(Icons.queue_music_rounded, 'Añadir a la cola', () async {
-                final result = await actions.addToQueue(song);
+                final result = await ref.read(addToQueueUseCaseProvider)(song);
                 if (result.isOk && context.mounted) {
                   showSnack(context, 'Añadida a la cola');
                 }
@@ -153,7 +154,7 @@ class SongTile extends ConsumerWidget {
                 _item(
                   Icons.save_alt_rounded,
                   'Exportar a Música',
-                  () => _export(context, actions),
+                  () => _export(context, ref),
                 ),
               for (final extra in extraActions)
                 _item(extra.icon, extra.label, extra.onSelected),
@@ -169,13 +170,15 @@ class SongTile extends ConsumerWidget {
       direction: DismissDirection.startToEnd,
       background: const QueueSwipeBackground(),
       // Nunca se descarta: la fila vuelve a su sitio tras encolar.
-      confirmDismiss: (_) => queueOnSwipe(context, actions, song),
+      confirmDismiss: (_) => queueOnSwipe(context, ref, song),
       child: tile,
     );
   }
 
-  Future<void> _export(BuildContext context, SongActions actions) async {
-    final message = switch (await actions.exportToMusic(song)) {
+  /// Copia el archivo descargado a la carpeta pública de Música
+  /// (`ExportSongUseCase`).
+  Future<void> _export(BuildContext context, WidgetRef ref) async {
+    final message = switch (await ref.read(exportSongUseCaseProvider)(song)) {
       Ok() => 'Guardada en Música/Koda',
       // `SongExportFailure` trae el texto para el usuario según el error.
       Err(failure: ExportFailure(:final message)) => message,

@@ -19,7 +19,6 @@ import 'package:sponify/features/downloads/presentation/downloads_providers.dart
 import 'package:sponify/features/favorites/domain/i_liked_playlist_sync.dart';
 import 'package:sponify/features/favorites/presentation/favorites_providers.dart';
 import 'package:sponify/core/database/playlist_dao.dart';
-import 'package:sponify/shared/song_actions.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import '../domain/fakes/fake_services.dart';
@@ -110,7 +109,7 @@ void main() {
 
   Future<List<Song>> reloaded() => container.read(likedSongsProvider.future);
 
-  SongActions actions() => container.read(songActionsProvider);
+  LikedSongsNotifier notifier() => container.read(likedSongsProvider.notifier);
 
   /// Espera a que las favoritas cumplan [test] (p. ej. tras un aviso del
   /// [DownloadManager], que llega en segundo plano).
@@ -155,15 +154,15 @@ void main() {
     });
   });
 
-  group('puente con SongActions.toggleLike', () {
+  group('toggle', () {
     test('marcar y desmarcar refresca las favoritas', () async {
       expect(await load(), isEmpty);
 
-      final liked = _ok(await actions().toggleLike(_song('x')));
+      final liked = _ok(await notifier().toggle(_song('x')));
       expect(_titles(await reloaded()), ['Canción x']);
       expect(container.read(isLikedProvider(_song('x'))), isTrue);
 
-      _ok(await actions().toggleLike(liked));
+      _ok(await notifier().toggle(liked));
       expect(await reloaded(), isEmpty);
       expect(container.read(isLikedProvider(_song('x'))), isFalse);
     });
@@ -173,7 +172,7 @@ void main() {
       final callsAfterLoad = flaky.getLikedCalls;
       flaky.setLikedFailures = 1;
 
-      final result = await actions().toggleLike(_song('x'));
+      final result = await notifier().toggle(_song('x'));
 
       expect(result.failureOrNull, same(FlakySongRepository.failure));
       expect(await reloaded(), isEmpty);
@@ -196,8 +195,8 @@ void main() {
       expect(await failingSync.read(likedSongsProvider.future), isEmpty);
 
       final result = await failingSync
-          .read(songActionsProvider)
-          .toggleLike(_song('x'));
+          .read(likedSongsProvider.notifier)
+          .toggle(_song('x'));
 
       final failure = result.failureOrNull;
       expect(failure, isA<LikedPlaylistSyncFailure>());

@@ -7,7 +7,7 @@ import '../../../core/domain/entities/song.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/error/result.dart';
 import '../../../core/utils/formatters.dart';
-import '../../../shared/song_actions.dart';
+import '../../../di/providers.dart';
 import '../../../shared/widgets/artwork_image.dart';
 import '../../../shared/widgets/dialogs.dart';
 import '../../../shared/widgets/empty_state.dart';
@@ -93,7 +93,6 @@ class _PlaylistViewState extends ConsumerState<_PlaylistView> {
     final playlist = widget.playlist;
     final detail = ref.read(playlistProvider(playlist.id).notifier);
     final playlists = ref.read(playlistsProvider.notifier);
-    final actions = ref.read(songActionsProvider);
     final theme = Theme.of(context);
     final songs = playlist.songs;
 
@@ -200,7 +199,7 @@ class _PlaylistViewState extends ConsumerState<_PlaylistView> {
                 onPressed: songs.isEmpty || playlist.isFullyDownloaded
                     ? null
                     : () async {
-                        await actions.downloadAll(songs);
+                        await ref.read(downloadAllUseCaseProvider)(songs);
                         if (context.mounted) {
                           showSnack(context, 'Descargando la playlist…');
                         }
@@ -251,7 +250,7 @@ class _PlaylistViewState extends ConsumerState<_PlaylistView> {
                 tooltip: 'Aleatorio',
                 onPressed: songs.isEmpty
                     ? null
-                    : () => actions.playShuffled(songs),
+                    : () => ref.read(playShuffledUseCaseProvider)(songs),
                 icon: Icon(
                   Icons.shuffle_rounded,
                   size: 26,
@@ -264,7 +263,7 @@ class _PlaylistViewState extends ConsumerState<_PlaylistView> {
                 iconSize: 32,
                 onPressed: songs.isEmpty
                     ? null
-                    : () => actions.playQueue(songs, 0),
+                    : () => ref.read(playQueueUseCaseProvider)(songs, 0),
                 icon: const Icon(Icons.play_arrow_rounded),
               ),
             ],
@@ -315,7 +314,7 @@ class _PlaylistViewState extends ConsumerState<_PlaylistView> {
                     background: const QueueSwipeBackground(),
                     confirmDismiss: (direction) async =>
                         direction == DismissDirection.endToStart ||
-                        await queueOnSwipe(context, actions, song),
+                        await queueOnSwipe(context, ref, song),
                     secondaryBackground: Container(
                       color: theme.colorScheme.errorContainer,
                       alignment: Alignment.centerRight,
@@ -355,7 +354,7 @@ class _PlaylistViewState extends ConsumerState<_PlaylistView> {
                     child: SongTile(
                       song: song,
                       swipeToQueue: false,
-                      onTap: () => actions.playQueue(songs, i),
+                      onTap: () => ref.read(playQueueUseCaseProvider)(songs, i),
                       leading: ArtworkImage(
                         url: song.artworkUrl,
                         seed: song.title,

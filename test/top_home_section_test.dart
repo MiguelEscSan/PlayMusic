@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sponify/core/domain/entities/song.dart';
-import 'package:sponify/core/error/result.dart';
 import 'package:sponify/di/providers.dart';
 import 'package:sponify/features/history/presentation/top_home_section.dart';
-import 'package:sponify/shared/song_actions.dart';
 
+import 'domain/fakes/fake_audio_player_service.dart';
 import 'domain/fakes/fake_feature_repositories.dart';
+import 'domain/fakes/fake_song_repository.dart';
 
 Song _song(String id) => Song(
   id: id,
@@ -18,26 +18,10 @@ Song _song(String id) => Song(
   sourceId: id,
 );
 
-/// Acciones falsas: solo recuerdan qué se pidió reproducir.
-class _FakeActions implements SongActions {
-  List<Song>? queue;
-  int? index;
-
-  @override
-  Future<Result<Unit>> playQueue(List<Song> songs, int index) async {
-    queue = songs;
-    this.index = index;
-    return const Ok(unit);
-  }
-
-  @override
-  dynamic noSuchMethod(Invocation invocation) => Future<void>.value();
-}
-
 void main() {
-  late _FakeActions actions;
+  late FakeAudioPlayerService audio;
 
-  setUp(() => actions = _FakeActions());
+  setUp(() => audio = FakeAudioPlayerService());
 
   Future<void> pump(WidgetTester tester, List<Song> top) async {
     await tester.pumpWidget(
@@ -46,7 +30,11 @@ void main() {
           historyRepositoryProvider.overrideWithValue(
             FakeHistoryRepository(top: top),
           ),
-          songActionsProvider.overrideWithValue(actions),
+          // Guardar devuelve la canción tal cual; el reproductor registra.
+          songRepositoryProvider.overrideWithValue(
+            FakeSongRepository()..saveResult = null,
+          ),
+          audioPlayerServiceProvider.overrideWithValue(audio),
         ],
         child: const MaterialApp(home: Scaffold(body: TopHomeSection())),
       ),
@@ -67,8 +55,7 @@ void main() {
     await pump(tester, top);
     await tester.tap(find.text('Reproducir'));
     await tester.pump();
-    expect(actions.queue, top);
-    expect(actions.index, 0);
+    expect(audio.calls, ['playQueue([1,2], 0)']);
   });
 
   testWidgets('sin escuchas no pinta nada', (tester) async {

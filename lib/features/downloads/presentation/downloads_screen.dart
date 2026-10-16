@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/domain/entities/song.dart';
 import '../../../core/utils/formatters.dart';
-import '../../../shared/song_actions.dart';
+import '../../../di/providers.dart';
 import '../../../shared/widgets/artwork_image.dart';
 import '../../../shared/widgets/dialogs.dart';
 import '../../../shared/widgets/empty_state.dart';
@@ -52,7 +52,6 @@ class _DownloadsView extends ConsumerWidget {
     final inProgress = tasks.values
         .where((t) => t.isActive || t.status == DownloadStatus.failed)
         .toList();
-    final actions = ref.read(songActionsProvider);
 
     Future<void> deleteAll() async {
       final ok = await showConfirmDialog(
@@ -114,7 +113,8 @@ class _DownloadsView extends ConsumerWidget {
                   for (var i = 0; i < downloaded.length; i++)
                     SongTile(
                       song: downloaded[i],
-                      onTap: () => actions.playQueue(downloaded, i),
+                      onTap: () =>
+                          ref.read(playQueueUseCaseProvider)(downloaded, i),
                     ),
                 ],
               ],
@@ -142,7 +142,6 @@ class _TaskTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final actions = ref.read(songActionsProvider);
     final failed = task.status == DownloadStatus.failed;
     final progress = task.progress;
     final scheme = Theme.of(context).colorScheme;
@@ -179,12 +178,13 @@ class _TaskTile extends ConsumerWidget {
           ? IconButton(
               tooltip: 'Reintentar',
               icon: const Icon(Icons.refresh_rounded),
-              onPressed: () => actions.download(task.song),
+              onPressed: () => ref.read(downloadSongUseCaseProvider)(task.song),
             )
           : IconButton(
               tooltip: 'Cancelar',
               icon: const Icon(Icons.close_rounded),
-              onPressed: () => actions.cancelDownload(task.song),
+              onPressed: () =>
+                  ref.read(cancelDownloadUseCaseProvider)(task.song),
             ),
     );
   }

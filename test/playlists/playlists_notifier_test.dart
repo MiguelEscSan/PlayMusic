@@ -14,11 +14,11 @@ import 'package:sponify/core/error/result.dart';
 import 'package:sponify/core/settings/settings_dao.dart';
 import 'package:sponify/features/downloads/presentation/downloads_providers.dart';
 import 'package:sponify/features/favorites/data/liked_playlist.dart';
+import 'package:sponify/features/favorites/presentation/favorites_providers.dart';
 import 'package:sponify/features/playlists/data/playlist_cover_service.dart';
 import 'package:sponify/core/database/playlist_dao.dart';
 import 'package:sponify/features/playlists/data/youtube_playlist_importer.dart';
 import 'package:sponify/features/playlists/presentation/playlists_providers.dart';
-import 'package:sponify/shared/song_actions.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import '../domain/fakes/fake_playlist_repository.dart';
@@ -246,9 +246,9 @@ void main() {
     );
     liking.listen(playlistsProvider, (_, _) {});
     expect(await liking.read(playlistsProvider.future), isEmpty);
-    final actions = liking.read(songActionsProvider);
+    final likedSongs = liking.read(likedSongsProvider.notifier);
 
-    final liked = _ok(await actions.toggleLike(_song(1)));
+    final liked = _ok(await likedSongs.toggle(_song(1)));
 
     final list = await liking.read(playlistsProvider.future);
     expect(_names(list), [LikedPlaylist.name]);
@@ -258,7 +258,7 @@ void main() {
     liking.listen(playlistProvider(likedId), (_, _) {});
     expect((await liking.read(playlistProvider(likedId).future)).length, 1);
 
-    _ok(await actions.toggleLike(liked));
+    _ok(await likedSongs.toggle(liked));
 
     expect((await liking.read(playlistProvider(likedId).future)).length, 0);
     expect((await liking.read(playlistsProvider.future)).single.length, 0);

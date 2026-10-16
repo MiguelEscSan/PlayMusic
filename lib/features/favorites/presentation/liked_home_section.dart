@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../shared/song_actions.dart';
+import '../../../di/providers.dart';
 import '../../../shared/widgets/error_view.dart';
 import '../../../shared/widgets/song_tile.dart';
 import '../../home/home_sections.dart';
@@ -41,7 +41,6 @@ class LikedHomeSection extends ConsumerWidget {
     if (songs.isEmpty) return const SizedBox.shrink();
 
     final theme = Theme.of(context);
-    final actions = ref.read(songActionsProvider);
     final shown = songs.take(_maxSongs).toList();
 
     return Column(
@@ -78,7 +77,7 @@ class LikedHomeSection extends ConsumerWidget {
           SongTile(
             song: shown[i],
             showDownloadButton: false,
-            onTap: () => actions.playQueue(songs, i),
+            onTap: () => ref.read(playQueueUseCaseProvider)(songs, i),
           ),
       ],
     );
