@@ -54,7 +54,8 @@ void main() {
     await pump(tester, [_song('1'), _song('2')]);
     expect(find.text('Escuchado recientemente'), findsOneWidget);
     expect(find.text('Canción 1'), findsOneWidget);
-    expect(find.text('Artista 2'), findsOneWidget);
+    // Cada canción es un SongTile: el subtítulo lleva artista y duración.
+    expect(find.text('Artista 2 · 0:01'), findsOneWidget);
   });
 
   testWidgets('tocar una canción reproduce la lista desde ella', (
