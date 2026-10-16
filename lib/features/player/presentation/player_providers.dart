@@ -5,10 +5,10 @@ import '../../../di/providers.dart';
 
 /// Estado del reproductor para la UI (mini-player, pantalla Now Playing).
 final playerSnapshotProvider = StreamProvider<PlayerSnapshot>(
-  (ref) => ref.watch(audioPlayerServiceProvider).snapshots,
+  (ref) => ref.watch(watchPlayerSnapshotUseCaseProvider)(),
 );
 
 /// Posición de reproducción, separada para no reconstruir toda la UI.
 final playerPositionProvider = StreamProvider<Duration>(
-  (ref) => ref.watch(audioPlayerServiceProvider).positionStream,
+  (ref) => ref.watch(watchPlayerPositionUseCaseProvider)(),
 );

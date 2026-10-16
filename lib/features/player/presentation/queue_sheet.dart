@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../di/providers.dart';
-import 'player_providers.dart';
 import '../../../core/domain/entities/song.dart';
+import '../../../core/error/result.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../di/providers.dart';
 import '../../../shared/widgets/artwork_image.dart';
+import '../../../shared/widgets/dialogs.dart';
+import 'player_providers.dart';
 
 Future<void> showQueueSheet(BuildContext context) => showModalBottomSheet<void>(
   context: context,
@@ -29,6 +31,18 @@ class _QueueSheetState extends ConsumerState<_QueueSheet> {
   List<Song>? _local;
   List<Song>? _lastRemote;
 
+  /// Lanza un cambio de la cola. Si falla, vuelve a mostrar la cola que
+  /// tiene el reproductor (deshace el cambio optimista) y avisa.
+  Future<void> _mutate(
+    Future<Result<Unit>> Function() action,
+    String errorMessage,
+  ) async {
+    final result = await action();
+    if (result.isOk || !mounted) return;
+    setState(() => _local = _lastRemote);
+    showSnack(context, errorMessage);
+  }
+
   @override
   Widget build(BuildContext context) {
     final snapshot = ref.watch(playerSnapshotProvider).value;
@@ -39,7 +53,6 @@ class _QueueSheetState extends ConsumerState<_QueueSheet> {
     }
     final queue = _local!;
     final currentSong = snapshot?.currentSong;
-    final audio = ref.read(audioPlayerServiceProvider);
     final scheme = Theme.of(context).colorScheme;
 
     return SizedBox(
@@ -66,7 +79,11 @@ class _QueueSheetState extends ConsumerState<_QueueSheet> {
                   list.insert(newIndex, list.removeAt(oldIndex));
                   _local = list;
                 });
-                audio.moveInQueue(oldIndex, newIndex);
+                _mutate(
+                  () =>
+                      ref.read(moveInQueueUseCaseProvider)(oldIndex, newIndex),
+                  'No se pudo reordenar la cola',
+                );
               },
               itemBuilder: (context, i) {
                 final song = queue[i];
@@ -84,10 +101,16 @@ class _QueueSheetState extends ConsumerState<_QueueSheet> {
                   ),
                   onDismissed: (_) {
                     setState(() => _local = [...queue]..removeAt(i));
-                    audio.removeFromQueue(i);
+                    _mutate(
+                      () => ref.read(removeFromQueueUseCaseProvider)(i),
+                      'No se pudo quitar la canción de la cola',
+                    );
                   },
                   child: ListTile(
-                    onTap: () => audio.skipToIndex(i),
+                    onTap: () => _mutate(
+                      () => ref.read(skipToQueueIndexUseCaseProvider)(i),
+                      'No se pudo reproducir esa canción',
+                    ),
                     leading: ArtworkImage(
                       url: song.artworkUrl,
                       seed: song.title,

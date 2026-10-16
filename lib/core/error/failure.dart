@@ -56,6 +56,12 @@ class SyncFailure extends Failure {
   const SyncFailure(super.message, {super.cause, super.stackTrace});
 }
 
+/// El reproductor de audio no pudo hacer la acción pedida (reproducir,
+/// saltar, cambiar la cola...).
+final class PlaybackFailure extends Failure {
+  const PlaybackFailure(super.message, {super.cause, super.stackTrace});
+}
+
 /// Cualquier error no previsto por los demás subtipos.
 final class UnexpectedFailure extends Failure {
   const UnexpectedFailure(super.message, {super.cause, super.stackTrace});

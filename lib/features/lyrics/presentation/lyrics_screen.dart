@@ -174,9 +174,7 @@ class _SyncedLyricsViewState extends ConsumerState<_SyncedLyricsView> {
               key: _keys[i],
               text: widget.lines[i].text,
               isActive: i == current,
-              onTap: () => ref
-                  .read(audioPlayerServiceProvider)
-                  .seek(widget.lines[i].time),
+              onTap: () => ref.read(seekUseCaseProvider)(widget.lines[i].time),
             ),
         ],
       ),

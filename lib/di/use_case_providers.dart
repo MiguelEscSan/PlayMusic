@@ -10,6 +10,24 @@ import '../features/downloads/domain/usecases/watch_download_tasks_use_case.dart
 import '../features/downloads/domain/usecases/watch_downloads_changed_use_case.dart';
 import '../features/favorites/domain/usecases/get_liked_songs_use_case.dart';
 import '../features/favorites/domain/usecases/toggle_like_use_case.dart';
+import '../features/player/domain/usecases/add_to_queue_use_case.dart';
+import '../features/player/domain/usecases/cycle_repeat_mode_use_case.dart';
+import '../features/player/domain/usecases/move_in_queue_use_case.dart';
+import '../features/player/domain/usecases/pause_playback_use_case.dart';
+import '../features/player/domain/usecases/play_next_use_case.dart';
+import '../features/player/domain/usecases/play_queue_use_case.dart';
+import '../features/player/domain/usecases/play_shuffled_use_case.dart';
+import '../features/player/domain/usecases/remove_from_queue_use_case.dart';
+import '../features/player/domain/usecases/seek_use_case.dart';
+import '../features/player/domain/usecases/set_stop_after_current_use_case.dart';
+import '../features/player/domain/usecases/skip_to_next_use_case.dart';
+import '../features/player/domain/usecases/skip_to_previous_song_use_case.dart';
+import '../features/player/domain/usecases/skip_to_previous_use_case.dart';
+import '../features/player/domain/usecases/skip_to_queue_index_use_case.dart';
+import '../features/player/domain/usecases/toggle_play_pause_use_case.dart';
+import '../features/player/domain/usecases/toggle_shuffle_use_case.dart';
+import '../features/player/domain/usecases/watch_player_position_use_case.dart';
+import '../features/player/domain/usecases/watch_player_snapshot_use_case.dart';
 import '../features/playlists/domain/usecases/add_song_to_playlist_use_case.dart';
 import '../features/playlists/domain/usecases/clear_playlist_cover_use_case.dart';
 import '../features/playlists/domain/usecases/create_playlist_use_case.dart';
@@ -138,4 +156,94 @@ final deleteDownloadUseCaseProvider = Provider<DeleteDownloadUseCase>(
 
 final deleteAllDownloadsUseCaseProvider = Provider<DeleteAllDownloadsUseCase>(
   (ref) => DeleteAllDownloadsUseCase(ref.watch(downloadServiceProvider)),
+);
+
+// ---------------------------------------------------------------------------
+// Reproductor y cola
+// ---------------------------------------------------------------------------
+
+final watchPlayerSnapshotUseCaseProvider = Provider<WatchPlayerSnapshotUseCase>(
+  (ref) => WatchPlayerSnapshotUseCase(ref.watch(audioPlayerServiceProvider)),
+);
+
+final watchPlayerPositionUseCaseProvider = Provider<WatchPlayerPositionUseCase>(
+  (ref) => WatchPlayerPositionUseCase(ref.watch(audioPlayerServiceProvider)),
+);
+
+final playQueueUseCaseProvider = Provider<PlayQueueUseCase>(
+  (ref) => PlayQueueUseCase(
+    ref.watch(songRepositoryProvider),
+    ref.watch(audioPlayerServiceProvider),
+  ),
+);
+
+final playShuffledUseCaseProvider = Provider<PlayShuffledUseCase>(
+  (ref) => PlayShuffledUseCase(
+    ref.watch(songRepositoryProvider),
+    ref.watch(audioPlayerServiceProvider),
+  ),
+);
+
+final playNextUseCaseProvider = Provider<PlayNextUseCase>(
+  (ref) => PlayNextUseCase(
+    ref.watch(songRepositoryProvider),
+    ref.watch(audioPlayerServiceProvider),
+  ),
+);
+
+final addToQueueUseCaseProvider = Provider<AddToQueueUseCase>(
+  (ref) => AddToQueueUseCase(
+    ref.watch(songRepositoryProvider),
+    ref.watch(audioPlayerServiceProvider),
+  ),
+);
+
+final togglePlayPauseUseCaseProvider = Provider<TogglePlayPauseUseCase>(
+  (ref) => TogglePlayPauseUseCase(ref.watch(audioPlayerServiceProvider)),
+);
+
+final skipToNextUseCaseProvider = Provider<SkipToNextUseCase>(
+  (ref) => SkipToNextUseCase(ref.watch(audioPlayerServiceProvider)),
+);
+
+final skipToPreviousUseCaseProvider = Provider<SkipToPreviousUseCase>(
+  (ref) => SkipToPreviousUseCase(ref.watch(audioPlayerServiceProvider)),
+);
+
+final skipToPreviousSongUseCaseProvider = Provider<SkipToPreviousSongUseCase>(
+  (ref) => SkipToPreviousSongUseCase(ref.watch(audioPlayerServiceProvider)),
+);
+
+final skipToQueueIndexUseCaseProvider = Provider<SkipToQueueIndexUseCase>(
+  (ref) => SkipToQueueIndexUseCase(ref.watch(audioPlayerServiceProvider)),
+);
+
+final seekUseCaseProvider = Provider<SeekUseCase>(
+  (ref) => SeekUseCase(ref.watch(audioPlayerServiceProvider)),
+);
+
+final toggleShuffleUseCaseProvider = Provider<ToggleShuffleUseCase>(
+  (ref) => ToggleShuffleUseCase(ref.watch(audioPlayerServiceProvider)),
+);
+
+final cycleRepeatModeUseCaseProvider = Provider<CycleRepeatModeUseCase>(
+  (ref) => CycleRepeatModeUseCase(ref.watch(audioPlayerServiceProvider)),
+);
+
+final moveInQueueUseCaseProvider = Provider<MoveInQueueUseCase>(
+  (ref) => MoveInQueueUseCase(ref.watch(audioPlayerServiceProvider)),
+);
+
+final removeFromQueueUseCaseProvider = Provider<RemoveFromQueueUseCase>(
+  (ref) => RemoveFromQueueUseCase(ref.watch(audioPlayerServiceProvider)),
+);
+
+// Temporizador de apagado.
+
+final pausePlaybackUseCaseProvider = Provider<PausePlaybackUseCase>(
+  (ref) => PausePlaybackUseCase(ref.watch(audioPlayerServiceProvider)),
+);
+
+final setStopAfterCurrentUseCaseProvider = Provider<SetStopAfterCurrentUseCase>(
+  (ref) => SetStopAfterCurrentUseCase(ref.watch(audioPlayerServiceProvider)),
 );

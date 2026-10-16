@@ -24,13 +24,6 @@ class SongActions {
 
   final Ref _ref;
 
-  Future<Result<Song>> _persist(Song song) {
-    // Volvemos a leerla aunque tenga id: su descarga puede haber cambiado.
-    // Guardar solo refresca metadatos (conserva descarga y "me gusta"), así
-    // que no hay listas que recargar.
-    return _ref.read(songRepositoryProvider).save(song);
-  }
-
   /// Alterna "me gusta" con `ToggleLikeUseCase` (guarda la canción, cambia
   /// el "me gusta" y sincroniza "Me encanta"). Si el "me gusta" cambió
   /// (`Ok`, o `Err(LikedPlaylistSyncFailure)` cuando solo falló "Me
@@ -55,48 +48,19 @@ class SongActions {
     return result;
   }
 
-  Future<Result<Unit>> playQueue(List<Song> songs, int index) async {
-    final saved = <Song>[];
-    for (final s in songs) {
-      switch (await _persist(s)) {
-        case Ok(:final value):
-          saved.add(value);
-        case Err(:final failure):
-          return Err(failure);
-      }
-    }
-    await _ref
-        .read(audioPlayerServiceProvider)
-        .playQueue(saved, startIndex: index);
-    return const Ok(unit);
-  }
+  // Reproducir y encolar: guardan antes cada canción (ver los casos de uso).
 
-  Future<Result<Unit>> playShuffled(List<Song> songs) async {
-    if (songs.isEmpty) return const Ok(unit);
-    final audio = _ref.read(audioPlayerServiceProvider);
-    await audio.setShuffle(true);
-    return playQueue(songs, 0);
-  }
+  Future<Result<Unit>> playQueue(List<Song> songs, int index) =>
+      _ref.read(playQueueUseCaseProvider)(songs, index);
 
-  Future<Result<Unit>> playNext(Song song) async {
-    switch (await _persist(song)) {
-      case Ok(:final value):
-        await _ref.read(audioPlayerServiceProvider).playNext(value);
-        return const Ok(unit);
-      case Err(:final failure):
-        return Err(failure);
-    }
-  }
+  Future<Result<Unit>> playShuffled(List<Song> songs) =>
+      _ref.read(playShuffledUseCaseProvider)(songs);
 
-  Future<Result<Unit>> addToQueue(Song song) async {
-    switch (await _persist(song)) {
-      case Ok(:final value):
-        await _ref.read(audioPlayerServiceProvider).addToQueue(value);
-        return const Ok(unit);
-      case Err(:final failure):
-        return Err(failure);
-    }
-  }
+  Future<Result<Unit>> playNext(Song song) =>
+      _ref.read(playNextUseCaseProvider)(song);
+
+  Future<Result<Unit>> addToQueue(Song song) =>
+      _ref.read(addToQueueUseCaseProvider)(song);
 
   /// Un fallo al guardar deja la descarga en estado fallido (se ve en su
   /// tarea); un `Err` solo llega si no se pudo ni encolar.

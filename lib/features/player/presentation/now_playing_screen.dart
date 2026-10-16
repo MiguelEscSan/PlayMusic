@@ -47,8 +47,6 @@ class NowPlayingScreen extends ConsumerWidget {
       );
     }
 
-    final audio = ref.read(audioPlayerServiceProvider);
-
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -139,9 +137,10 @@ class NowPlayingScreen extends ConsumerWidget {
               current: song,
               next: snapshot.nextSong,
               previous: snapshot.previousSong,
-              onNext: audio.skipToNext,
+              onNext: () => ref.read(skipToNextUseCaseProvider)(),
               // Siempre a la anterior; ⏮ reinicia la canción tras 3 s.
-              onPrevious: () => audio.skipToIndex(snapshot.currentIndex! - 1),
+              onPrevious: () =>
+                  ref.read(skipToPreviousSongUseCaseProvider)(snapshot),
               itemBuilder: (_, item) => builder(item),
             );
 
@@ -163,7 +162,7 @@ class NowPlayingScreen extends ConsumerWidget {
                   const SizedBox(height: 16),
                   _SeekBar(total: song.duration),
                   const SizedBox(height: 8),
-                  _TransportControls(snapshot: snapshot, audio: audio),
+                  _TransportControls(snapshot: snapshot),
                   const SizedBox(height: 16),
                   _ActionRow(song: song),
                 ],
@@ -207,34 +206,31 @@ class NowPlayingScreen extends ConsumerWidget {
   }
 }
 
-class _TransportControls extends StatelessWidget {
-  const _TransportControls({required this.snapshot, required this.audio});
+class _TransportControls extends ConsumerWidget {
+  const _TransportControls({required this.snapshot});
 
   final PlayerSnapshot snapshot;
-  final AudioPlayerService audio;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final scheme = Theme.of(context).colorScheme;
     final loading =
         snapshot.status == PlaybackStatus.loading ||
         snapshot.status == PlaybackStatus.buffering;
 
-    final (repeatIcon, nextRepeat) = switch (snapshot.repeatMode) {
-      PlayerRepeatMode.off => (Icons.repeat_rounded, PlayerRepeatMode.all),
-      PlayerRepeatMode.all => (Icons.repeat_on_rounded, PlayerRepeatMode.one),
-      PlayerRepeatMode.one => (
-        Icons.repeat_one_on_rounded,
-        PlayerRepeatMode.off,
-      ),
+    final repeatIcon = switch (snapshot.repeatMode) {
+      PlayerRepeatMode.off => Icons.repeat_rounded,
+      PlayerRepeatMode.all => Icons.repeat_on_rounded,
+      PlayerRepeatMode.one => Icons.repeat_one_on_rounded,
     };
+    void skipToNext() => ref.read(skipToNextUseCaseProvider)();
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         IconButton(
           tooltip: 'Aleatorio',
-          onPressed: () => audio.setShuffle(!snapshot.shuffleEnabled),
+          onPressed: () => ref.read(toggleShuffleUseCaseProvider)(snapshot),
           icon: Icon(
             Icons.shuffle_rounded,
             color: snapshot.shuffleEnabled ? scheme.primary : null,
@@ -243,7 +239,7 @@ class _TransportControls extends StatelessWidget {
         IconButton(
           tooltip: 'Anterior',
           iconSize: 40,
-          onPressed: audio.skipToPrevious,
+          onPressed: () => ref.read(skipToPreviousUseCaseProvider)(),
           icon: const Icon(Icons.skip_previous_rounded),
         ),
         SizedBox.square(
@@ -256,7 +252,7 @@ class _TransportControls extends StatelessWidget {
               : IconButton.filled(
                   tooltip: snapshot.isPlaying ? 'Pausa' : 'Reproducir',
                   iconSize: 40,
-                  onPressed: audio.togglePlayPause,
+                  onPressed: () => ref.read(togglePlayPauseUseCaseProvider)(),
                   icon: Icon(
                     snapshot.isPlaying
                         ? Icons.pause_rounded
@@ -269,13 +265,13 @@ class _TransportControls extends StatelessWidget {
           iconSize: 40,
           onPressed:
               snapshot.hasNext || snapshot.repeatMode == PlayerRepeatMode.all
-              ? audio.skipToNext
+              ? skipToNext
               : null,
           icon: const Icon(Icons.skip_next_rounded),
         ),
         IconButton(
           tooltip: 'Repetir',
-          onPressed: () => audio.setRepeat(nextRepeat),
+          onPressed: () => ref.read(cycleRepeatModeUseCaseProvider)(snapshot),
           icon: Icon(
             repeatIcon,
             color: snapshot.repeatMode == PlayerRepeatMode.off
@@ -360,9 +356,7 @@ class _SeekBarState extends ConsumerState<_SeekBar> {
             max: max,
             onChanged: (v) => setState(() => _dragValue = v),
             onChangeEnd: (v) {
-              ref
-                  .read(audioPlayerServiceProvider)
-                  .seek(Duration(milliseconds: v.round()));
+              ref.read(seekUseCaseProvider)(Duration(milliseconds: v.round()));
               setState(() => _dragValue = null);
             },
           ),
