@@ -60,13 +60,13 @@ void main() {
     expect(_ids(ranked), ['a']);
   });
 
-  test('evita dos seguidas del mismo artista si hay alternativa', () {
+  test('permite varias seguidas del mismo artista', () {
     final ranked = rankByTaste([
       _song('a1', 'A'),
       _song('a2', 'A'),
       _song('b1', 'B'),
       _song('a3', 'A'),
     ], TasteProfile());
-    expect(_ids(ranked), ['a1', 'b1', 'a2', 'a3']);
+    expect(_ids(ranked), ['a1', 'a2', 'b1', 'a3']);
   });
 }

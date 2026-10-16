@@ -46,8 +46,8 @@ class TasteProfile {
 
 /// Ordena las candidatas de la radio: respeta el orden de YouTube (las
 /// primeras se parecen más a la semilla) pero sube las de artistas que
-/// gustan, quita las que sonaron hace poco y evita dos seguidas del mismo
-/// artista cuando hay alternativa.
+/// gustan y quita las que sonaron hace poco. Puede haber varias seguidas
+/// del mismo artista.
 ///
 /// Si quitar las recientes deja la lista vacía, se usan igualmente: mejor
 /// repetir que quedarse en silencio.
@@ -68,18 +68,5 @@ List<Song> rankByTaste(List<Song> candidates, TasteProfile taste) {
             (taste.likedKeys.contains(TasteProfile.songKey(pool[i])) ? 0.3 : 0),
       ),
   ]..sort((a, b) => b.score.compareTo(a.score));
-  return _spreadArtists([for (final e in scored) e.song]);
-}
-
-/// Si una canción es del mismo artista que la anterior, adelanta la
-/// siguiente de otro artista.
-List<Song> _spreadArtists(List<Song> songs) {
-  final rest = [...songs];
-  final out = <Song>[];
-  while (rest.isNotEmpty) {
-    final last = out.isEmpty ? null : TasteProfile.artistKey(out.last.artist);
-    final i = rest.indexWhere((s) => TasteProfile.artistKey(s.artist) != last);
-    out.add(rest.removeAt(i < 0 ? 0 : i));
-  }
-  return out;
+  return [for (final e in scored) e.song];
 }
