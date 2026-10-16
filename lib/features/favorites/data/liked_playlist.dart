@@ -5,6 +5,7 @@ import '../../../core/domain/repositories/i_song_repository.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/error/result.dart';
 import '../../../core/settings/settings_dao.dart';
+import '../domain/i_liked_playlist_sync.dart';
 
 /// Mantiene la playlist "Me encanta" igual que los "me gusta".
 ///
@@ -13,7 +14,7 @@ import '../../../core/settings/settings_dao.dart';
 /// se vuelve a crear con el siguiente "me gusta".
 ///
 /// Nunca lanza por un fallo de los repositorios: lo devuelve como `Err`.
-class LikedPlaylist {
+class LikedPlaylist implements ILikedPlaylistSync {
   LikedPlaylist({
     required this._playlists,
     required this._songs,
@@ -94,6 +95,7 @@ class LikedPlaylist {
   }
 
   /// Añade o quita [song] según su `isLiked` (ya guardada en la BD).
+  @override
   Future<Result<Unit>> sync(Song song) => _locked(() async {
     switch (await _ensure()) {
       case Err(:final failure):

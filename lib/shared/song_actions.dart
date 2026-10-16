@@ -4,6 +4,7 @@ import '../di/providers.dart';
 import '../core/domain/entities/song.dart';
 import '../core/error/result.dart';
 import '../features/downloads/presentation/downloads_providers.dart';
+import '../features/favorites/domain/i_liked_playlist_sync.dart';
 import '../features/favorites/presentation/favorites_providers.dart';
 import '../features/playlists/presentation/playlists_providers.dart';
 import 'export/song_exporter.dart';
@@ -30,35 +31,28 @@ class SongActions {
     return _ref.read(songRepositoryProvider).save(song);
   }
 
-  /// Alterna "me gusta". Guarda antes la canción (los resultados de búsqueda
-  /// llegan con id vacío) y decide con el estado de la BD, no con el de
-  /// [song], que puede estar desfasado. También la añade o quita de la
-  /// playlist "Me encanta" y recarga las favoritas y las playlists (también
-  /// si la sincronización devuelve `Err`: puede haber cambiado a medias).
+  /// Alterna "me gusta" con `ToggleLikeUseCase` (guarda la canción, cambia
+  /// el "me gusta" y sincroniza "Me encanta"). Si el "me gusta" cambió
+  /// (`Ok`, o `Err(LikedPlaylistSyncFailure)` cuando solo falló "Me
+  /// encanta", F5) recarga las favoritas y las playlists; el `Err` se
+  /// devuelve igual para que la UI avise.
   Future<Result<Song>> toggleLike(Song song) async {
-    final Song saved;
-    switch (await _persist(song)) {
-      case Ok(:final value):
-        saved = value;
-      case Err(:final failure):
-        return Err(failure);
+    final result = await _ref.read(toggleLikeUseCaseProvider)(song);
+    final likeChanged = switch (result) {
+      Ok() => true,
+      Err(failure: LikedPlaylistSyncFailure()) => true,
+      Err() => false,
+    };
+    if (likeChanged) {
+      // "Me encanta" es una playlist normal: su lista y su detalle se
+      // recargan. No se sabe su id aquí, así que se invalida toda la familia
+      // de detalles (solo se reconstruyen los que estén abiertos).
+      _ref
+        ..invalidate(likedSongsProvider)
+        ..invalidate(playlistsProvider)
+        ..invalidate(playlistProvider);
     }
-    final Song updated;
-    switch (await _ref.read(toggleFavoriteUseCaseProvider)(saved)) {
-      case Ok(:final value):
-        updated = value;
-      case Err(:final failure):
-        return Err(failure);
-    }
-    final synced = await _ref.read(likedPlaylistProvider).sync(updated);
-    // "Me encanta" es una playlist normal: su lista y su detalle se recargan.
-    // No se sabe su id aquí, así que se invalida toda la familia de detalles
-    // (solo se reconstruyen los que estén abiertos).
-    _ref
-      ..invalidate(likedSongsProvider)
-      ..invalidate(playlistsProvider)
-      ..invalidate(playlistProvider);
-    return synced.map((_) => updated);
+    return result;
   }
 
   Future<Result<Unit>> playQueue(List<Song> songs, int index) async {
@@ -104,20 +98,16 @@ class SongActions {
     }
   }
 
-  /// Un fallo al guardar deja la descarga en estado fallido (ver
-  /// `DownloadManager.download`).
-  Future<Song> download(Song song) =>
-      _ref.read(downloadManagerProvider).download(song);
+  /// Un fallo al guardar deja la descarga en estado fallido (se ve en su
+  /// tarea); un `Err` solo llega si no se pudo ni encolar.
+  Future<Result<Song>> download(Song song) =>
+      _ref.read(downloadSongUseCaseProvider)(song);
 
-  Future<void> downloadAll(List<Song> songs) async {
-    final manager = _ref.read(downloadManagerProvider);
-    for (final s in songs.where((s) => !s.isDownloaded)) {
-      await manager.download(s);
-    }
-  }
+  Future<Result<Unit>> downloadAll(List<Song> songs) =>
+      _ref.read(downloadAllUseCaseProvider)(songs);
 
-  Future<void> cancelDownload(Song song) =>
-      _ref.read(downloadManagerProvider).cancel(song);
+  Future<Result<Unit>> cancelDownload(Song song) =>
+      _ref.read(cancelDownloadUseCaseProvider)(song);
 
   Future<Result<Song>> deleteDownload(Song song) =>
       _ref.read(downloadedSongsProvider.notifier).delete(song);

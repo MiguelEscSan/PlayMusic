@@ -140,7 +140,7 @@ void main() {
           audioPlayerServiceProvider.overrideWithValue(audio),
           songDaoProvider.overrideWithValue(songDao),
           playlistDaoProvider.overrideWithValue(playlistDao),
-          downloadManagerProvider.overrideWithValue(downloads),
+          downloadServiceProvider.overrideWithValue(downloads),
           historyDaoProvider.overrideWithValue(historyDao),
           settingsDaoProvider.overrideWithValue(SettingsDao(db)),
           likedPlaylistFromRepositories,

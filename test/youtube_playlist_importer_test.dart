@@ -3,9 +3,11 @@ import 'package:sponify/core/data/repositories/playlist_repository_impl.dart';
 import 'package:sponify/core/database/app_database.dart';
 import 'package:sponify/core/database/song_dao.dart';
 import 'package:sponify/core/domain/entities/song.dart';
+import 'package:sponify/core/error/failure.dart';
 import 'package:sponify/core/error/result.dart';
 import 'package:sponify/core/database/playlist_dao.dart';
 import 'package:sponify/features/playlists/data/youtube_playlist_importer.dart';
+import 'package:sponify/features/playlists/domain/i_playlist_importer.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import 'domain/fakes/fake_playlist_repository.dart';
@@ -71,10 +73,9 @@ void main() {
       return ('X', [_song('1')]);
     });
 
-    await expectLater(
-      importer.importFromUrl('https://example.com/nada'),
-      throwsA(isA<InvalidPlaylistLinkException>()),
-    );
+    final result = await importer.importFromUrl('https://example.com/nada');
+
+    expect(result.failureOrNull, isA<InvalidPlaylistLinkFailure>());
     expect(fetched, isFalse);
     expect(await dao.all(), isEmpty);
   });
@@ -125,10 +126,9 @@ void main() {
       (_) async => ('Vacía', <Song?>[null]),
     );
 
-    await expectLater(
-      importer.importFromUrl(_url),
-      throwsA(isA<EmptyPlaylistException>()),
-    );
+    final result = await importer.importFromUrl(_url);
+
+    expect(result.failureOrNull, isA<EmptyPlaylistFailure>());
     expect(await dao.all(), isEmpty);
   });
 
@@ -141,5 +141,17 @@ void main() {
     final result = await importer.importFromUrl(_url);
 
     expect(result.isErr, isTrue);
+  });
+
+  test('un error al leer la playlist remota es Err(NetworkFailure)', () async {
+    final importer = YoutubePlaylistImporter(
+      repo,
+      (_) async => throw Exception('sin conexión'),
+    );
+
+    final result = await importer.importFromUrl(_url);
+
+    expect(result.failureOrNull, isA<NetworkFailure>());
+    expect(await dao.all(), isEmpty);
   });
 }

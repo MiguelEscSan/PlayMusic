@@ -30,6 +30,32 @@ final class NotFoundFailure extends Failure {
   const NotFoundFailure(super.message, {super.cause, super.stackTrace});
 }
 
+/// El dato de entrada no es válido (p. ej. un enlace mal formado).
+///
+/// No es `final`: cada feature puede concretarlo (p. ej. un enlace de
+/// playlist no válido) para que la UI elija su mensaje.
+class ValidationFailure extends Failure {
+  const ValidationFailure(super.message, {super.cause, super.stackTrace});
+}
+
+/// Error de red al hablar con un servicio remoto (YouTube, etc.).
+final class NetworkFailure extends Failure {
+  const NetworkFailure(super.message, {super.cause, super.stackTrace});
+}
+
+/// Error del almacenamiento de archivos (copiar, borrar, renombrar).
+final class StorageFailure extends Failure {
+  const StorageFailure(super.message, {super.cause, super.stackTrace});
+}
+
+/// El cambio principal se guardó, pero una copia que depende de él no se
+/// pudo actualizar (p. ej. el "me gusta" sí, la playlist "Me encanta" no).
+///
+/// No es `final`: cada feature lo concreta con lo que sí se guardó.
+class SyncFailure extends Failure {
+  const SyncFailure(super.message, {super.cause, super.stackTrace});
+}
+
 /// Cualquier error no previsto por los demás subtipos.
 final class UnexpectedFailure extends Failure {
   const UnexpectedFailure(super.message, {super.cause, super.stackTrace});

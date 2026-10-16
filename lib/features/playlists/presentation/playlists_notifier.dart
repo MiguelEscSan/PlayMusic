@@ -4,9 +4,8 @@ import '../../../di/providers.dart';
 import '../../../shared/no_automatic_retry.dart';
 import '../../../core/domain/entities/playlist.dart';
 import '../../../core/domain/entities/song.dart';
-import '../../../core/domain/repositories/i_playlist_repository.dart';
 import '../../../core/error/result.dart';
-import '../data/youtube_playlist_importer.dart';
+import '../domain/i_playlist_importer.dart';
 import 'playlists_providers.dart';
 
 /// Todas las playlists, la modificada más recientemente primero.
@@ -18,47 +17,43 @@ final playlistsProvider =
 
 /// Dueño de la lista de playlists y de las operaciones sobre una playlist
 /// completa (crear, renombrar, borrar, portada, importar, añadir desde la
-/// hoja). Cada mutación devuelve el `Result` del repositorio y, si sale bien,
-/// recarga la lista y el detalle afectado.
+/// hoja). Cada mutación pasa por su caso de uso, devuelve su `Result` y, si
+/// sale bien, recarga la lista y el detalle afectado.
 ///
 /// Un `Err` al cargar se lanza como su `Failure` tipado: la UI lo recibe
 /// como `AsyncError`.
 class PlaylistsNotifier extends AsyncNotifier<List<Playlist>> {
   @override
   Future<List<Playlist>> build() async {
-    final repository = ref.watch(playlistRepositoryProvider);
+    final getPlaylists = ref.watch(getPlaylistsUseCaseProvider);
     rebuildOnDownloadsChange(ref);
-    return switch (await repository.getAll()) {
+    return switch (await getPlaylists()) {
       Ok(:final value) => value,
       Err(:final failure) => throw failure,
     };
   }
 
-  IPlaylistRepository get _repository => ref.read(playlistRepositoryProvider);
-
   Future<Result<Playlist>> create(String name) async {
-    final result = await _repository.create(name);
+    final result = await ref.read(createPlaylistUseCaseProvider)(name);
     if (result.isOk) _refresh();
     return result;
   }
 
   Future<Result<Unit>> rename(String id, String name) =>
-      _mutate(id, () => _repository.rename(id, name));
+      _mutate(id, () => ref.read(renamePlaylistUseCaseProvider)(id, name));
 
   /// Borra la playlist y su portada personalizada.
-  Future<Result<Unit>> delete(String id) => _mutate(
-    id,
-    () => ref.read(playlistCoverServiceProvider).deletePlaylist(id),
-  );
+  Future<Result<Unit>> delete(String id) =>
+      _mutate(id, () => ref.read(deletePlaylistUseCaseProvider)(id));
 
   Future<Result<Unit>> setCoverFromFile(String id, String imagePath) => _mutate(
     id,
-    () => ref.read(playlistCoverServiceProvider).setFromFile(id, imagePath),
+    () => ref.read(setPlaylistCoverFromFileUseCaseProvider)(id, imagePath),
   );
 
   /// Vuelve a la portada automática.
   Future<Result<Unit>> clearCover(String id) =>
-      _mutate(id, () => ref.read(playlistCoverServiceProvider).clear(id));
+      _mutate(id, () => ref.read(clearPlaylistCoverUseCaseProvider)(id));
 
   /// Añade [song] al final de la playlist [playlistId]. `Ok(false)` si ya
   /// estaba.
@@ -71,21 +66,20 @@ class PlaylistsNotifier extends AsyncNotifier<List<Playlist>> {
     return result;
   }
 
-  /// Importa una playlist de YouTube. Lanza las mismas excepciones que
-  /// [YoutubePlaylistImporter.importFromUrl] (enlace no válido, playlist
-  /// vacía, red); un fallo al guardar llega como `Err`.
+  /// Importa una playlist de YouTube. Nunca lanza: enlace no válido,
+  /// playlist vacía, red o un fallo al guardar llegan como `Err` tipado
+  /// (ver `ImportYoutubePlaylistUseCase`).
   Future<Result<ImportResult>> importFromYoutube(
     String link, {
-    void Function(int done, int total)? onProgress,
+    ImportProgress? onProgress,
   }) async {
-    try {
-      return await ref
-          .read(youtubePlaylistImporterProvider)
-          .importFromUrl(link, onProgress: onProgress);
-    } finally {
-      // Aunque falle a medias, la playlist puede haberse creado.
-      _refresh();
-    }
+    final result = await ref.read(importYoutubePlaylistUseCaseProvider)(
+      link,
+      onProgress: onProgress,
+    );
+    // Aunque falle a medias, la playlist puede haberse creado.
+    _refresh();
+    return result;
   }
 
   Future<Result<Unit>> _mutate(

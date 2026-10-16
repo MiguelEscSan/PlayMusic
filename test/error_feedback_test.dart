@@ -25,6 +25,7 @@ import 'package:sponify/shared/widgets/error_view.dart';
 import 'package:sponify/shared/widgets/song_tile.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
+import 'domain/fakes/fake_services.dart';
 import 'domain/fakes/fake_song_repository.dart';
 import 'helpers/fixed_notifiers.dart';
 
@@ -108,9 +109,11 @@ void main() {
         overrides: [
           songDaoProvider.overrideWithValue(songDao),
           songRepositoryProvider.overrideWithValue(songs),
-          downloadManagerProvider.overrideWithValue(downloads),
+          downloadServiceProvider.overrideWithValue(downloads),
           settingsDaoProvider.overrideWithValue(settings),
           historyDaoProvider.overrideWithValue(HistoryDao(db)),
+          // `ToggleLikeUseCase` la necesita; aquí el "me gusta" falla antes.
+          likedPlaylistProvider.overrideWithValue(FakeLikedPlaylistSync()),
           ...overrides,
         ],
         child: MaterialApp(home: home),

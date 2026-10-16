@@ -17,5 +17,5 @@ List<Override> appOverrides(AppDependencies deps) => [
   playlistRepositoryProvider.overrideWithValue(deps.playlistRepository),
   likedPlaylistProvider.overrideWithValue(deps.likedPlaylist),
   playlistCoverServiceProvider.overrideWithValue(deps.playlistCovers),
-  downloadManagerProvider.overrideWithValue(deps.downloads),
+  downloadServiceProvider.overrideWithValue(deps.downloads),
 ];

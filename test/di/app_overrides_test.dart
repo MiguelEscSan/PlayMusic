@@ -97,7 +97,7 @@ void main() {
       same(deps.playlistRepository),
     );
     expect(container.read(audioPlayerServiceProvider), same(deps.audio));
-    expect(container.read(downloadManagerProvider), same(deps.downloads));
+    expect(container.read(downloadServiceProvider), same(deps.downloads));
     expect(
       container.read(playlistCoverServiceProvider),
       same(deps.playlistCovers),

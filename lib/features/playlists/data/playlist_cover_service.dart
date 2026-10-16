@@ -5,6 +5,7 @@ import 'package:path/path.dart' as p;
 import '../../../core/domain/repositories/i_playlist_repository.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/error/result.dart';
+import '../domain/i_playlist_cover_service.dart';
 
 /// Portadas personalizadas de las playlists.
 ///
@@ -13,20 +14,34 @@ import '../../../core/error/result.dart';
 /// copia lleva un nombre nuevo para que la caché de imágenes no muestre la
 /// anterior, y el archivo viejo se borra al cambiarla o quitarla.
 ///
-/// Un fallo del repositorio se devuelve como `Err` (no se lanza), deja el
-/// archivo anterior en su sitio y descarta la copia nueva.
-class PlaylistCoverService {
+/// Nunca lanza. Un fallo del repositorio se devuelve como `Err`, deja el
+/// archivo anterior en su sitio y descarta la copia nueva. Si no se puede
+/// copiar la imagen, `Err(StorageFailure)` sin tocar la BD. Un fallo al
+/// borrar un archivo viejo no deshace el cambio ya guardado: se ignora.
+class PlaylistCoverService implements IPlaylistCoverService {
   PlaylistCoverService(this._playlists, this._dir);
 
   final IPlaylistRepository _playlists;
   final Directory _dir;
 
+  @override
   Future<Result<Unit>> setFromFile(String playlistId, String sourcePath) async {
-    await _dir.create(recursive: true);
     final extension = p.extension(sourcePath).toLowerCase();
     final stamp = DateTime.now().microsecondsSinceEpoch;
     final target = p.join(_dir.path, '$playlistId-$stamp$extension');
-    await File(sourcePath).copy(target);
+    try {
+      await _dir.create(recursive: true);
+      await File(sourcePath).copy(target);
+    } on FileSystemException catch (e, st) {
+      await _deleteOwned(target);
+      return Err(
+        StorageFailure(
+          'No se pudo copiar la portada',
+          cause: e,
+          stackTrace: st,
+        ),
+      );
+    }
 
     final result = await _replace(
       playlistId,
@@ -37,9 +52,11 @@ class PlaylistCoverService {
     return result;
   }
 
+  @override
   Future<Result<Unit>> clear(String playlistId) =>
       _replace(playlistId, () => _playlists.setCover(playlistId, null));
 
+  @override
   Future<Result<Unit>> deletePlaylist(String playlistId) =>
       _replace(playlistId, () => _playlists.delete(playlistId));
 
@@ -63,13 +80,15 @@ class PlaylistCoverService {
     return const Ok(unit);
   }
 
-  /// Solo borra archivos que creó este servicio.
+  /// Solo borra archivos que creó este servicio. Si no se puede borrar
+  /// (ya no estaba, o el sistema lo impide) queda huérfano: no es un error
+  /// para quien llama.
   Future<void> _deleteOwned(String? path) async {
     if (path == null || !p.isWithin(_dir.path, path)) return;
     try {
       await File(path).delete();
-    } on PathNotFoundException {
-      // Ya no estaba.
+    } on FileSystemException {
+      // Ya no estaba o no se pudo borrar.
     }
   }
 }

@@ -8,7 +8,7 @@ import '../../../core/utils/formatters.dart';
 import '../../../shared/widgets/dialogs.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/error_view.dart';
-import '../data/youtube_playlist_importer.dart';
+import '../domain/i_playlist_importer.dart';
 import 'playlist_detail_screen.dart';
 import 'playlists_providers.dart';
 import 'widgets/playlist_cover.dart';
@@ -65,15 +65,13 @@ class PlaylistsScreen extends ConsumerWidget {
       )) {
         case Ok(:final value):
           result = value;
+        case Err(failure: InvalidPlaylistLinkFailure()):
+          error = 'Ese enlace no es de una playlist de YouTube';
+        case Err(failure: EmptyPlaylistFailure()):
+          error = 'La playlist no tiene canciones que importar';
         case Err():
           error = _importFailed;
       }
-    } on InvalidPlaylistLinkException {
-      error = 'Ese enlace no es de una playlist de YouTube';
-    } on EmptyPlaylistException {
-      error = 'La playlist no tiene canciones que importar';
-    } catch (_) {
-      error = _importFailed;
     } finally {
       navigator.pop();
       progress.dispose();

@@ -29,23 +29,44 @@ class FakePlaylistRepository implements IPlaylistRepository {
     return removeSongResult;
   }
 
+  // Resultados configurables del resto de métodos (por defecto, `Err`).
+  Result<Playlist> createResult = const Err(_notConfigured);
+  Result<Playlist> findByIdResult = const Err(_notConfigured);
+  Result<List<Playlist>> getAllResult = const Err(_notConfigured);
+  Result<Unit> removeSongAtResult = const Err(_notConfigured);
+  Result<Unit> moveSongResult = const Err(_notConfigured);
+  Result<Unit> renameResult = const Err(_notConfigured);
+
+  final List<String> createCalls = [];
+  final List<String> findByIdCalls = [];
+  final List<({String id, String name})> renameCalls = [];
+  final List<({String playlistId, int index})> removeSongAtCalls = [];
+  final List<({String playlistId, int oldIndex, int newIndex})> moveSongCalls =
+      [];
+
   @override
-  Future<Result<Playlist>> create(String name, {String? description}) async =>
-      const Err(_notConfigured);
+  Future<Result<Playlist>> create(String name, {String? description}) async {
+    createCalls.add(name);
+    return createResult;
+  }
 
   @override
   Future<Result<Unit>> delete(String id) async => const Err(_notConfigured);
 
   @override
-  Future<Result<Playlist>> findById(String id) async =>
-      const Err(_notConfigured);
+  Future<Result<Playlist>> findById(String id) async {
+    findByIdCalls.add(id);
+    return findByIdResult;
+  }
 
   @override
-  Future<Result<List<Playlist>>> getAll() async => const Err(_notConfigured);
+  Future<Result<List<Playlist>>> getAll() async => getAllResult;
 
   @override
-  Future<Result<Unit>> removeSongAt(String playlistId, int index) async =>
-      const Err(_notConfigured);
+  Future<Result<Unit>> removeSongAt(String playlistId, int index) async {
+    removeSongAtCalls.add((playlistId: playlistId, index: index));
+    return removeSongAtResult;
+  }
 
   @override
   Future<Result<Unit>> setCover(String id, String? coverUrl) async =>
@@ -56,14 +77,24 @@ class FakePlaylistRepository implements IPlaylistRepository {
     String playlistId,
     int oldIndex,
     int newIndex,
-  ) async => const Err(_notConfigured);
+  ) async {
+    moveSongCalls.add((
+      playlistId: playlistId,
+      oldIndex: oldIndex,
+      newIndex: newIndex,
+    ));
+    return moveSongResult;
+  }
 
   @override
   Future<Result<Unit>> rename(
     String id,
     String name, {
     String? description,
-  }) async => const Err(_notConfigured);
+  }) async {
+    renameCalls.add((id: id, name: name));
+    return renameResult;
+  }
 }
 
 /// Delega en un repositorio real, pero cada operación con contador

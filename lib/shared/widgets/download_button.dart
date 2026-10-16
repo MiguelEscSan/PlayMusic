@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/domain/entities/song.dart';
-import '../../features/downloads/data/download_manager.dart';
+import '../../core/domain/song_key.dart';
 import '../../features/downloads/domain/download_task.dart';
 import '../../features/downloads/presentation/downloads_providers.dart';
 import '../song_actions.dart';
@@ -22,7 +22,7 @@ class DownloadButton extends ConsumerWidget {
     final task = ref.watch(downloadTaskProvider(song));
     final downloaded =
         song.isDownloaded ||
-        ref.watch(downloadedKeysProvider).contains(DownloadManager.keyOf(song));
+        ref.watch(downloadedKeysProvider).contains(songKey(song));
     final actions = ref.read(songActionsProvider);
     final scheme = Theme.of(context).colorScheme;
 

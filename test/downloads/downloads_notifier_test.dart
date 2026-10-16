@@ -92,7 +92,7 @@ void main() {
     container = ProviderContainer.test(
       overrides: [
         songRepositoryProvider.overrideWithValue(flaky),
-        downloadManagerProvider.overrideWithValue(manager),
+        downloadServiceProvider.overrideWithValue(manager),
       ],
     );
   });

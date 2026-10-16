@@ -82,7 +82,7 @@ void main() {
       ProviderScope(
         overrides: [
           songDaoProvider.overrideWithValue(songDao),
-          downloadManagerProvider.overrideWithValue(downloads),
+          downloadServiceProvider.overrideWithValue(downloads),
           historyDaoProvider.overrideWithValue(historyDao),
           settingsDaoProvider.overrideWithValue(settings),
         ],

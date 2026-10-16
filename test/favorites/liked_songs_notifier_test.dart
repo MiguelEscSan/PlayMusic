@@ -16,11 +16,13 @@ import 'package:sponify/core/settings/settings_dao.dart';
 import 'package:sponify/core/storage/file_paths.dart';
 import 'package:sponify/features/downloads/data/download_manager.dart';
 import 'package:sponify/features/downloads/presentation/downloads_providers.dart';
+import 'package:sponify/features/favorites/domain/i_liked_playlist_sync.dart';
 import 'package:sponify/features/favorites/presentation/favorites_providers.dart';
 import 'package:sponify/core/database/playlist_dao.dart';
 import 'package:sponify/shared/song_actions.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
+import '../domain/fakes/fake_services.dart';
 import '../domain/fakes/fake_song_repository.dart';
 import '../helpers/liked_playlist_override.dart';
 
@@ -76,7 +78,7 @@ void main() {
     container = ProviderContainer.test(
       overrides: [
         songRepositoryProvider.overrideWithValue(flaky),
-        downloadManagerProvider.overrideWithValue(manager),
+        downloadServiceProvider.overrideWithValue(manager),
         playlistRepositoryProvider.overrideWithValue(
           PlaylistRepositoryImpl(PlaylistDao(db, songDao)),
         ),
@@ -176,6 +178,34 @@ void main() {
       expect(result.failureOrNull, same(FlakySongRepository.failure));
       expect(await reloaded(), isEmpty);
       expect(flaky.getLikedCalls, callsAfterLoad, reason: 'nada que recargar');
+    });
+
+    test('F5: si falla "Me encanta" se devuelve el Err pero las favoritas '
+        'se recargan (el "me gusta" sí cambió)', () async {
+      final sync = FakeLikedPlaylistSync()
+        ..result = const Err(FakeLikedPlaylistSync.failure);
+      final failingSync = ProviderContainer.test(
+        overrides: [
+          songRepositoryProvider.overrideWithValue(flaky),
+          downloadServiceProvider.overrideWithValue(manager),
+          likedPlaylistProvider.overrideWithValue(sync),
+          downloadedKeysProvider.overrideWithValue(const {}),
+        ],
+      );
+      failingSync.listen(likedSongsProvider, (_, _) {});
+      expect(await failingSync.read(likedSongsProvider.future), isEmpty);
+
+      final result = await failingSync
+          .read(songActionsProvider)
+          .toggleLike(_song('x'));
+
+      final failure = result.failureOrNull;
+      expect(failure, isA<LikedPlaylistSyncFailure>());
+      expect((failure as LikedPlaylistSyncFailure).song.isLiked, isTrue);
+      expect(sync.synced.single.title, 'Canción x');
+      expect(_titles(await failingSync.read(likedSongsProvider.future)), [
+        'Canción x',
+      ]);
     });
   });
 

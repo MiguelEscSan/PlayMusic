@@ -36,17 +36,28 @@ class FakeSongRepository implements ISongRepository {
     required int sizeBytes,
   }) async => const Err(_notConfigured);
 
+  // Resultados configurables (por defecto, `Err`). [saveResult] null
+  // devuelve la canción recibida tal cual.
+  Result<List<Song>> getDownloadedResult = const Err(_notConfigured);
+  Result<List<Song>> getLikedResult = const Err(_notConfigured);
+  Result<Song>? saveResult = const Err(_notConfigured);
+
+  final List<Song> saveCalls = [];
+
   @override
-  Future<Result<List<Song>>> getDownloaded() async => const Err(_notConfigured);
+  Future<Result<List<Song>>> getDownloaded() async => getDownloadedResult;
 
   @override
   Future<Result<int>> getDownloadedBytes() async => const Err(_notConfigured);
 
   @override
-  Future<Result<List<Song>>> getLiked() async => const Err(_notConfigured);
+  Future<Result<List<Song>>> getLiked() async => getLikedResult;
 
   @override
-  Future<Result<Song>> save(Song song) async => const Err(_notConfigured);
+  Future<Result<Song>> save(Song song) async {
+    saveCalls.add(song);
+    return saveResult ?? Ok(song);
+  }
 }
 
 /// Delega en un repositorio real, pero cada operación con contador

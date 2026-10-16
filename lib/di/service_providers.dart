@@ -3,11 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
 import '../core/audio/audio_player_service.dart';
-import '../features/downloads/data/download_manager.dart';
-import '../features/favorites/data/liked_playlist.dart';
+import '../features/downloads/domain/i_download_service.dart';
+import '../features/favorites/domain/i_liked_playlist_sync.dart';
 import '../features/lyrics/data/lyrics_repository.dart';
-import '../features/playlists/data/playlist_cover_service.dart';
 import '../features/playlists/data/youtube_playlist_importer.dart';
+import '../features/playlists/domain/i_playlist_cover_service.dart';
+import '../features/playlists/domain/i_playlist_importer.dart';
 import '../features/search/data/search_source.dart';
 import '../features/search/data/suggestion_source.dart';
 import '../features/search/data/youtube_search_source.dart';
@@ -23,23 +24,25 @@ final audioPlayerServiceProvider = Provider<AudioPlayerService>(
   ),
 );
 
-/// Se sobrescribe en `main()` con la instancia de `bootstrap()`.
-final downloadManagerProvider = Provider<DownloadManager>(
+/// Gestor de descargas (`DownloadManager`). Se sobrescribe en `main()` con
+/// la instancia de `bootstrap()`.
+final downloadServiceProvider = Provider<IDownloadService>(
   (ref) =>
-      throw UnimplementedError('downloadManagerProvider se define en main()'),
+      throw UnimplementedError('downloadServiceProvider se define en main()'),
 );
 
-/// Se sobrescribe en `main()` con la instancia de `bootstrap()`.
-final playlistCoverServiceProvider = Provider<PlaylistCoverService>(
+/// Portadas de playlists (`PlaylistCoverService`). Se sobrescribe en
+/// `main()` con la instancia de `bootstrap()`.
+final playlistCoverServiceProvider = Provider<IPlaylistCoverService>(
   (ref) => throw UnimplementedError(
     'playlistCoverServiceProvider se define en main()',
   ),
 );
 
-/// Sincroniza los "me gusta" con la playlist "Me encanta". Se sobrescribe en
-/// `main()` con la instancia de `bootstrap()`: la misma que prepara la
-/// playlist al arrancar, así que hay un único cerrojo.
-final likedPlaylistProvider = Provider<LikedPlaylist>(
+/// Sincroniza los "me gusta" con la playlist "Me encanta" (`LikedPlaylist`).
+/// Se sobrescribe en `main()` con la instancia de `bootstrap()`: la misma
+/// que prepara la playlist al arrancar, así que hay un único cerrojo.
+final likedPlaylistProvider = Provider<ILikedPlaylistSync>(
   (ref) =>
       throw UnimplementedError('likedPlaylistProvider se define en main()'),
 );
@@ -47,9 +50,7 @@ final likedPlaylistProvider = Provider<LikedPlaylist>(
 /// Importador de playlists de YouTube. El cliente de YouTube se crea al
 /// importar por primera vez (construir la pantalla no toca la red) y se
 /// cierra al desechar el provider.
-final youtubePlaylistImporterProvider = Provider<YoutubePlaylistImporter>((
-  ref,
-) {
+final youtubePlaylistImporterProvider = Provider<IPlaylistImporter>((ref) {
   YoutubeExplode? yt;
   ref.onDispose(() => yt?.close());
   return YoutubePlaylistImporter.youtube(

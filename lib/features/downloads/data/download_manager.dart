@@ -10,7 +10,9 @@ import '../../../core/domain/repositories/i_song_repository.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/error/result.dart';
 import '../../../core/storage/file_paths.dart';
+import '../../../core/domain/song_key.dart';
 import '../domain/download_task.dart';
+import '../domain/i_download_service.dart';
 
 typedef StorageChangedCallback = Future<void> Function(Song song);
 
@@ -30,7 +32,7 @@ typedef CanDownloadCheck = Future<bool> Function();
 ///
 /// Si una descarga falla, el `.part` se conserva y al reintentar continúa
 /// donde se quedó.
-class DownloadManager {
+class DownloadManager implements IDownloadService {
   DownloadManager({
     required this._dio,
     required this._songRepository,
@@ -68,9 +70,8 @@ class DownloadManager {
   final _downloadsChanged = StreamController<Song>.broadcast();
   int _running = 0;
 
-  /// Clave de una canción: no depende del id de BD, así la UI puede seguir
-  /// el progreso de un resultado de búsqueda que aún no está guardado.
-  static String keyOf(Song song) => '${song.source.name}:${song.sourceId}';
+  /// Clave de una canción en [tasks] (ver [songKey]).
+  static String keyOf(Song song) => songKey(song);
 
   // ---------------------------------------------------------------------------
   // Estado
@@ -79,6 +80,7 @@ class DownloadManager {
   Map<String, DownloadTask> get tasks => Map.unmodifiable(_tasks);
 
   /// Todas las descargas en curso o recientes; emite en cada cambio.
+  @override
   Stream<Map<String, DownloadTask>> get tasksStream async* {
     yield tasks;
     yield* _controller.stream;
@@ -87,6 +89,7 @@ class DownloadManager {
   /// Emite la canción (ya actualizada) cada vez que su archivo local aparece
   /// o desaparece de la BD: descarga terminada, borrada o archivo perdido.
   /// Las listas de descargas se recargan con él; el progreso no emite aquí.
+  @override
   Stream<Song> get downloadsChanged => _downloadsChanged.stream;
 
   /// Progreso de una canción concreta (para el botón de descarga).
@@ -101,6 +104,7 @@ class DownloadManager {
 
   /// Encola la descarga. Devuelve la canción tal como quedó en la BD. Si no
   /// se puede guardar, la tarea queda fallida y se devuelve [song] tal cual.
+  @override
   Future<Song> download(Song song) async {
     final key = keyOf(song);
     final active = _tasks[key];
@@ -133,6 +137,7 @@ class DownloadManager {
   }
 
   /// Cancela una descarga en cola o en curso y borra el archivo parcial.
+  @override
   Future<void> cancel(Song song) async {
     final key = keyOf(song);
     final task = _tasks[key];
@@ -148,6 +153,7 @@ class DownloadManager {
   /// Borra el archivo descargado; la canción vuelve a reproducirse en
   /// streaming y sigue en sus playlists. Si la canción no está guardada
   /// devuelve `Ok(song)` sin cambios; un fallo de la BD llega como `Err`.
+  @override
   Future<Result<Song>> delete(Song song) async {
     await cancel(song);
     final found = song.id.isEmpty
@@ -192,6 +198,7 @@ class DownloadManager {
 
   /// Vacía todas las descargas (botón "Borrar todo" de la vista Descargas).
   /// Se detiene en el primer fallo y lo devuelve.
+  @override
   Future<Result<Unit>> deleteAll() async {
     switch (await _songRepository.getDownloaded()) {
       case Err(:final failure):
