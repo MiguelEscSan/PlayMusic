@@ -14,6 +14,7 @@ import 'core/error/result.dart';
 import 'core/settings/settings_dao.dart';
 import 'core/storage/file_paths.dart';
 import 'features/downloads/data/download_manager.dart';
+import 'features/downloads/data/local_file_missing_handler.dart';
 import 'features/favorites/data/liked_playlist.dart';
 import 'features/history/data/history_dao.dart';
 import 'features/history/data/history_recorder.dart';
@@ -63,19 +64,16 @@ Future<AppDependencies> bootstrap() async {
 
   // El resolver y las descargas se necesitan mutuamente: el resolver avisa
   // de un archivo perdido y el DownloadManager lo olvida (y avisa a la vista
-  // Descargas para que deje de mostrarlo).
-  late final DownloadManager downloads;
+  // Descargas para que deje de mostrarlo). El audio ya resuelve canciones al
+  // arrancar, antes de que exista el DownloadManager: hasta entonces el
+  // handler limpia la BD directamente.
+  final onLocalFileMissing = LocalFileMissingHandler(songRepository);
 
   // Un único resolver compartido: reproductor y descargas aprovechan la
   // misma caché de URLs de streaming.
   final resolver = DefaultPlaybackSourceResolver(
     providers: [YoutubeStreamUrlProvider(YoutubeExplode())],
-    onLocalFileMissing: (song) async {
-      // Si no se puede olvidar, se sigue en streaming igualmente.
-      if (await downloads.forgetMissingFile(song) case Err(:final failure)) {
-        debugPrint('No se pudo olvidar el archivo perdido: $failure');
-      }
-    },
+    onLocalFileMissing: onLocalFileMissing.call,
   );
 
   final audio = await initAudio(resolver);
@@ -88,7 +86,7 @@ Future<AppDependencies> bootstrap() async {
     settings: settings,
   ).nextFor;
 
-  downloads = DownloadManager(
+  final downloads = DownloadManager(
     dio: Dio(
       BaseOptions(
         connectTimeout: const Duration(seconds: 15),
@@ -102,6 +100,7 @@ Future<AppDependencies> bootstrap() async {
     // Ajuste "Descargar solo con wifi".
     canDownload: downloadPolicy(settings),
   );
+  onLocalFileMissing.manager = downloads;
 
   // Los "me gusta" de antes de existir "Me encanta" pasan a la playlist.
   // Si falla no se bloquea el arranque: la playlist a medias se descarta y
