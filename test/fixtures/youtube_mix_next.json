@@ -1,0 +1,184 @@
+{
+  "contents": {
+    "twoColumnWatchNextResults": {
+      "playlist": {
+        "playlist": {
+          "contents": [
+            {
+              "playlistPanelVideoRenderer": {
+                "videoId": "4NRXx6U8ABQ",
+                "title": {
+                  "accessibility": {
+                    "accessibilityData": {
+                      "label": "The Weeknd - Blinding Lights (Official Video) 4 minutos y 23 segundos"
+                    }
+                  },
+                  "simpleText": "The Weeknd - Blinding Lights (Official Video)"
+                },
+                "longBylineText": {
+                  "runs": [
+                    {
+                      "text": "The Weeknd",
+                      "navigationEndpoint": {
+                        "clickTrackingParams": "CKQBEMggGAAiEwil5aOij7-XAxUAHGMBHXmfIyDKAQQhMrnW",
+                        "commandMetadata": {
+                          "webCommandMetadata": {
+                            "url": "/channel/UC0WP5P-ufpRfjbNrmOWwLBQ",
+                            "webPageType": "WEB_PAGE_TYPE_CHANNEL",
+                            "rootVe": 3611,
+                            "apiUrl": "/youtubei/v1/browse"
+                          }
+                        },
+                        "browseEndpoint": {
+                          "browseId": "UC0WP5P-ufpRfjbNrmOWwLBQ",
+                          "canonicalBaseUrl": "/channel/UC0WP5P-ufpRfjbNrmOWwLBQ"
+                        }
+                      }
+                    }
+                  ]
+                },
+                "lengthText": {
+                  "accessibility": {
+                    "accessibilityData": {
+                      "label": "4 minutos y 23 segundos"
+                    }
+                  },
+                  "simpleText": "4:23"
+                }
+              }
+            },
+            {
+              "playlistPanelVideoRenderer": {
+                "videoId": "XXYlFuWEuKI",
+                "title": {
+                  "accessibility": {
+                    "accessibilityData": {
+                      "label": "The Weeknd - Save Your Tears (Official Music Video) 4 minutos y 9 segundos"
+                    }
+                  },
+                  "simpleText": "The Weeknd - Save Your Tears (Official Music Video)"
+                },
+                "longBylineText": {
+                  "runs": [
+                    {
+                      "text": "The Weeknd",
+                      "navigationEndpoint": {
+                        "clickTrackingParams": "CKIBEMggGAEiEwil5aOij7-XAxUAHGMBHXmfIyDKAQQhMrnW",
+                        "commandMetadata": {
+                          "webCommandMetadata": {
+                            "url": "/channel/UC0WP5P-ufpRfjbNrmOWwLBQ",
+                            "webPageType": "WEB_PAGE_TYPE_CHANNEL",
+                            "rootVe": 3611,
+                            "apiUrl": "/youtubei/v1/browse"
+                          }
+                        },
+                        "browseEndpoint": {
+                          "browseId": "UC0WP5P-ufpRfjbNrmOWwLBQ",
+                          "canonicalBaseUrl": "/channel/UC0WP5P-ufpRfjbNrmOWwLBQ"
+                        }
+                      }
+                    }
+                  ]
+                },
+                "lengthText": {
+                  "accessibility": {
+                    "accessibilityData": {
+                      "label": "4 minutos y 9 segundos"
+                    }
+                  },
+                  "simpleText": "4:09"
+                }
+              }
+            },
+            {
+              "playlistPanelVideoRenderer": {
+                "videoId": "34Na4j8AVgA",
+                "title": {
+                  "accessibility": {
+                    "accessibilityData": {
+                      "label": "The Weeknd - Starboy ft. Daft Punk (Official Video) ft. Daft Punk 4 minutos y 34 segundos"
+                    }
+                  },
+                  "simpleText": "The Weeknd - Starboy ft. Daft Punk (Official Video) ft. Daft Punk"
+                },
+                "longBylineText": {
+                  "runs": [
+                    {
+                      "text": "The Weeknd",
+                      "navigationEndpoint": {
+                        "clickTrackingParams": "CKABEMggGAIiEwil5aOij7-XAxUAHGMBHXmfIyDKAQQhMrnW",
+                        "commandMetadata": {
+                          "webCommandMetadata": {
+                            "url": "/channel/UC0WP5P-ufpRfjbNrmOWwLBQ",
+                            "webPageType": "WEB_PAGE_TYPE_CHANNEL",
+                            "rootVe": 3611,
+                            "apiUrl": "/youtubei/v1/browse"
+                          }
+                        },
+                        "browseEndpoint": {
+                          "browseId": "UC0WP5P-ufpRfjbNrmOWwLBQ",
+                          "canonicalBaseUrl": "/channel/UC0WP5P-ufpRfjbNrmOWwLBQ"
+                        }
+                      }
+                    }
+                  ]
+                },
+                "lengthText": {
+                  "accessibility": {
+                    "accessibilityData": {
+                      "label": "4 minutos y 34 segundos"
+                    }
+                  },
+                  "simpleText": "4:34"
+                }
+              }
+            },
+            {
+              "playlistPanelVideoRenderer": {
+                "videoId": "yzTuBuRdAyA",
+                "title": {
+                  "accessibility": {
+                    "accessibilityData": {
+                      "label": "The Weeknd - The Hills 3 minutos y 55 segundos"
+                    }
+                  },
+                  "simpleText": "The Weeknd - The Hills"
+                },
+                "longBylineText": {
+                  "runs": [
+                    {
+                      "text": "The Weeknd",
+                      "navigationEndpoint": {
+                        "clickTrackingParams": "CJ4BEMggGAMiEwil5aOij7-XAxUAHGMBHXmfIyDKAQQhMrnW",
+                        "commandMetadata": {
+                          "webCommandMetadata": {
+                            "url": "/channel/UC0WP5P-ufpRfjbNrmOWwLBQ",
+                            "webPageType": "WEB_PAGE_TYPE_CHANNEL",
+                            "rootVe": 3611,
+                            "apiUrl": "/youtubei/v1/browse"
+                          }
+                        },
+                        "browseEndpoint": {
+                          "browseId": "UC0WP5P-ufpRfjbNrmOWwLBQ",
+                          "canonicalBaseUrl": "/channel/UC0WP5P-ufpRfjbNrmOWwLBQ"
+                        }
+                      }
+                    }
+                  ]
+                },
+                "lengthText": {
+                  "accessibility": {
+                    "accessibilityData": {
+                      "label": "3 minutos y 55 segundos"
+                    }
+                  },
+                  "simpleText": "3:55"
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}

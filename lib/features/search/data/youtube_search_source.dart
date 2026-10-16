@@ -11,7 +11,7 @@ class YoutubeSearchSource implements SearchSource {
 
   /// Vídeos más largos que esto casi nunca son canciones (directos,
   /// recopilatorios de horas…).
-  static const _maxDuration = Duration(minutes: 20);
+  static const maxDuration = Duration(minutes: 20);
 
   @override
   Future<SearchPage> search(String query) async =>
@@ -29,7 +29,7 @@ class YoutubeSearchSource implements SearchSource {
   /// duración o demasiado largo).
   static Song? songFromVideo(Video v) {
     final duration = v.duration;
-    if (v.isLive || duration == null || duration > _maxDuration) return null;
+    if (v.isLive || duration == null || duration > maxDuration) return null;
     return Song(
       id: '', // se asigna al guardarla en la BD
       title: cleanTitle(v.title),
