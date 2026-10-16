@@ -14,6 +14,7 @@ import '../features/playlists/data/youtube_playlist_importer.dart';
 import '../features/playlists/domain/i_playlist_cover_service.dart';
 import '../features/playlists/domain/i_playlist_importer.dart';
 import '../features/radio/domain/radio_service.dart';
+import '../features/search/data/youtube_innertube.dart';
 import '../features/search/data/youtube_search_source.dart';
 import '../features/search/data/youtube_suggestion_source.dart';
 import '../features/search/domain/search_source.dart';
@@ -57,17 +58,14 @@ final radioServiceProvider = Provider<RadioService>(
   (ref) => throw UnimplementedError('radioServiceProvider se define en main()'),
 );
 
-/// Importador de playlists de YouTube. El cliente de YouTube se crea al
-/// importar por primera vez (construir la pantalla no toca la red) y se
-/// cierra al desechar el provider.
-final youtubePlaylistImporterProvider = Provider<IPlaylistImporter>((ref) {
-  YoutubeExplode? yt;
-  ref.onDispose(() => yt?.close());
-  return YoutubePlaylistImporter.youtube(
+/// Importador de playlists de YouTube. Crear el cliente no toca la red:
+/// solo se conecta al importar.
+final youtubePlaylistImporterProvider = Provider<IPlaylistImporter>(
+  (ref) => YoutubePlaylistImporter.youtube(
     ref.watch(playlistRepositoryProvider),
-    () => yt ??= YoutubeExplode(),
-  );
-});
+    YoutubeInnertube(),
+  ),
+);
 
 /// Repositorio único para que la caché en memoria dure toda la sesión.
 final lyricsRepositoryProvider = Provider<ILyricsRepository>(

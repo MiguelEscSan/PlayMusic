@@ -1,0 +1,100 @@
+{
+  "onResponseReceivedActions": [
+    {
+      "appendContinuationItemsAction": {
+        "continuationItems": [
+          {
+            "lockupViewModel": {
+              "contentImage": {
+                "thumbnailViewModel": {
+                  "overlays": [
+                    {
+                      "thumbnailBottomOverlayViewModel": {
+                        "badges": [
+                          {
+                            "thumbnailBadgeViewModel": {
+                              "text": "2:19"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              },
+              "metadata": {
+                "lockupMetadataViewModel": {
+                  "title": {
+                    "content": "Thin Lizzy - Don't Believe A Word (Official Music Video)"
+                  },
+                  "metadata": {
+                    "contentMetadataViewModel": {
+                      "metadataRows": [
+                        {
+                          "metadataParts": [
+                            {
+                              "text": {
+                                "content": "Thin Lizzy Official"
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                }
+              },
+              "contentId": "XsGl-0pzEEc",
+              "contentType": "LOCKUP_CONTENT_TYPE_VIDEO"
+            }
+          },
+          {
+            "lockupViewModel": {
+              "contentImage": {
+                "thumbnailViewModel": {
+                  "overlays": [
+                    {
+                      "thumbnailBottomOverlayViewModel": {
+                        "badges": [
+                          {
+                            "thumbnailBadgeViewModel": {
+                              "text": "7:14"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              },
+              "metadata": {
+                "lockupMetadataViewModel": {
+                  "title": {
+                    "content": "U2 - Where The Streets Have No Name (Official Music Video)"
+                  },
+                  "metadata": {
+                    "contentMetadataViewModel": {
+                      "metadataRows": [
+                        {
+                          "metadataParts": [
+                            {
+                              "text": {
+                                "content": "U2"
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                }
+              },
+              "contentId": "GzZWSrr5wFI",
+              "contentType": "LOCKUP_CONTENT_TYPE_VIDEO"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,186 @@
+{
+  "contents": {
+    "twoColumnBrowseResultsRenderer": {
+      "tabs": [
+        {
+          "tabRenderer": {
+            "content": {
+              "sectionListRenderer": {
+                "contents": [
+                  {
+                    "itemSectionRenderer": {
+                      "contents": [
+                        {
+                          "lockupViewModel": {
+                            "contentImage": {
+                              "thumbnailViewModel": {
+                                "overlays": [
+                                  {
+                                    "thumbnailBottomOverlayViewModel": {
+                                      "badges": [
+                                        {
+                                          "thumbnailBadgeViewModel": {
+                                            "text": "6:00"
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  }
+                                ]
+                              }
+                            },
+                            "metadata": {
+                              "lockupMetadataViewModel": {
+                                "title": {
+                                  "content": "Queen – Bohemian Rhapsody (Official Video Remastered)"
+                                },
+                                "metadata": {
+                                  "contentMetadataViewModel": {
+                                    "metadataRows": [
+                                      {
+                                        "metadataParts": [
+                                          {
+                                            "text": {
+                                              "content": "Queen Official"
+                                            }
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                }
+                              }
+                            },
+                            "contentId": "fJ9rUzIMcZQ",
+                            "contentType": "LOCKUP_CONTENT_TYPE_VIDEO"
+                          }
+                        },
+                        {
+                          "lockupViewModel": {
+                            "contentImage": {
+                              "thumbnailViewModel": {
+                                "overlays": [
+                                  {
+                                    "thumbnailBottomOverlayViewModel": {
+                                      "badges": [
+                                        {
+                                          "thumbnailBadgeViewModel": {
+                                            "text": "4:45"
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  }
+                                ]
+                              }
+                            },
+                            "metadata": {
+                              "lockupMetadataViewModel": {
+                                "title": {
+                                  "content": "AC/DC - Highway to Hell (Live At River Plate, December 2009)"
+                                },
+                                "metadata": {
+                                  "contentMetadataViewModel": {
+                                    "metadataRows": [
+                                      {
+                                        "metadataParts": [
+                                          {
+                                            "text": {
+                                              "content": "AC/DC"
+                                            }
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                }
+                              }
+                            },
+                            "contentId": "gEPmA3USJdI",
+                            "contentType": "LOCKUP_CONTENT_TYPE_VIDEO"
+                          }
+                        },
+                        {
+                          "lockupViewModel": {
+                            "contentImage": {
+                              "thumbnailViewModel": {
+                                "overlays": [
+                                  {
+                                    "thumbnailBottomOverlayViewModel": {
+                                      "badges": [
+                                        {
+                                          "thumbnailBadgeViewModel": {
+                                            "text": "5:31"
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  }
+                                ]
+                              }
+                            },
+                            "metadata": {
+                              "lockupMetadataViewModel": {
+                                "title": {
+                                  "content": "Metallica: Enter Sandman (Official Music Video)"
+                                },
+                                "metadata": {
+                                  "contentMetadataViewModel": {
+                                    "metadataRows": [
+                                      {
+                                        "metadataParts": [
+                                          {
+                                            "text": {
+                                              "content": "Metallica"
+                                            }
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                }
+                              }
+                            },
+                            "contentId": "CD-E-LDc384",
+                            "contentType": "LOCKUP_CONTENT_TYPE_VIDEO"
+                          }
+                        },
+                        {
+                          "continuationItemViewModel": {
+                            "continuationCommand": {
+                              "innertubeCommand": {
+                                "continuationCommand": {
+                                  "token": "4qmFsgKBARIkVkxQTDBHdnNMUWlsME1tWUM5NktFc183ZFROc0xtMVBTNkpYGjRDQUY2SGxCVU9rTkhiMmxGUkdSRlQwUmplazFyVFhoT1JWVjRUbXRWTlUxRVFRJTNEJTNEmgIiUEwwR3ZzTFFpbDBNbVlDOTZLRXNfN2RUTnNMbTFQUzZKWA%3D%3D"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "continuationItemViewModel": {
+                      "continuationCommand": {
+                        "innertubeCommand": {
+                          "continuationCommand": {
+                            "token": "4qmFsgJbEiRWTFBMMEd2c0xRaWwwTW1ZQzk2S0VzXzdkVE5zTG0xUFM2SlgaDGtnRURDT01JNEFzQpoCJFZMUEwwR3ZzTFFpbDBNbVlDOTZLRXNfN2RUTnNMbTFQUzZKWA%3D%3D"
+                          }
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "metadata": {
+    "playlistMetadataRenderer": {
+      "title": "Top 500 Classic Rock songs"
+    }
+  }
+}
