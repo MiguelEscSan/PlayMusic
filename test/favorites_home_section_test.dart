@@ -7,6 +7,8 @@ import 'package:sponify/core/domain/entities/song.dart';
 import 'package:sponify/features/favorites/presentation/favorites_providers.dart';
 import 'package:sponify/features/favorites/presentation/liked_home_section.dart';
 
+import 'helpers/fixed_notifiers.dart';
+
 Song _song(int i) => Song(
   id: 'id$i',
   title: 'Canción $i',
@@ -21,7 +23,7 @@ Future<void> _pump(WidgetTester tester, List<Song> liked) async {
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
-        likedSongsProvider.overrideWith((ref) => Stream.value(liked)),
+        likedSongsProvider.overrideWith(() => FixedLikedSongs(liked)),
         playerSnapshotProvider.overrideWith(
           (ref) => const Stream<PlayerSnapshot>.empty(),
         ),

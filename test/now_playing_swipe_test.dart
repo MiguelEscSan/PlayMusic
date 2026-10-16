@@ -9,6 +9,8 @@ import 'package:sponify/features/favorites/presentation/favorites_providers.dart
 import 'package:sponify/features/player/presentation/now_playing_screen.dart';
 import 'package:sponify/shared/widgets/artwork_image.dart';
 
+import 'helpers/fixed_notifiers.dart';
+
 Song _song(int i) => Song(
   id: 'id$i',
   title: 'Canción $i',
@@ -74,8 +76,8 @@ void main() {
               ),
             ),
           ),
-          likedSongsProvider.overrideWith((ref) => Stream.value(const [])),
-          downloadedSongsProvider.overrideWith((ref) => Stream.value(const [])),
+          likedSongsProvider.overrideWith(FixedLikedSongs.new),
+          downloadedSongsProvider.overrideWith(FixedDownloads.new),
           downloadTasksProvider.overrideWith((ref) => Stream.value(const {})),
         ],
         child: const MaterialApp(home: NowPlayingScreen()),

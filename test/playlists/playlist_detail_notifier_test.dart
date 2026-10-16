@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sponify/core/data/repositories/playlist_repository_impl.dart';
@@ -170,7 +172,6 @@ void main() {
       await load();
       final removed = current().songs[1];
       _ok(await notifier().removeSongAt(1));
-      final before = current();
       flaky.addSongFailures = 1;
 
       final pending = notifier().addSong(removed, at: 1);
@@ -178,8 +179,9 @@ void main() {
 
       final result = await pending;
       expect(result.isErr, isTrue);
-      expect(current(), before);
-      expect(await dbTitles(), ['T0', 'T2']);
+      // Se relee de la BD (no se restaura una copia).
+      expect(current(), _ok(await repo.findById(id)));
+      expect(_titles(current()), ['T0', 'T2']);
     });
 
     test('si falla la recolocación se resincroniza con la BD', () async {
@@ -249,6 +251,79 @@ void main() {
     _ok(await notifier().removeSongAt(0));
 
     expect((await container.read(playlistsProvider.future)).single.length, 2);
+  });
+
+  group('F6: mutaciones solapadas', () {
+    test('la primera falla después de que la segunda guarde: '
+        'el estado final es el de la BD', () async {
+      await load();
+      final gate = Completer<void>();
+      flaky
+        ..removeSongAtFailures = 1
+        ..removeSongAtGate = gate;
+
+      final first = notifier().removeSongAt(1); // T1, fallará
+      final second = notifier().removeSongAt(0); // T0, se guarda
+      _ok(await second);
+      gate.complete();
+      expect((await first).isErr, isTrue);
+
+      expect(await dbTitles(), ['T1', 'T2']);
+      expect(_titles(current()), await dbTitles());
+    });
+
+    test('la primera falla antes de que la segunda guarde: '
+        'el estado final es el de la BD', () async {
+      await load();
+      final gate = Completer<void>();
+      flaky.removeSongAtFailures = 1;
+
+      final first = notifier().removeSongAt(0); // T0, falla al instante
+      flaky.removeSongAtGate = gate;
+      final second = notifier().removeSongAt(0); // T1 en el estado optimista
+      expect((await first).isErr, isTrue);
+      gate.complete();
+      _ok(await second);
+
+      // La BD quitó la primera fila que tenía (T0).
+      expect(await dbTitles(), ['T1', 'T2']);
+      expect(_titles(current()), await dbTitles());
+    });
+  });
+
+  group('F7: recarga por descargas con una escritura pendiente', () {
+    test('la recarga termina antes que la escritura', () async {
+      await load();
+      final gate = Completer<void>();
+      flaky.removeSongAtGate = gate;
+
+      final pending = notifier().removeSongAt(0);
+      container.read(_keysProvider.notifier).set({'youtube:yt9'});
+      // La recarga lee la BD antes de que se guarde el cambio.
+      expect(_titles(await container.read(playlistProvider(id).future)), [
+        'T0',
+        'T1',
+        'T2',
+      ]);
+      gate.complete();
+      _ok(await pending);
+
+      expect(await dbTitles(), ['T1', 'T2']);
+      expect(_titles(current()), await dbTitles());
+    });
+
+    test('la escritura empieza con una recarga en curso', () async {
+      await load();
+      container.read(_keysProvider.notifier).set({'youtube:yt9'});
+      // Arranca la recarga (lee la BD) sin esperarla.
+      expect(container.read(playlistProvider(id)).isLoading, isTrue);
+
+      _ok(await notifier().removeSongAt(0));
+      await container.read(playlistProvider(id).future);
+
+      expect(await dbTitles(), ['T1', 'T2']);
+      expect(_titles(current()), await dbTitles());
+    });
   });
 
   test('se refresca cuando cambian las canciones descargadas', () async {

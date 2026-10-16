@@ -65,6 +65,7 @@ class DownloadManager {
   final Map<String, DateTime> _lastProgressEmit = {};
   final Queue<String> _pending = Queue();
   final _controller = StreamController<Map<String, DownloadTask>>.broadcast();
+  final _downloadsChanged = StreamController<Song>.broadcast();
   int _running = 0;
 
   /// Clave de una canción: no depende del id de BD, así la UI puede seguir
@@ -82,6 +83,11 @@ class DownloadManager {
     yield tasks;
     yield* _controller.stream;
   }
+
+  /// Emite la canción (ya actualizada) cada vez que su archivo local aparece
+  /// o desaparece de la BD: descarga terminada, borrada o archivo perdido.
+  /// Las listas de descargas se recargan con él; el progreso no emite aquí.
+  Stream<Song> get downloadsChanged => _downloadsChanged.stream;
 
   /// Progreso de una canción concreta (para el botón de descarga).
   Stream<DownloadTask?> watch(Song song) {
@@ -168,8 +174,20 @@ class DownloadManager {
     final updated = saved.copyWith(clearLocalFile: true);
     _tasks.remove(keyOf(song));
     _emit();
+    _notifyDownloadsChanged(updated);
     await onStorageChanged?.call(updated);
     return Ok(updated);
+  }
+
+  /// El archivo local de [song] ya no existe (p. ej. lo borró el sistema):
+  /// se olvida en la BD para que se reproduzca en streaming y deje de
+  /// aparecer en Descargas. Lo usa el resolver al no encontrar el archivo.
+  Future<Result<Unit>> forgetMissingFile(Song song) async {
+    final cleared = await _songRepository.clearDownload(song.id);
+    if (cleared.isErr) return cleared;
+    if (_tasks.remove(keyOf(song)) != null) _emit();
+    _notifyDownloadsChanged(song.copyWith(clearLocalFile: true));
+    return cleared;
   }
 
   /// Vacía todas las descargas (botón "Borrar todo" de la vista Descargas).
@@ -191,6 +209,7 @@ class DownloadManager {
       token.cancel('dispose');
     }
     await _controller.close();
+    await _downloadsChanged.close();
   }
 
   // ---------------------------------------------------------------------------
@@ -258,6 +277,7 @@ class DownloadManager {
               totalBytes: size,
             ),
           );
+          _notifyDownloadsChanged(updated);
           await onStorageChanged?.call(updated);
       }
     } on DioException catch (e) {
@@ -482,5 +502,9 @@ class DownloadManager {
 
   void _emit() {
     if (!_controller.isClosed) _controller.add(tasks);
+  }
+
+  void _notifyDownloadsChanged(Song song) {
+    if (!_downloadsChanged.isClosed) _downloadsChanged.add(song);
   }
 }

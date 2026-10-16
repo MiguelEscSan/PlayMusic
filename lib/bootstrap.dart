@@ -55,16 +55,27 @@ Future<AppDependencies> bootstrap() async {
   final songDao = SongDao(database);
   final playlistDao = PlaylistDao(database, songDao);
   // Los servicios dependen de las interfaces; los DAOs siguen en
-  // [AppDependencies] porque los StreamProviders escuchan sus `changes`.
+  // [AppDependencies] porque los providers de los repositorios se derivan
+  // de ellos.
   final songRepository = SongRepositoryImpl(songDao);
   final playlistRepository = PlaylistRepositoryImpl(playlistDao);
   final paths = await FilePaths.create();
+
+  // El resolver y las descargas se necesitan mutuamente: el resolver avisa
+  // de un archivo perdido y el DownloadManager lo olvida (y avisa a la vista
+  // Descargas para que deje de mostrarlo).
+  late final DownloadManager downloads;
 
   // Un único resolver compartido: reproductor y descargas aprovechan la
   // misma caché de URLs de streaming.
   final resolver = DefaultPlaybackSourceResolver(
     providers: [YoutubeStreamUrlProvider(YoutubeExplode())],
-    onLocalFileMissing: (song) => songDao.clearDownload(song.id),
+    onLocalFileMissing: (song) async {
+      // Si no se puede olvidar, se sigue en streaming igualmente.
+      if (await downloads.forgetMissingFile(song) case Err(:final failure)) {
+        debugPrint('No se pudo olvidar el archivo perdido: $failure');
+      }
+    },
   );
 
   final audio = await initAudio(resolver);
@@ -77,7 +88,7 @@ Future<AppDependencies> bootstrap() async {
     settings: settings,
   ).nextFor;
 
-  final downloads = DownloadManager(
+  downloads = DownloadManager(
     dio: Dio(
       BaseOptions(
         connectTimeout: const Duration(seconds: 15),

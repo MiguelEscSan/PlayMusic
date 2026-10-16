@@ -21,16 +21,32 @@ final playlistProvider = AsyncNotifierProvider.autoDispose
 ///
 /// Quitar, deshacer y mover se aplican al instante al [state] (la lista
 /// responde sin esperar a la BD) y después se guardan. Si el repositorio
-/// devuelve `Err`, el [state] vuelve a lo que había y el `Err` se devuelve
-/// para que la UI avise. Si sale bien, se recarga [playlistsProvider]
+/// devuelve `Err`, el `Err` se devuelve para que la UI avise y el [state] se
+/// vuelve a leer de la BD. Si sale bien, se recarga [playlistsProvider]
 /// (cambian contador, duración y portada).
+///
+/// No se restaura una copia del estado anterior: con varias escrituras a la
+/// vez, esa copia resucitaría filas que otra escritura ya quitó de la BD
+/// (F6). Tampoco se relee la BD mientras queden escrituras pendientes: la
+/// lectura no las vería. Por eso, si alguna escritura falla o el detalle se
+/// recarga con escrituras en vuelo (p. ej. al cambiar las descargas, F7),
+/// el estado queda "desfasado" y se relee cuando termina la última.
 class PlaylistDetailNotifier extends AsyncNotifier<Playlist> {
   PlaylistDetailNotifier(this.id);
 
   final String id;
 
+  /// Escrituras optimistas aún sin respuesta del repositorio.
+  int _pending = 0;
+
+  /// El [state] puede no coincidir con la BD: se relee cuando [_pending]
+  /// llegue a cero.
+  bool _stale = false;
+
   @override
   Future<Playlist> build() async {
+    // Esta lectura puede llegar antes que las escrituras en vuelo.
+    if (_pending > 0) _stale = true;
     final repository = ref.watch(playlistRepositoryProvider);
     rebuildOnDownloadsChange(ref);
     return switch (await repository.findById(id)) {
@@ -70,14 +86,12 @@ class PlaylistDetailNotifier extends AsyncNotifier<Playlist> {
         };
       },
     );
-    // Ya estaba, o se añadió pero no se pudo recolocar: el estado optimista
-    // no coincide con la BD, así que se vuelve a leer.
-    final inSync = switch ((added, result)) {
-      (Ok(value: false), _) => false,
-      (Ok(value: true), Err()) => false,
-      _ => true,
-    };
-    if (!inSync && ref.mounted) ref.invalidateSelf();
+    // Ya estaba: el estado optimista la tiene dos veces, así que se vuelve a
+    // leer. (Si se añadió pero no se pudo recolocar, el `Err` ya relee.)
+    if (added case Ok(value: false) when ref.mounted) {
+      _stale = true;
+      await _resyncIfStale();
+    }
     return switch (result) {
       Err(:final failure) => Err(failure),
       Ok() => added!,
@@ -94,31 +108,46 @@ class PlaylistDetailNotifier extends AsyncNotifier<Playlist> {
   Future<Result<Unit>> rename(String name) =>
       ref.read(playlistsProvider.notifier).rename(id, name);
 
-  /// Aplica [edit] a una copia de las canciones, guarda con [persist] y, si
-  /// falla, restaura el estado anterior.
+  /// Aplica [edit] a una copia de las canciones y guarda con [persist]. Si
+  /// falla, o si el estado quedó desfasado mientras tanto, lo relee de la BD
+  /// cuando ya no quedan escrituras pendientes.
   Future<Result<Unit>> _optimistic(
     List<Song> Function(List<Song> songs) edit,
     Future<Result<Unit>> Function() persist,
   ) async {
-    final previous = state.value;
-    if (previous == null) {
+    final current = state.value;
+    if (current == null) {
       return const Err(UnexpectedFailure('La playlist aún no se ha cargado'));
     }
+    // Una recarga en curso puede leer la BD antes de esta escritura.
+    if (state.isLoading) _stale = true;
     // Mantiene vivo el detalle aunque se cierre la pantalla a mitad.
     final keepAlive = ref.keepAlive();
+    _pending++;
     try {
-      state = AsyncData(previous.copyWith(songs: edit([...previous.songs])));
+      state = AsyncData(current.copyWith(songs: edit([...current.songs])));
       final result = await persist();
-      if (!ref.mounted) return result;
-      switch (result) {
-        case Ok():
-          ref.invalidate(playlistsProvider);
-        case Err():
-          state = AsyncData(previous);
-      }
+      if (result.isErr) _stale = true;
+      if (ref.mounted && result.isOk) ref.invalidate(playlistsProvider);
       return result;
     } finally {
+      _pending--;
+      if (ref.mounted) await _resyncIfStale();
       keepAlive.close();
+    }
+  }
+
+  /// Relee la playlist de la BD si el estado está desfasado y no quedan
+  /// escrituras pendientes. Un fallo al releer queda en el [state] como
+  /// `AsyncError` (la pantalla lo muestra con su botón de reintentar).
+  Future<void> _resyncIfStale() async {
+    if (_pending > 0 || !_stale) return;
+    _stale = false;
+    ref.invalidateSelf();
+    try {
+      await future;
+    } on Object {
+      // Ya está en el state.
     }
   }
 }

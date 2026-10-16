@@ -49,12 +49,12 @@ Slice 2b:
 - [x] F3 (review 2b) `PlaylistCoverService.setFromFile`: copied cover leaks when findById/setCover returns Err — delete it on Err + test
 - [x] F4 (review 2b) `LikedPlaylist._ensure`: playlist id persisted before backfill; getLiked/addSong Err leaves "Me encanta" permanently incomplete — persist id after backfill + test
 - [ ] F5 (review 2b, suggestion) `SongActions.toggleLike`: Err after like already changed is ambiguous — document or return partial result
-- [ ] F6 (review 3b, WARNING) PlaylistDetailNotifier._optimistic restores a full snapshot on Err; overlapping mutations resurrect rows already removed in the DB — on Err reload from the repository (or serialize mutations) + overlapping-mutation test
-- [ ] F7 (review 3b, suggestion) detail rebuild via downloadedKeysProvider during a pending optimistic write — pin interleaving with a test / guard with ref.mounted
-- [ ] P2.2 (moved) Remove `StreamController` from DAOs; reactivity owned by notifiers
-- [ ] P3.1 Notifiers for playlists, playlist detail, favorites, downloads
-- [ ] P3.2 Refactor `PlaylistDetailScreen` and `DownloadsScreen` to notifiers
-- [ ] P3.3 Error states rendered from `Result`
+- [x] F6 (review 3b, WARNING) PlaylistDetailNotifier._optimistic restores a full snapshot on Err; overlapping mutations resurrect rows already removed in the DB — on Err reload from the repository (or serialize mutations) + overlapping-mutation test
+- [x] F7 (review 3b, suggestion) detail rebuild via downloadedKeysProvider during a pending optimistic write — pin interleaving with a test / guard with ref.mounted
+- [x] P2.2 (moved) Remove `StreamController` from DAOs; reactivity owned by notifiers
+- [x] P3.1 Notifiers for playlists, playlist detail, favorites, downloads
+- [x] P3.2 Refactor `PlaylistDetailScreen` and `DownloadsScreen` to notifiers
+- [x] P3.3 Error states rendered from `Result`
 
 ## Acceptance criteria (Phase 1)
 - Domain files import nothing from Flutter, sqflite or data layers (only `dart:` libraries; `meta`/`collection` are not direct deps).
@@ -76,3 +76,4 @@ Slice 2b:
 - 2026-10-17: Slice 3a commit e6f8e9b. Review assess (base 8f6cf46): medium, 230 lines, review_due=false (under_budget) — pending in slice until the next commits reach the budget. Reviewed boundary stays 8f6cf46.
 - 2026-10-17: Slice 3b (playlists half of P2.2/P3.1-P3.3 + F1) done (delegated writer). PlaylistDao is pure CRUD (no StreamController, no SongDao subscription). playlistsProvider = AsyncNotifier (create/rename/delete/setCoverFromFile/clearCover/addSong/importFromYoutube, all Result); playlistProvider = autoDispose family AsyncNotifier (removeSongAt/addSong/move/rename) with optimistic update + rollback on Err (F1; RED "Expected 3 songs, Actual 2" -> GREEN). Bridges: toggleLike invalidates playlist providers; builds watch a select signature of downloadedKeysProvider. retry disabled (Riverpod 3 retries thrown Failures). ErrorView for load errors, SnackBar for mutation Err. song_swipe known failure fixed (test screen too short). Parent re-ran test/playlists + song_swipe: +40. Full suite +295/-2 (history_section, widget_test "Me gusta" known). analyze 31.
 - 2026-10-17: Slice 3b commit a32326d. Review (base 8f6cf46 = 3a+3b, 1581 lines): consent granted, 1 lens review-reliability, APPROVED, acknowledged (lineage review-95e2f15b6989137b). Reviewed boundary advances to a32326d. Findings recorded as F6 (warning) and F7 (suggestion).
+- 2026-10-17: Slice 3c done (delegated writer). SongDao pure CRUD (no StreamController). DownloadsNotifier (downloadedSongsProvider; delete/deleteAll via DownloadManager, reload after Err) bridged by new DownloadManager.downloadsChanged stream (completed/deleted/forgetMissingFile; bootstrap onLocalFileMissing -> forgetMissingFile). LikedSongsNotifier invalidated by SongActions.toggleLike. downloadsSizeProvider derived from list. unwrapOrThrow removed; noAutomaticRetry moved to repository_providers. F6/F7: no snapshot restore — pending/stale counters, resync from repository when last write ends (RED: Expected [T1,T2] Actual [T0,T1,T2] -> GREEN). Parent re-ran test/downloads+favorites+playlists: +49. Full suite +312/-2 (known: history_section; widget_test "Me gusta" is stale — commit 88afcd7 removed likedHomeSection from home). analyze 31.

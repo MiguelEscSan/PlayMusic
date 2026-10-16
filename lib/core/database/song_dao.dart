@@ -1,22 +1,16 @@
-import 'dart:async';
-
 import 'package:sqflite/sqflite.dart';
 import 'package:uuid/uuid.dart';
 
 import '../data/models/song_model.dart';
 import 'app_database.dart';
 
-/// Acceso a la tabla `songs`. Además de CRUD expone [changes], que emite
-/// cada vez que algo cambia, para que la UI (Descargas, biblioteca) se
-/// refresque sola.
+/// Acceso a la tabla `songs` (CRUD). No avisa de cambios: quien escribe
+/// recarga los notifiers afectados (descargas, favoritas, playlists).
 class SongDao {
   SongDao(AppDatabase database) : _db = database.db;
 
   final Database _db;
-  final _changes = StreamController<void>.broadcast();
   static const _uuid = Uuid();
-
-  Stream<void> get changes => _changes.stream;
 
   /// Guarda una canción (p. ej. un resultado de búsqueda) y devuelve la
   /// versión persistida. Si ya existía por `source + sourceId` conserva su
@@ -38,12 +32,10 @@ class SongDao {
         where: 'id = ?',
         whereArgs: [merged.id],
       );
-      _notify();
       return merged;
     }
     final created = song.id.isEmpty ? song.copyWith(id: _uuid.v4()) : song;
     await _db.insert('songs', created.toMap());
-    _notify();
     return created;
   }
 
@@ -97,7 +89,6 @@ class SongDao {
       where: 'id = ?',
       whereArgs: [id],
     );
-    _notify();
     return findById(id);
   }
 
@@ -108,7 +99,6 @@ class SongDao {
       where: 'id = ?',
       whereArgs: [id],
     );
-    _notify();
   }
 
   /// Marca o desmarca "me gusta". Es la única vía que escribe `liked_at`.
@@ -119,7 +109,6 @@ class SongDao {
       where: 'id = ?',
       whereArgs: [songId],
     );
-    _notify();
   }
 
   /// Canciones con "me gusta", la última marcada primero.
@@ -131,10 +120,4 @@ class SongDao {
     );
     return rows.map(SongModel.fromMap).toList();
   }
-
-  void _notify() {
-    if (!_changes.isClosed) _changes.add(null);
-  }
-
-  Future<void> dispose() => _changes.close();
 }

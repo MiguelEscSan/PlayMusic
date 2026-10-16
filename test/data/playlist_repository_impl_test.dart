@@ -47,10 +47,7 @@ void main() {
     repo = PlaylistRepositoryImpl(dao);
   });
 
-  tearDown(() async {
-    await songDao.dispose();
-    await db.close();
-  });
+  tearDown(() => db.close());
 
   test('create, getAll and findById return domain entities', () async {
     final created = _ok(await repo.create('  Mix ', description: 'd'));

@@ -1,12 +1,15 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/song_dao.dart';
-import '../../../core/di/repository_providers.dart';
 import '../../../core/domain/entities/song.dart';
 import '../data/download_manager.dart';
 import '../domain/download_task.dart';
+import 'downloads_notifier.dart';
 
-/// Se sobrescriben en `main()` con las instancias de `bootstrap()`.
+export 'downloads_notifier.dart';
+
+/// Se sobrescriben en `main()` con las instancias de `bootstrap()`. Solo lo
+/// usa `songRepositoryProvider`: la UI pasa por los notifiers.
 final songDaoProvider = Provider<SongDao>(
   (ref) => throw UnimplementedError('songDaoProvider se define en main()'),
 );
@@ -27,30 +30,11 @@ final downloadTaskProvider = Provider.family<DownloadTask?, Song>(
       ref.watch(downloadTasksProvider).value?[DownloadManager.keyOf(song)],
 );
 
-/// Canciones descargadas; se refresca sola al descargar o borrar.
-final downloadedSongsProvider = StreamProvider<List<Song>>((ref) async* {
-  final dao = ref.watch(songDaoProvider);
-  final repository = ref.watch(songRepositoryProvider);
-  // Un Err se lanza como AsyncError; en la fase 3 lo tratarán los notifiers.
-  Future<List<Song>> load() async =>
-      unwrapOrThrow(await repository.getDownloaded());
-  yield await load();
-  await for (final _ in dao.changes) {
-    yield await load();
-  }
-});
-
-/// Espacio ocupado por las descargas, en bytes.
-final downloadsSizeProvider = StreamProvider<int>((ref) async* {
-  final dao = ref.watch(songDaoProvider);
-  final repository = ref.watch(songRepositoryProvider);
-  // Un Err se lanza como AsyncError; en la fase 3 lo tratarán los notifiers.
-  Future<int> load() async =>
-      unwrapOrThrow(await repository.getDownloadedBytes());
-  yield await load();
-  await for (final _ in dao.changes) {
-    yield await load();
-  }
+/// Espacio ocupado por las descargas, en bytes (0 mientras cargan o si no
+/// se pudieron leer).
+final downloadsSizeProvider = Provider<int>((ref) {
+  final songs = ref.watch(downloadedSongsProvider).value ?? const [];
+  return songs.fold(0, (sum, s) => sum + (s.fileSizeBytes ?? 0));
 });
 
 /// Claves (`source:sourceId`) de las canciones descargadas, para marcar

@@ -70,10 +70,6 @@ void main() {
     expect(stored.isLiked, isTrue);
   });
 
-  test('setLiked notifica cambios', () async {
-    final s = await dao.upsert(_song('1'));
-    final next = dao.changes.first;
-    await dao.setLiked(s.id, true);
-    await expectLater(next, completes);
-  });
+  // El DAO ya no avisa de cambios: que las favoritas se refresquen al marcar
+  // "me gusta" lo cubre test/favorites/liked_songs_notifier_test.dart.
 }

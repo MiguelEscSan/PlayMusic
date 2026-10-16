@@ -120,7 +120,12 @@ class SongTile extends ConsumerWidget {
                     ? Icons.favorite_rounded
                     : Icons.favorite_border_rounded,
                 isLiked ? 'Quitar de Me gusta' : 'Me gusta',
-                () => actions.toggleLike(song),
+                () async {
+                  final result = await actions.toggleLike(song);
+                  if (result.isErr && context.mounted) {
+                    showSnack(context, 'No se pudo actualizar "Me gusta"');
+                  }
+                },
               ),
               _item(
                 Icons.playlist_play_rounded,

@@ -38,17 +38,12 @@ final youtubePlaylistImporterProvider = Provider<YoutubePlaylistImporter>((
   );
 });
 
-/// Un fallo de la BD local no es transitorio: se muestra con su botón de
-/// reintentar en vez de reintentarlo en segundo plano (y dejar la pantalla
-/// cargando mientras tanto).
-Duration? noAutomaticRetry(int retryCount, Object error) => null;
-
 /// Reconstruye el provider de [ref] cuando cambia el conjunto de canciones
 /// descargadas: una descarga que termina o se borra cambia cómo se pintan
 /// sus playlists (icono, "Descargada", contador).
 ///
-/// Se observa una firma ordenada de las claves, no el `Set`: cada evento de
-/// la tabla `songs` crea un `Set` nuevo aunque el contenido sea el mismo, y
+/// Se observa una firma ordenada de las claves, no el `Set`: cada recarga
+/// de las descargas crea un `Set` nuevo aunque el contenido sea el mismo, y
 /// eso no debe recargar las playlists.
 void rebuildOnDownloadsChange(Ref ref) =>
     ref.watch(downloadedKeysProvider.select(_signature));

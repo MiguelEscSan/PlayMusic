@@ -36,7 +36,13 @@ class SettingsScreen extends ConsumerWidget {
             'seguirán en tus playlists para escucharlas en streaming.',
         confirmLabel: 'Borrar todo',
       );
-      if (ok) await ref.read(downloadManagerProvider).deleteAll();
+      if (!ok) return;
+      final result = await ref
+          .read(downloadedSongsProvider.notifier)
+          .deleteAll();
+      if (result.isErr && context.mounted) {
+        showSnack(context, 'No se pudieron borrar todas las descargas');
+      }
     }
 
     Future<void> clearHistory() async {

@@ -26,14 +26,16 @@ class SongActions {
 
   Future<Result<Song>> _persist(Song song) {
     // Volvemos a leerla aunque tenga id: su descarga puede haber cambiado.
+    // Guardar solo refresca metadatos (conserva descarga y "me gusta"), así
+    // que no hay listas que recargar.
     return _ref.read(songRepositoryProvider).save(song);
   }
 
   /// Alterna "me gusta". Guarda antes la canción (los resultados de búsqueda
   /// llegan con id vacío) y decide con el estado de la BD, no con el de
   /// [song], que puede estar desfasado. También la añade o quita de la
-  /// playlist "Me encanta" y recarga las playlists (también si la
-  /// sincronización devuelve `Err`: puede haber cambiado a medias).
+  /// playlist "Me encanta" y recarga las favoritas y las playlists (también
+  /// si la sincronización devuelve `Err`: puede haber cambiado a medias).
   Future<Result<Song>> toggleLike(Song song) async {
     final Song saved;
     switch (await _persist(song)) {
@@ -54,6 +56,7 @@ class SongActions {
     // No se sabe su id aquí, así que se invalida toda la familia de detalles
     // (solo se reconstruyen los que estén abiertos).
     _ref
+      ..invalidate(likedSongsProvider)
       ..invalidate(playlistsProvider)
       ..invalidate(playlistProvider);
     return synced.map((_) => updated);
@@ -118,7 +121,7 @@ class SongActions {
       _ref.read(downloadManagerProvider).cancel(song);
 
   Future<Result<Song>> deleteDownload(Song song) =>
-      _ref.read(downloadManagerProvider).delete(song);
+      _ref.read(downloadedSongsProvider.notifier).delete(song);
 
   /// Copia el archivo descargado a la carpeta pública de Música. Lanza
   /// [SongExportException] si no se puede.

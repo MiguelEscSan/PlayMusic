@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:sponify/core/domain/entities/playlist.dart';
 import 'package:sponify/core/domain/entities/song.dart';
 import 'package:sponify/core/domain/repositories/i_playlist_repository.dart';
@@ -127,12 +129,18 @@ class FlakyPlaylistRepository implements IPlaylistRepository {
     return _inner.getAll();
   }
 
+  /// Si no es null, la próxima llamada a [removeSongAt] decide al instante
+  /// si falla, pero no toca la BD ni responde hasta que se complete.
+  Completer<void>? removeSongAtGate;
+
   @override
   Future<Result<Unit>> removeSongAt(String playlistId, int index) async {
-    if (removeSongAtFailures > 0) {
-      removeSongAtFailures--;
-      return const Err(failure);
-    }
+    final fail = removeSongAtFailures > 0;
+    if (fail) removeSongAtFailures--;
+    final gate = removeSongAtGate;
+    removeSongAtGate = null;
+    if (gate != null) await gate.future;
+    if (fail) return const Err(failure);
     return _inner.removeSongAt(playlistId, index);
   }
 

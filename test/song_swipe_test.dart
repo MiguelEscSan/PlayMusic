@@ -17,6 +17,7 @@ import 'package:sponify/shared/song_actions.dart';
 import 'package:sponify/shared/widgets/song_tile.dart';
 
 import 'domain/fakes/fake_playlist_repository.dart';
+import 'helpers/fixed_notifiers.dart';
 
 Song _song(int i, {String? localPath}) => Song(
   id: 'id$i',
@@ -105,8 +106,8 @@ void main() {
           ? const Stream<PlayerSnapshot>.empty()
           : Stream.value(snapshot),
     ),
-    likedSongsProvider.overrideWith((ref) => Stream.value(const [])),
-    downloadedSongsProvider.overrideWith((ref) => Stream.value(const [])),
+    likedSongsProvider.overrideWith(FixedLikedSongs.new),
+    downloadedSongsProvider.overrideWith(FixedDownloads.new),
     downloadTasksProvider.overrideWith((ref) => Stream.value(const {})),
   ];
 

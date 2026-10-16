@@ -124,6 +124,9 @@ Song _song(String sourceId) => Song(
   sourceId: sourceId,
 );
 
+void _expectOk(Result<Object?> result) =>
+    expect(result.isOk, isTrue, reason: '$result');
+
 void main() {
   sqfliteFfiInit();
 
@@ -283,6 +286,39 @@ void main() {
 
     expect((await failing.delete(song)).isErr, isTrue);
     expect((await failing.deleteAll()).isErr, isTrue);
+    expect(
+      (await failing.forgetMissingFile(song.copyWith(id: 'x'))).isErr,
+      isTrue,
+    );
+  });
+
+  test('downloadsChanged avisa al terminar, al borrar y al olvidar un '
+      'archivo perdido, no con el progreso', () async {
+    final changes = <Song>[];
+    final sub = manager.downloadsChanged.listen(changes.add);
+    addTearDown(sub.cancel);
+    final song = _song('notify');
+
+    final done = waitFor(song, DownloadStatus.completed);
+    await manager.download(song);
+    final downloaded = (await done).song;
+    await pumpEventQueue();
+    expect(changes.map((s) => s.isDownloaded), [true]);
+
+    _expectOk(await manager.delete(downloaded));
+    await pumpEventQueue();
+    expect(changes.map((s) => s.isDownloaded), [true, false]);
+
+    final again = waitFor(song, DownloadStatus.completed);
+    await manager.download(song);
+    final redownloaded = (await again).song;
+    await File(redownloaded.localPath!).delete();
+    _expectOk(await manager.forgetMissingFile(redownloaded));
+    await pumpEventQueue();
+
+    expect(changes.map((s) => s.isDownloaded), [true, false, true, false]);
+    expect((await dao.findById(redownloaded.id))!.isDownloaded, isFalse);
+    expect(manager.tasks, isEmpty);
   });
 
   test('si la BD no registra el archivo, se borra del disco', () async {

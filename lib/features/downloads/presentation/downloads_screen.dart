@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/domain/entities/song.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../shared/song_actions.dart';
 import '../../../shared/widgets/artwork_image.dart';
 import '../../../shared/widgets/dialogs.dart';
 import '../../../shared/widgets/empty_state.dart';
+import '../../../shared/widgets/error_view.dart';
 import '../../../shared/widgets/song_tile.dart';
 import '../domain/download_task.dart';
 import 'downloads_providers.dart';
@@ -17,8 +19,35 @@ class DownloadsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final downloaded = ref.watch(downloadedSongsProvider).value ?? const [];
-    final bytes = ref.watch(downloadsSizeProvider).value ?? 0;
+    final async = ref.watch(downloadedSongsProvider);
+    return async.when(
+      // Al recargar (p. ej. termina una descarga) se sigue viendo la lista.
+      skipLoadingOnReload: true,
+      loading: () => Scaffold(
+        appBar: AppBar(title: const Text('Descargas')),
+        body: const Center(child: CircularProgressIndicator()),
+      ),
+      error: (e, _) => Scaffold(
+        appBar: AppBar(title: const Text('Descargas')),
+        body: ErrorView(
+          error: e,
+          title: 'No se pudieron cargar las descargas',
+          onRetry: () => ref.invalidate(downloadedSongsProvider),
+        ),
+      ),
+      data: (downloaded) => _DownloadsView(downloaded: downloaded),
+    );
+  }
+}
+
+class _DownloadsView extends ConsumerWidget {
+  const _DownloadsView({required this.downloaded});
+
+  final List<Song> downloaded;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final bytes = ref.watch(downloadsSizeProvider);
     final tasks = ref.watch(downloadTasksProvider).value ?? const {};
     final inProgress = tasks.values
         .where((t) => t.isActive || t.status == DownloadStatus.failed)
@@ -34,7 +63,13 @@ class DownloadsScreen extends ConsumerWidget {
             'seguirán en tus playlists para escucharlas en streaming.',
         confirmLabel: 'Borrar todo',
       );
-      if (ok) await ref.read(downloadManagerProvider).deleteAll();
+      if (!ok) return;
+      final result = await ref
+          .read(downloadedSongsProvider.notifier)
+          .deleteAll();
+      if (result.isErr && context.mounted) {
+        showSnack(context, 'No se pudieron borrar todas las descargas');
+      }
     }
 
     return Scaffold(

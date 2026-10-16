@@ -81,7 +81,11 @@ class DownloadButton extends ConsumerWidget {
                 '"${song.title}" dejará de estar disponible sin conexión. '
                 'Seguirá en tus playlists.',
           );
-          if (ok) await actions.deleteDownload(song);
+          if (!ok) return;
+          final result = await actions.deleteDownload(song);
+          if (result.isErr && context.mounted) {
+            showSnack(context, 'No se pudo borrar la descarga');
+          }
         },
       );
     }

@@ -13,6 +13,7 @@ import 'package:sponify/features/favorites/presentation/favorites_providers.dart
 import 'package:sponify/features/playlists/presentation/playlist_detail_screen.dart';
 
 import '../domain/fakes/fake_playlist_repository.dart';
+import '../helpers/fixed_notifiers.dart';
 
 Song _song(int i) => Song(
   id: 'id$i',
@@ -64,8 +65,8 @@ void main() {
           playerSnapshotProvider.overrideWith(
             (ref) => const Stream<PlayerSnapshot>.empty(),
           ),
-          likedSongsProvider.overrideWith((ref) => Stream.value(const [])),
-          downloadedSongsProvider.overrideWith((ref) => Stream.value(const [])),
+          likedSongsProvider.overrideWith(FixedLikedSongs.new),
+          downloadedSongsProvider.overrideWith(FixedDownloads.new),
           downloadTasksProvider.overrideWith((ref) => Stream.value(const {})),
         ],
         child: const MaterialApp(home: PlaylistDetailScreen(id: 'p1')),

@@ -41,10 +41,7 @@ void main() {
     repo = SongRepositoryImpl(dao);
   });
 
-  tearDown(() async {
-    await dao.dispose();
-    await db.close();
-  });
+  tearDown(() => db.close());
 
   test(
     'save persists the song and returns a domain entity with an id',

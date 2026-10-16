@@ -9,7 +9,6 @@ import '../data/repositories/playlist_repository_impl.dart';
 import '../data/repositories/song_repository_impl.dart';
 import '../domain/repositories/i_playlist_repository.dart';
 import '../domain/repositories/i_song_repository.dart';
-import '../error/result.dart';
 
 /// Repositorios de dominio. Se derivan de los providers de los DAOs, así
 /// que basta con sobrescribir el DAO (en `main()` o en un test) para que el
@@ -36,12 +35,8 @@ final removeSongFromPlaylistUseCaseProvider =
           RemoveSongFromPlaylistUseCase(ref.watch(playlistRepositoryProvider)),
     );
 
-/// Valor de un `Ok`; un `Err` lanza su `Failure` tipado.
-///
-/// Transitorio: lo usan los `StreamProvider` que aún se refrescan con los
-/// `changes` de los DAOs, para que un fallo llegue a la UI como `AsyncError`.
-/// En la fase 3 los notifiers tratarán el `Err` explícitamente.
-T unwrapOrThrow<T>(Result<T> result) => switch (result) {
-  Ok(:final value) => value,
-  Err(:final failure) => throw failure,
-};
+/// `retry` de los notifiers que cargan de un repositorio y lanzan su
+/// `Failure` tipado: un fallo de la BD local no es transitorio, así que se
+/// muestra con su botón de reintentar en vez de reintentarlo en segundo
+/// plano (y dejar la pantalla cargando mientras tanto).
+Duration? noAutomaticRetry(int retryCount, Object error) => null;
