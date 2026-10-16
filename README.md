@@ -33,3 +33,36 @@ lib/
 │       ├── data/     # Repositorios, DAOs y Data Sources (APIs).
 │       └── presentation/ # Widgets tontos y Notifiers (Riverpod).
 └── shared/           #
+```
+
+## ✨ Retos Técnicos Resueltos
+
+- **Resolución de Reproducción Híbrida (PlaybackSourceResolver):** Un patrón interceptor que evalúa dinámicamente cada canción antes de reproducirse. Si el archivo existe en el almacenamiento local, inyecta un `LocalFileSource`. Si no, negocia una nueva URL de streaming (evitando problemas de caducidad de tokens).
+- **Gestor de Descargas Concurrente:** Implementación de un `DownloadManager` personalizado usando `dio` para descargar archivos grandes en fragmentos (chunks), permitiendo pausar, cancelar y reanudar descargas en caso de fallo de red.
+- **Audio Background & OS Integration:** Integración profunda con Android/iOS para mantener la reproducción con la pantalla apagada, respondiendo a eventos de auriculares Bluetooth y controles en la pantalla de bloqueo a través de `audio_service`.
+- **Motor de Recomendaciones Local:** Un algoritmo híbrido que cruza los grafos de canciones recomendadas de una API pública con el historial de reproducción local (SQLite) para sugerir la siguiente pista automáticamente (Radio Infinita).
+
+## 📱 Demo
+
+*(Añade aquí capturas de pantalla o un GIF mostrando la app en funcionamiento)*
+
+- Reproductor
+- Mi Biblioteca
+- Descargas Offline
+
+## ⚙️ Cómo ejecutar el proyecto (Modo Desarrollo)
+
+1. **Clona el repositorio:**
+```bash
+git clone [https://github.com/tu-usuario/sponify.git](https://github.com/tu-usuario/sponify.git)
+```
+2. **Instala las dependencias:**
+```bash
+flutter pub get
+```
+3. **Ejecuta la aplicación:**
+```bash
+flutter run
+```
+
+
