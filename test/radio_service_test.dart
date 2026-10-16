@@ -129,4 +129,47 @@ void main() {
     expect(await service.nextFor([local]), isEmpty);
     expect(await service.nextFor(const []), isEmpty);
   });
+
+  test('forSeed ordena por gustos y salta las recientes', () async {
+    Song by(String id, String artist) => Song(
+      id: '',
+      title: 'T$id',
+      artist: artist,
+      durationMs: 1000,
+      source: SongSource.youtube,
+      sourceId: id,
+    );
+    for (final id in ['l1', 'l2', 'l3']) {
+      final liked = (await songs.upsert(SongModel.fromEntity(by(id, 'Fav'))))
+          .toEntity();
+      await songs.setLiked(liked.id, true);
+    }
+    final service = RadioService(
+      fetchRelated: (_) async => [
+        by('x', 'Otro'),
+        by('old', 'Otro2'),
+        by('f', 'Fav'),
+      ],
+      songRepository: SongRepositoryImpl(songs),
+      settings: SettingsRepositoryImpl(settings),
+      history: FakeHistoryRepository(recent: [by('old', 'Otro2')]),
+    );
+    final seed = (await queueOf(['s'])).single;
+
+    final next = await service.forSeed(seed);
+
+    expect([for (final s in next) s.sourceId], ['f', 'x']);
+  });
+
+  test('si falla el historial, la radio sigue', () async {
+    final service = RadioService(
+      fetchRelated: (_) async => [_song('r1')],
+      songRepository: SongRepositoryImpl(songs),
+      settings: SettingsRepositoryImpl(settings),
+      history: FakeHistoryRepository()
+        ..failure = const DatabaseFailure('disk full'),
+    );
+    final next = await service.forSeed((await queueOf(['s'])).single);
+    expect([for (final s in next) s.sourceId], ['r1']);
+  });
 }

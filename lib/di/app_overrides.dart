@@ -21,4 +21,5 @@ List<Override> appOverrides(AppDependencies deps) => [
   likedPlaylistProvider.overrideWithValue(deps.likedPlaylist),
   playlistCoverServiceProvider.overrideWithValue(deps.playlistCovers),
   downloadServiceProvider.overrideWithValue(deps.downloads),
+  radioServiceProvider.overrideWithValue(deps.radio),
 ];

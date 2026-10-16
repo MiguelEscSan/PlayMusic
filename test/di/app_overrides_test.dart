@@ -25,6 +25,7 @@ import 'package:sponify/features/history/data/history_repository_impl.dart';
 import 'package:sponify/features/history/domain/history_events.dart';
 import 'package:sponify/features/playlists/data/playlist_cover_service.dart';
 import 'package:sponify/features/search/data/search_history_dao.dart';
+import 'package:sponify/features/radio/domain/radio_service.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 class _FakeAudio implements AudioPlayerService {
@@ -91,6 +92,12 @@ void main() {
       settings: settings,
       settingsRepository: settingsRepository,
       searchHistory: SearchHistoryDao(db),
+      radio: RadioService(
+        fetchRelated: (_) async => const [],
+        songRepository: songs,
+        settings: settingsRepository,
+        history: historyRepository,
+      ),
     );
     final container = ProviderContainer(overrides: appOverrides(deps));
     addTearDown(() async {
@@ -124,5 +131,6 @@ void main() {
       container.read(playlistCoverServiceProvider),
       same(deps.playlistCovers),
     );
+    expect(container.read(radioServiceProvider), same(deps.radio));
   });
 }

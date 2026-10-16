@@ -153,7 +153,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 itemCount: state.results.length,
                 itemBuilder: (context, i) => SongTile(
                   song: state.results[i],
-                  onTap: () => ref.read(playQueueUseCaseProvider)(state.results, i),
+                  onTap: () =>
+                      ref.read(playWithRadioUseCaseProvider)(state.results, i),
                 ),
               ),
               SliverToBoxAdapter(

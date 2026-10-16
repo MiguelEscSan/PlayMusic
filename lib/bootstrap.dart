@@ -27,7 +27,7 @@ import 'features/history/domain/history_events.dart';
 import 'features/history/domain/i_history_repository.dart';
 import 'features/playlists/data/playlist_cover_service.dart';
 import 'core/database/playlist_dao.dart';
-import 'features/radio/data/youtube_related_songs.dart';
+import 'features/radio/data/youtube_mix_songs.dart';
 import 'features/radio/domain/radio_service.dart';
 import 'features/search/data/search_history_dao.dart';
 import 'features/settings/data/download_policy.dart';
@@ -51,6 +51,7 @@ class AppDependencies {
     required this.settings,
     required this.settingsRepository,
     required this.searchHistory,
+    required this.radio,
   });
 
   final AppDatabase database;
@@ -75,6 +76,10 @@ class AppDependencies {
   final SettingsDao settings;
   final ISettingsRepository settingsRepository;
   final SearchHistoryDao searchHistory;
+
+  /// Única instancia: la que sigue la cola al acabarse y la que arranca la
+  /// radio al tocar un resultado de búsqueda.
+  final RadioService radio;
 }
 
 Future<AppDependencies> bootstrap() async {
@@ -106,12 +111,20 @@ Future<AppDependencies> bootstrap() async {
   final settings = SettingsDao(database);
   final settingsRepository = SettingsRepositoryImpl(settings);
 
-  // Radio automática: al acabarse la cola sigue con canciones relacionadas.
-  audio.onQueueEnded = RadioService(
-    fetchRelated: youtubeRelatedSongs(YoutubeExplode()),
+  // El historial escucha al reproductor desde el arranque.
+  final historyDao = HistoryDao(database);
+  final historyRepository = HistoryRepositoryImpl(historyDao);
+  final historyEvents = HistoryEvents();
+
+  // Radio automática: al acabarse la cola sigue con canciones parecidas,
+  // ordenadas por los gustos del usuario.
+  final radio = RadioService(
+    fetchRelated: youtubeMixSongs(YoutubeExplode()),
     songRepository: songRepository,
     settings: settingsRepository,
-  ).nextFor;
+    history: historyRepository,
+  );
+  audio.onQueueEnded = radio.nextFor;
 
   final downloads = DownloadManager(
     dio: Dio(
@@ -147,11 +160,6 @@ Future<AppDependencies> bootstrap() async {
     debugPrint('No se pudieron leer los "me gusta": $failure');
   }
 
-  // El historial escucha al reproductor desde el arranque.
-  final historyDao = HistoryDao(database);
-  final historyRepository = HistoryRepositoryImpl(historyDao);
-  final historyEvents = HistoryEvents();
-
   return AppDependencies(
     database: database,
     songDao: songDao,
@@ -173,5 +181,6 @@ Future<AppDependencies> bootstrap() async {
     settings: settings,
     settingsRepository: settingsRepository,
     searchHistory: SearchHistoryDao(database),
+    radio: radio,
   );
 }

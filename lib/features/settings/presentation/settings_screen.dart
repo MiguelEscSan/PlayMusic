@@ -72,9 +72,7 @@ class SettingsScreen extends ConsumerWidget {
           SwitchListTile(
             secondary: const Icon(Icons.radio_rounded),
             title: const Text('Radio automática'),
-            subtitle: const Text(
-              'Al acabar la cola, sigue con canciones parecidas',
-            ),
+            subtitle: const Text('Sigue con canciones parecidas a tus gustos'),
             value: settings.radioEnabled,
             onChanged: (v) => save(
               () => ref.read(settingsProvider.notifier).setRadioEnabled(v),

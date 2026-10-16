@@ -10,6 +10,7 @@ import 'package:sponify/core/audio/audio_player_service.dart';
 import 'package:sponify/di/providers.dart';
 import 'package:sponify/core/audio/playback_source.dart';
 import 'package:sponify/core/data/models/song_model.dart';
+import 'package:sponify/core/data/repositories/settings_repository_impl.dart';
 import 'package:sponify/core/data/repositories/song_repository_impl.dart';
 import 'package:sponify/core/database/app_database.dart';
 import 'package:sponify/core/database/song_dao.dart';
@@ -20,6 +21,7 @@ import 'package:sponify/features/downloads/data/download_manager.dart';
 import 'package:sponify/features/history/data/history_dao.dart';
 import 'package:sponify/core/database/playlist_dao.dart';
 import 'package:sponify/features/playlists/presentation/playlists_providers.dart';
+import 'package:sponify/features/radio/domain/radio_service.dart';
 import 'package:sponify/features/search/data/search_history_dao.dart';
 import 'package:sponify/features/search/domain/search_source.dart';
 import 'package:sponify/features/search/domain/suggestion_source.dart';
@@ -147,6 +149,13 @@ void main() {
           searchSourceProvider.overrideWithValue(search),
           searchHistoryDaoProvider.overrideWithValue(SearchHistoryDao(db)),
           suggestionSourceProvider.overrideWithValue(_NoSuggestions()),
+          radioServiceProvider.overrideWithValue(
+            RadioService(
+              fetchRelated: (_) async => const [],
+              songRepository: SongRepositoryImpl(songDao),
+              settings: SettingsRepositoryImpl(SettingsDao(db)),
+            ),
+          ),
         ],
         child: const SponifyApp(),
       ),
@@ -244,11 +253,13 @@ void main() {
     await tester.tap(find.text('Segunda'));
     await settle(tester);
 
-    expect(audio.lastIndex, 1);
+    // Suena solo la tocada (detrás irá la radio), no todos los resultados.
+    expect(audio.lastIndex, 0);
+    expect([for (final s in audio.lastQueue!) s.title], ['Segunda']);
     expect(
-      audio.lastQueue!.every((s) => s.id.isNotEmpty),
-      isTrue,
-      reason: 'se guardan en la BD antes de sonar',
+      audio.lastQueue!.single.id,
+      isNotEmpty,
+      reason: 'se guarda en la BD antes de sonar',
     );
     // Aparece el mini-reproductor con la canción.
     expect(find.text('Segunda'), findsNWidgets(2));

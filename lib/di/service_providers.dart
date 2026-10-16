@@ -13,6 +13,7 @@ import '../features/lyrics/domain/i_lyrics_repository.dart';
 import '../features/playlists/data/youtube_playlist_importer.dart';
 import '../features/playlists/domain/i_playlist_cover_service.dart';
 import '../features/playlists/domain/i_playlist_importer.dart';
+import '../features/radio/domain/radio_service.dart';
 import '../features/search/data/youtube_search_source.dart';
 import '../features/search/data/youtube_suggestion_source.dart';
 import '../features/search/domain/search_source.dart';
@@ -48,6 +49,12 @@ final playlistCoverServiceProvider = Provider<IPlaylistCoverService>(
 final likedPlaylistProvider = Provider<ILikedPlaylistSync>(
   (ref) =>
       throw UnimplementedError('likedPlaylistProvider se define en main()'),
+);
+
+/// Radio (`RadioService`). Se sobrescribe en `main()` con la instancia de
+/// `bootstrap()`, la misma que sigue la cola al acabarse.
+final radioServiceProvider = Provider<RadioService>(
+  (ref) => throw UnimplementedError('radioServiceProvider se define en main()'),
 );
 
 /// Importador de playlists de YouTube. El cliente de YouTube se crea al

@@ -53,6 +53,7 @@ import '../features/search/domain/usecases/record_search_use_case.dart';
 import '../features/search/domain/usecases/remove_recent_search_use_case.dart';
 import '../features/search/domain/usecases/search_songs_use_case.dart';
 import '../features/settings/domain/usecases/get_download_only_wifi_use_case.dart';
+import '../features/radio/domain/usecases/play_with_radio_use_case.dart';
 import '../features/settings/domain/usecases/get_radio_enabled_use_case.dart';
 import '../features/settings/domain/usecases/set_download_only_wifi_use_case.dart';
 import '../features/settings/domain/usecases/set_radio_enabled_use_case.dart';
@@ -190,6 +191,14 @@ final playQueueUseCaseProvider = Provider<PlayQueueUseCase>(
   (ref) => PlayQueueUseCase(
     ref.watch(songRepositoryProvider),
     ref.watch(audioPlayerServiceProvider),
+  ),
+);
+
+final playWithRadioUseCaseProvider = Provider<PlayWithRadioUseCase>(
+  (ref) => PlayWithRadioUseCase(
+    ref.watch(songRepositoryProvider),
+    ref.watch(audioPlayerServiceProvider),
+    ref.watch(radioServiceProvider),
   ),
 );
 

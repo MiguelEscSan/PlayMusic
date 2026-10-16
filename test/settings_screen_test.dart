@@ -114,7 +114,7 @@ void main() {
 
     expect(find.text('Reproducción'), findsOneWidget);
     expect(
-      find.text('Al acabar la cola, sigue con canciones parecidas'),
+      find.text('Sigue con canciones parecidas a tus gustos'),
       findsOneWidget,
     );
     // Valores por defecto: radio activada, descargas con datos permitidas.
