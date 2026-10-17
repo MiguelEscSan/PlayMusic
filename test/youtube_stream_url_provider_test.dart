@@ -187,4 +187,143 @@ void main() {
       expect(ranges.first, 'bytes=2097152-2097152');
     });
   });
+
+  group('límite de peticiones de YouTube', () {
+    test('solo descarga la página del vídeo si falta el visitorData', () async {
+      final requested = <bool>[];
+      final load = YoutubeStreamUrlProvider.manifestLoader((
+        id,
+        clients, {
+        required bool requireWatchPage,
+      }) async {
+        requested.add(requireWatchPage);
+        throw Exception('sin red');
+      });
+      final withVisitor = YoutubeStreamUrlProvider.withVisitorData(
+        YoutubeStreamUrlProvider.visionOs,
+        'VD',
+      );
+
+      for (final clients in [
+        [withVisitor],
+        [YoutubeStreamUrlProvider.visionOs],
+        null,
+      ]) {
+        await expectLater(load('abc', clients), throwsException);
+      }
+
+      expect(requested, [false, true, false]);
+    });
+
+    test('withVisitorData lo pone en el contexto y en la cabecera', () {
+      final client = YoutubeStreamUrlProvider.withVisitorData(
+        YoutubeStreamUrlProvider.visionOs,
+        'VD',
+      );
+
+      expect(client.payload['context']['client']['visitorData'], 'VD');
+      expect(client.payload['context']['client']['clientName'], 'VISIONOS');
+      expect(client.headers['X-Goog-Visitor-Id'], 'VD');
+      expect(client.headers['X-YouTube-Client-Name'], '101');
+      expect(client.apiUrl, YoutubeStreamUrlProvider.visionOs.apiUrl);
+    });
+
+    test('pide el visitorData una vez y lo reutiliza', () async {
+      var visitorCalls = 0;
+      final sent = <String?>[];
+      final provider = YoutubeStreamUrlProvider.withLoader(
+        (id, clients) async {
+          sent.add(clients?.single.payload['context']['client']['visitorData']);
+          return visionOsUrl;
+        },
+        visitorData: () async {
+          visitorCalls++;
+          return 'VD';
+        },
+      );
+
+      await provider.fetchStreamUrl('a');
+      await provider.fetchStreamUrl('b');
+
+      expect(visitorCalls, 1);
+      expect(sent, ['VD', 'VD']);
+    });
+
+    test(
+      'si visionOS falla, la próxima canción pide otro visitorData',
+      () async {
+        var visitorCalls = 0;
+        final provider = YoutubeStreamUrlProvider.withLoader((
+          id,
+          clients,
+        ) async {
+          if (clients != null && id == 'a') throw Exception('unplayable');
+          return clients != null ? visionOsUrl : defaultUrl;
+        }, visitorData: () async => 'VD${++visitorCalls}');
+
+        expect(await provider.fetchStreamUrl('a'), defaultUrl);
+        expect(await provider.fetchStreamUrl('b'), visionOsUrl);
+        expect(visitorCalls, 2);
+      },
+    );
+
+    test('sin visitorData usa el cliente tal cual', () async {
+      final calls = <List<YoutubeApiClient>?>[];
+      final provider = YoutubeStreamUrlProvider.withLoader((id, clients) async {
+        calls.add(clients);
+        return visionOsUrl;
+      }, visitorData: () async => null);
+
+      await provider.fetchStreamUrl('a');
+
+      expect(calls.single, [YoutubeStreamUrlProvider.visionOs]);
+    });
+
+    test('al primer límite para y no prueba más clientes', () async {
+      var calls = 0;
+      final provider = YoutubeStreamUrlProvider.withLoader((id, clients) async {
+        calls++;
+        throw RequestLimitExceededException('429');
+      });
+
+      await expectLater(
+        provider.fetchStreamUrl('abc'),
+        throwsA(
+          isA<YoutubeRateLimitedException>().having(
+            (e) => e.message,
+            'message',
+            YoutubeRateLimitedException.rateLimitedMessage,
+          ),
+        ),
+      );
+      expect(calls, 1);
+    });
+
+    test('durante el enfriamiento falla sin pedir nada a YouTube', () async {
+      var now = DateTime(2026, 10, 17, 12);
+      var limited = true;
+      var calls = 0;
+      final provider = YoutubeStreamUrlProvider.withLoader((id, clients) async {
+        calls++;
+        if (limited) throw RequestLimitExceededException('429');
+        return visionOsUrl;
+      }, clock: () => now);
+
+      await expectLater(
+        provider.fetchStreamUrl('a'),
+        throwsA(isA<YoutubeRateLimitedException>()),
+      );
+      limited = false;
+      now = now.add(const Duration(minutes: 1));
+      await expectLater(
+        provider.fetchStreamUrl('b'),
+        throwsA(isA<YoutubeRateLimitedException>()),
+      );
+      expect(calls, 1, reason: 'no vuelve a llamar a YouTube');
+
+      now = now.add(YoutubeStreamUrlProvider.rateLimitCooldown);
+      expect(await provider.fetchStreamUrl('c'), visionOsUrl);
+      expect(calls, 2);
+    });
+  });
 }

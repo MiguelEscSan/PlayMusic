@@ -106,4 +106,12 @@ void main() {
       throwsA(isA<YoutubeBlockedException>()),
     );
   });
+
+  test('YouTube limitando peticiones -> propaga el aviso tal cual', () async {
+    yt.error = const YoutubeRateLimitedException();
+    await expectLater(
+      resolver.resolve(_song()),
+      throwsA(isA<YoutubeRateLimitedException>()),
+    );
+  });
 }

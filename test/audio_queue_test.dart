@@ -277,6 +277,26 @@ void main() {
       expect(player.loaded, isEmpty);
     });
 
+    test('si YouTube limita las peticiones muestra el aviso y no salta '
+        '(las siguientes también fallarían)', () async {
+      final handler = handlerWith(
+        _FnResolver((s, _) async {
+          if (s.id == 'a') throw const YoutubeRateLimitedException();
+          return LocalFileSource('/music/${s.id}.m4a');
+        }),
+      );
+
+      await handler.playQueue([song('a'), song('b')]);
+
+      expect(handler.current.status, PlaybackStatus.error);
+      expect(
+        handler.current.errorMessage,
+        YoutubeRateLimitedException.rateLimitedMessage,
+      );
+      expect(handler.current.currentSong?.id, 'a');
+      expect(player.loaded, isEmpty);
+    });
+
     test('con autoplay salta a la siguiente que sí se puede', () async {
       final handler = handlerWith(
         _FnResolver((s, _) async {

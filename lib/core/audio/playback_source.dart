@@ -52,6 +52,20 @@ class YoutubeBlockedException implements Exception {
   String toString() => 'YoutubeBlockedException: $message';
 }
 
+/// YouTube responde 429 (o manda a google.com/sorry): demasiadas peticiones
+/// desde esta IP. Pasa con toda la red, no con una canción, así que el
+/// reproductor no salta a la siguiente (fallaría igual).
+class YoutubeRateLimitedException extends YoutubeBlockedException {
+  const YoutubeRateLimitedException() : super(rateLimitedMessage);
+
+  static const rateLimitedMessage =
+      'YouTube está limitando las peticiones desde esta red. Espera unos '
+      'minutos o cambia de wifi a datos.';
+
+  @override
+  String toString() => 'YoutubeRateLimitedException: $message';
+}
+
 class SongUnavailableException implements Exception {
   const SongUnavailableException(this.song, [this.reason]);
   final Song song;
