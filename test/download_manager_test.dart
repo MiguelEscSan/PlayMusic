@@ -16,6 +16,7 @@ import 'package:sponify/core/error/result.dart';
 import 'package:sponify/core/storage/file_paths.dart';
 import 'package:sponify/features/downloads/data/download_manager.dart';
 import 'package:sponify/features/downloads/domain/download_task.dart';
+import 'package:sponify/features/downloads/presentation/download_task_progress.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import 'domain/fakes/fake_song_repository.dart';

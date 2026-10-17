@@ -5,6 +5,7 @@ import '../../core/domain/entities/song.dart';
 import '../../di/providers.dart';
 import '../../core/domain/song_key.dart';
 import '../../features/downloads/domain/download_task.dart';
+import '../../features/downloads/presentation/download_task_progress.dart';
 import '../../features/downloads/presentation/downloads_providers.dart';
 import 'dialogs.dart';
 
