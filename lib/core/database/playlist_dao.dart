@@ -30,14 +30,14 @@ class PlaylistDao {
     final rows = await _db.query('playlists', orderBy: 'updated_at DESC');
     return [
       for (final row in rows)
-        PlaylistModel.fromMap(row, songs: await _songsOf(row['id']! as String)),
+        PlaylistModel.fromRow(row, songs: await _songsOf(row['id']! as String)),
     ];
   }
 
   Future<PlaylistModel?> findById(String id) async {
     final rows = await _db.query('playlists', where: 'id = ?', whereArgs: [id]);
     if (rows.isEmpty) return null;
-    return PlaylistModel.fromMap(rows.first, songs: await _songsOf(id));
+    return PlaylistModel.fromRow(rows.first, songs: await _songsOf(id));
   }
 
   Future<List<SongModel>> _songsOf(
@@ -50,7 +50,7 @@ class PlaylistDao {
       'WHERE ps.playlist_id = ? ORDER BY ps.position',
       [playlistId],
     );
-    return rows.map(SongModel.fromMap).toList();
+    return rows.map(SongModel.fromJson).toList();
   }
 
   // ---------------------------------------------------------------------------
@@ -66,7 +66,7 @@ class PlaylistDao {
       createdAt: now,
       updatedAt: now,
     );
-    await _db.insert('playlists', playlist.toMap());
+    await _db.insert('playlists', playlist.toJson());
     return playlist;
   }
 

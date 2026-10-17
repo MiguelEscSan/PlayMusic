@@ -46,7 +46,7 @@ class HistoryDao {
       'ORDER BY h.last_played DESC, h.last_id DESC LIMIT ?',
       [limit],
     );
-    return rows.map(SongModel.fromMap).toList();
+    return rows.map(SongModel.fromJson).toList();
   }
 
   /// Canciones más escuchadas en los últimos [days] días, por número de
@@ -63,7 +63,7 @@ class HistoryDao {
       'ORDER BY plays DESC, last_played DESC LIMIT ?',
       [since, limit],
     );
-    return rows.map(SongModel.fromMap).toList();
+    return rows.map(SongModel.fromJson).toList();
   }
 
   Future<void> clear() async {

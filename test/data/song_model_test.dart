@@ -24,9 +24,9 @@ void main() {
   );
 
   group('SongModel map serialization', () {
-    test('toMap/fromMap round-trip keeps every persisted column', () {
-      final map = fullModel().toMap();
-      final restored = SongModel.fromMap(map);
+    test('toJson/fromJson round-trip keeps every persisted column', () {
+      final map = fullModel().toJson();
+      final restored = SongModel.fromJson(map);
 
       expect(restored.id, 'id-1');
       expect(restored.title, 'Title');
@@ -43,14 +43,14 @@ void main() {
       expect(restored.downloadProgress, isNull, reason: 'not persisted');
       expect(restored, fullModel(), reason: 'equal by source + sourceId');
       expect(restored.isDownloaded, isTrue);
-      expect(restored.isLiked, isFalse, reason: 'liked_at is not in toMap');
+      expect(restored.isLiked, isFalse, reason: 'liked_at is not in toJson');
     });
 
-    test('likedAt is read by fromMap but never written by toMap', () {
-      final map = fullModel().toMap();
+    test('likedAt is read by fromJson but never written by toJson', () {
+      final map = fullModel().toJson();
       expect(map.containsKey('liked_at'), isFalse);
 
-      final restored = SongModel.fromMap({
+      final restored = SongModel.fromJson({
         ...map,
         'liked_at': likedAt.millisecondsSinceEpoch,
       });

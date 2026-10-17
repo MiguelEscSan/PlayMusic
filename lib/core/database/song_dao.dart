@@ -29,21 +29,21 @@ class SongDao {
       final merged = existing.copyWith(
         title: song.title,
         artist: song.artist,
-        album: song.album,
+        album: song.album ?? existing.album,
         durationMs: song.durationMs,
-        artworkUrl: song.artworkUrl,
-        streamUrl: song.streamUrl,
+        artworkUrl: song.artworkUrl ?? existing.artworkUrl,
+        streamUrl: song.streamUrl ?? existing.streamUrl,
       );
       await db.update(
         'songs',
-        merged.toMap(),
+        merged.toJson(),
         where: 'id = ?',
         whereArgs: [merged.id],
       );
       return merged;
     }
     final created = song.id.isEmpty ? song.copyWith(id: _uuid.v4()) : song;
-    await db.insert('songs', created.toMap());
+    await db.insert('songs', created.toJson());
     return created;
   }
 
@@ -53,7 +53,7 @@ class SongDao {
       where: 'id = ?',
       whereArgs: [id],
     );
-    return rows.isEmpty ? null : SongModel.fromMap(rows.first);
+    return rows.isEmpty ? null : SongModel.fromJson(rows.first);
   }
 
   Future<SongModel?> findBySource(
@@ -66,7 +66,7 @@ class SongDao {
       where: 'source = ? AND source_id = ?',
       whereArgs: [source.name, sourceId],
     );
-    return rows.isEmpty ? null : SongModel.fromMap(rows.first);
+    return rows.isEmpty ? null : SongModel.fromJson(rows.first);
   }
 
   /// Canciones descargadas, las más recientes primero.
@@ -76,7 +76,7 @@ class SongDao {
       where: 'local_path IS NOT NULL',
       orderBy: 'downloaded_at DESC',
     );
-    return rows.map(SongModel.fromMap).toList();
+    return rows.map(SongModel.fromJson).toList();
   }
 
   /// Espacio total ocupado por las descargas, en bytes.
@@ -140,6 +140,6 @@ class SongDao {
       where: 'liked_at IS NOT NULL',
       orderBy: 'liked_at DESC',
     );
-    return rows.map(SongModel.fromMap).toList();
+    return rows.map(SongModel.fromJson).toList();
   }
 }
