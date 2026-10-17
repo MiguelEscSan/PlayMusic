@@ -15,8 +15,16 @@ class SongDao {
   /// Guarda una canción (p. ej. un resultado de búsqueda) y devuelve la
   /// versión persistida. Si ya existía por `source + sourceId` conserva su
   /// id y su descarga, y solo refresca los metadatos.
-  Future<SongModel> upsert(SongModel song) async {
-    final existing = await findBySource(song.source, song.sourceId);
+  ///
+  /// Con [executor] (p. ej. el `txn` de una transacción) la escritura se une
+  /// a esa unidad de trabajo; sin él usa la conexión base.
+  Future<SongModel> upsert(SongModel song, {DatabaseExecutor? executor}) async {
+    final db = executor ?? _db;
+    final existing = await findBySource(
+      song.source,
+      song.sourceId,
+      executor: db,
+    );
     if (existing != null) {
       final merged = existing.copyWith(
         title: song.title,
@@ -26,7 +34,7 @@ class SongDao {
         artworkUrl: song.artworkUrl,
         streamUrl: song.streamUrl,
       );
-      await _db.update(
+      await db.update(
         'songs',
         merged.toMap(),
         where: 'id = ?',
@@ -35,17 +43,25 @@ class SongDao {
       return merged;
     }
     final created = song.id.isEmpty ? song.copyWith(id: _uuid.v4()) : song;
-    await _db.insert('songs', created.toMap());
+    await db.insert('songs', created.toMap());
     return created;
   }
 
-  Future<SongModel?> findById(String id) async {
-    final rows = await _db.query('songs', where: 'id = ?', whereArgs: [id]);
+  Future<SongModel?> findById(String id, {DatabaseExecutor? executor}) async {
+    final rows = await (executor ?? _db).query(
+      'songs',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
     return rows.isEmpty ? null : SongModel.fromMap(rows.first);
   }
 
-  Future<SongModel?> findBySource(SongSource source, String sourceId) async {
-    final rows = await _db.query(
+  Future<SongModel?> findBySource(
+    SongSource source,
+    String sourceId, {
+    DatabaseExecutor? executor,
+  }) async {
+    final rows = await (executor ?? _db).query(
       'songs',
       where: 'source = ? AND source_id = ?',
       whereArgs: [source.name, sourceId],
@@ -78,8 +94,10 @@ class SongDao {
     String id, {
     required String localPath,
     required int sizeBytes,
+    DatabaseExecutor? executor,
   }) async {
-    await _db.update(
+    final db = executor ?? _db;
+    await db.update(
       'songs',
       {
         'local_path': localPath,
@@ -89,11 +107,11 @@ class SongDao {
       where: 'id = ?',
       whereArgs: [id],
     );
-    return findById(id);
+    return findById(id, executor: db);
   }
 
-  Future<void> clearDownload(String id) async {
-    await _db.update(
+  Future<void> clearDownload(String id, {DatabaseExecutor? executor}) async {
+    await (executor ?? _db).update(
       'songs',
       {'local_path': null, 'file_size_bytes': null, 'downloaded_at': null},
       where: 'id = ?',
@@ -102,8 +120,12 @@ class SongDao {
   }
 
   /// Marca o desmarca "me gusta". Es la única vía que escribe `liked_at`.
-  Future<void> setLiked(String songId, bool liked) async {
-    await _db.update(
+  Future<void> setLiked(
+    String songId,
+    bool liked, {
+    DatabaseExecutor? executor,
+  }) async {
+    await (executor ?? _db).update(
       'songs',
       {'liked_at': liked ? DateTime.now().millisecondsSinceEpoch : null},
       where: 'id = ?',

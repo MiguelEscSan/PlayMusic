@@ -102,9 +102,12 @@ class PlaylistDao {
   }
 
   /// Añade al final. Devuelve false si la canción ya estaba.
+  ///
+  /// El upsert de la canción y la escritura del orden comparten transacción:
+  /// si falla un paso no queda ni la canción huérfana ni la playlist a medias.
   Future<bool> addSong(String playlistId, SongModel song) async {
-    final saved = await _songDao.upsert(song);
     return _db.transaction((txn) async {
+      final saved = await _songDao.upsert(song, executor: txn);
       final ids = await _songIdsOf(txn, playlistId);
       if (ids.contains(saved.id)) return false;
       await _writeOrder(txn, playlistId, [...ids, saved.id]);
