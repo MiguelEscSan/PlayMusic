@@ -12,7 +12,11 @@ final class GetLyricsUseCase {
   final ILyricsRepository _lyrics;
 
   Future<Result<Lyrics>> call(Song song) => guardResult(
-    () => _lyrics.getLyrics(song),
+    () => _lyrics.getLyrics(
+      song.title,
+      song.artist,
+      durationSeconds: song.duration.inSeconds,
+    ),
     onError: (e, st) => UnexpectedFailure(
       'No se pudo cargar la letra',
       cause: e,

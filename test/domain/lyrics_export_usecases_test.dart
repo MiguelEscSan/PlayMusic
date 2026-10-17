@@ -22,11 +22,15 @@ class _FakeLyrics implements ILyricsRepository {
   _FakeLyrics(this.result);
 
   final Future<Result<Lyrics>> Function() result;
-  final requested = <Song>[];
+  final requested = <(String, String)>[];
 
   @override
-  Future<Result<Lyrics>> getLyrics(Song song) {
-    requested.add(song);
+  Future<Result<Lyrics>> getLyrics(
+    String title,
+    String artist, {
+    int durationSeconds = 0,
+  }) {
+    requested.add((title, artist));
     return result();
   }
 }
@@ -46,7 +50,7 @@ void main() {
       final repo = _FakeLyrics(() async => const Ok(PlainLyrics('hola')));
       final result = await GetLyricsUseCase(repo)(_song);
       expect((result.valueOrNull! as PlainLyrics).text, 'hola');
-      expect(repo.requested, [_song]);
+      expect(repo.requested, [(_song.title, _song.artist)]);
     });
 
     test('propagates the failure', () async {
