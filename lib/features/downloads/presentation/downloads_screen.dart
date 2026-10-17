@@ -10,6 +10,7 @@ import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/error_view.dart';
 import '../../../shared/widgets/song_tile.dart';
 import '../domain/download_task.dart';
+import 'download_task_progress.dart';
 import 'downloads_providers.dart';
 
 /// Gestión del almacenamiento: descargas en curso, espacio ocupado y

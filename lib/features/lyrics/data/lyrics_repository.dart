@@ -1,6 +1,5 @@
 import 'package:dio/dio.dart';
 
-import '../../../core/domain/entities/song.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/error/result.dart';
 import '../domain/i_lyrics_repository.dart';
@@ -38,13 +37,17 @@ class LyricsRepositoryImpl implements ILyricsRepository {
   final _cache = <String, Lyrics>{};
 
   @override
-  Future<Result<Lyrics>> getLyrics(Song song) async {
-    final key = '${song.source.name}:${song.sourceId}';
+  Future<Result<Lyrics>> getLyrics(
+    String title,
+    String artist, {
+    int durationSeconds = 0,
+  }) async {
+    final key = '$title\u0000$artist\u0000$durationSeconds';
     final cached = _cache[key];
     if (cached != null) return Ok(cached);
 
     try {
-      final lyrics = await _fetch(song);
+      final lyrics = await _fetch(title, artist, durationSeconds);
       _cache[key] = lyrics;
       return Ok(lyrics);
     } on _LyricsLoadException catch (e, st) {
@@ -54,18 +57,17 @@ class LyricsRepositoryImpl implements ILyricsRepository {
     }
   }
 
-  Future<Lyrics> _fetch(Song song) async {
-    final seconds = song.duration.inSeconds;
+  Future<Lyrics> _fetch(String title, String artist, int seconds) async {
     final exact = await _request('/get', {
-      'track_name': song.title,
-      'artist_name': song.artist,
+      'track_name': title,
+      'artist_name': artist,
       if (seconds > 0) 'duration': '$seconds',
     });
     if (exact is Map<String, dynamic>) return _fromJson(exact);
 
     final results = await _request('/search', {
-      'track_name': song.title,
-      'artist_name': song.artist,
+      'track_name': title,
+      'artist_name': artist,
     });
     if (results is! List) return const LyricsNotFound();
 

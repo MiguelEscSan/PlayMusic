@@ -40,6 +40,8 @@ dependencies:
   cached_network_image: ^4.0.4
   connectivity_plus: ^7.3.2
   image_picker: ^1.2.4
+  freezed_annotation: ^3.1.0
+  json_annotation: ^4.12.0
 
 dev_dependencies:
   flutter_test:
@@ -52,6 +54,9 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
   sqflite_common_ffi: ^2.4.3
+  freezed: ^4.0.2
+  json_serializable: ^6.14.1
+  build_runner: ^2.16.2
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

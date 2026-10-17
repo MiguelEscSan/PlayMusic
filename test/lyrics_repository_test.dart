@@ -66,7 +66,11 @@ void main() {
       }),
     );
 
-    final lyrics = (await repo.getLyrics(_song)).valueOrNull;
+    final lyrics = (await repo.getLyrics(
+      _song.title,
+      _song.artist,
+      durationSeconds: _song.duration.inSeconds,
+    )).valueOrNull;
 
     expect(lyrics, isA<SyncedLyrics>());
     expect((lyrics as SyncedLyrics).lines, const [
@@ -87,7 +91,11 @@ void main() {
     setUpWith(
       (_) => _json({'plainLyrics': 'Solo texto', 'syncedLyrics': null}),
     );
-    final lyrics = (await repo.getLyrics(_song)).valueOrNull;
+    final lyrics = (await repo.getLyrics(
+      _song.title,
+      _song.artist,
+      durationSeconds: _song.duration.inSeconds,
+    )).valueOrNull;
     expect(lyrics, isA<PlainLyrics>());
     expect((lyrics as PlainLyrics).text, 'Solo texto');
   });
@@ -95,7 +103,11 @@ void main() {
   test('instrumental devuelve InstrumentalLyrics', () async {
     setUpWith((_) => _json({'instrumental': true}));
     expect(
-      (await repo.getLyrics(_song)).valueOrNull,
+      (await repo.getLyrics(
+        _song.title,
+        _song.artist,
+        durationSeconds: _song.duration.inSeconds,
+      )).valueOrNull,
       isA<InstrumentalLyrics>(),
     );
   });
@@ -110,7 +122,11 @@ void main() {
       ]);
     });
 
-    final lyrics = (await repo.getLyrics(_song)).valueOrNull;
+    final lyrics = (await repo.getLyrics(
+      _song.title,
+      _song.artist,
+      durationSeconds: _song.duration.inSeconds,
+    )).valueOrNull;
 
     expect((lyrics as PlainLyrics).text, 'cercana');
     expect(adapter.requests.map((r) => r.uri.path), [
@@ -130,7 +146,14 @@ void main() {
         {'duration': 230, 'plainLyrics': 'lejana'},
       ]);
     });
-    expect((await repo.getLyrics(_song)).valueOrNull, isA<LyricsNotFound>());
+    expect(
+      (await repo.getLyrics(
+        _song.title,
+        _song.artist,
+        durationSeconds: _song.duration.inSeconds,
+      )).valueOrNull,
+      isA<LyricsNotFound>(),
+    );
   });
 
   test('nada en get ni en search → notFound', () async {
@@ -138,13 +161,28 @@ void main() {
       if (o.uri.path == '/api/get') return _json({'code': 404}, 404);
       return _json(<Object>[]);
     });
-    expect((await repo.getLyrics(_song)).valueOrNull, isA<LyricsNotFound>());
+    expect(
+      (await repo.getLyrics(
+        _song.title,
+        _song.artist,
+        durationSeconds: _song.duration.inSeconds,
+      )).valueOrNull,
+      isA<LyricsNotFound>(),
+    );
   });
 
   test('la caché evita una segunda petición para la misma canción', () async {
     setUpWith((_) => _json({'plainLyrics': 'x'}));
-    await repo.getLyrics(_song);
-    await repo.getLyrics(_song);
+    await repo.getLyrics(
+      _song.title,
+      _song.artist,
+      durationSeconds: _song.duration.inSeconds,
+    );
+    await repo.getLyrics(
+      _song.title,
+      _song.artist,
+      durationSeconds: _song.duration.inSeconds,
+    );
     expect(adapter.requests, hasLength(1));
   });
 
@@ -160,14 +198,35 @@ void main() {
       return _json({'plainLyrics': 'ok'});
     });
 
-    expect((await repo.getLyrics(_song)).failureOrNull, isA<NetworkFailure>());
+    expect(
+      (await repo.getLyrics(
+        _song.title,
+        _song.artist,
+        durationSeconds: _song.duration.inSeconds,
+      )).failureOrNull,
+      isA<NetworkFailure>(),
+    );
 
     fail = false;
-    expect((await repo.getLyrics(_song)).valueOrNull, isA<PlainLyrics>());
+    expect(
+      (await repo.getLyrics(
+        _song.title,
+        _song.artist,
+        durationSeconds: _song.duration.inSeconds,
+      )).valueOrNull,
+      isA<PlainLyrics>(),
+    );
   });
 
   test('error 500 → NetworkFailure', () async {
     setUpWith((_) => _json({'error': 'boom'}, 500));
-    expect((await repo.getLyrics(_song)).failureOrNull, isA<NetworkFailure>());
+    expect(
+      (await repo.getLyrics(
+        _song.title,
+        _song.artist,
+        durationSeconds: _song.duration.inSeconds,
+      )).failureOrNull,
+      isA<NetworkFailure>(),
+    );
   });
 }

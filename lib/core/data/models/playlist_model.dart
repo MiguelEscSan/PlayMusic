@@ -1,6 +1,11 @@
 import 'package:flutter/foundation.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:sponify/core/data/models/millis_date_time_converter.dart';
 import 'package:sponify/core/data/models/song_model.dart';
 import 'package:sponify/core/domain/entities/playlist.dart' as domain;
+
+part 'playlist_model.freezed.dart';
+part 'playlist_model.g.dart';
 
 /// DTO de la capa de datos: playlist del usuario. Puede mezclar canciones en
 /// streaming y descargadas: la playlist solo guarda el orden, cada
@@ -11,17 +16,34 @@ import 'package:sponify/core/domain/entities/playlist.dart' as domain;
 ///   playlists       (id, name, description, cover_url, created_at, updated_at)
 ///   playlist_songs  (playlist_id, song_id, position)  PK(playlist_id, position)
 /// `position` es lo que permite reordenar sin tocar la tabla `songs`.
-@immutable
-class PlaylistModel {
-  const PlaylistModel({
-    required this.id,
-    required this.name,
-    required this.createdAt,
-    required this.updatedAt,
-    this.description,
-    this.coverUrl,
-    this.songs = const [],
-  });
+///
+/// `toJson` solo produce la fila de `playlists`: [songs] vive en otra tabla y
+/// se inyecta aparte (ver [PlaylistModel.fromRow]).
+@freezed
+abstract class PlaylistModel with _$PlaylistModel {
+  const PlaylistModel._();
+
+  const factory PlaylistModel({
+    required String id,
+    required String name,
+    @JsonKey(name: 'created_at')
+    @MillisDateTimeConverter()
+    required DateTime createdAt,
+    @JsonKey(name: 'updated_at')
+    @MillisDateTimeConverter()
+    required DateTime updatedAt,
+    String? description,
+
+    /// Portada personalizada; si es null la UI usa la carátula de la 1ª
+    /// canción.
+    @JsonKey(name: 'cover_url') String? coverUrl,
+
+    /// Canciones en el orden de la playlist. No es una columna de
+    /// `playlists`.
+    @JsonKey(includeFromJson: false, includeToJson: false)
+    @Default(<SongModel>[])
+    List<SongModel> songs,
+  }) = _PlaylistModel;
 
   /// Construye el DTO desde la entidad de dominio, manteniendo el orden de
   /// las canciones.
@@ -35,18 +57,15 @@ class PlaylistModel {
     songs: [for (final song in entity.songs) SongModel.fromEntity(song)],
   );
 
-  final String id;
-  final String name;
-  final String? description;
+  /// Lee una fila de la tabla `playlists` (sin canciones).
+  factory PlaylistModel.fromJson(Map<String, Object?> json) =>
+      _$PlaylistModelFromJson(json);
 
-  /// Portada personalizada; si es null la UI usa la carátula de la 1ª canción.
-  final String? coverUrl;
-
-  final DateTime createdAt;
-  final DateTime updatedAt;
-
-  /// Canciones en el orden de la playlist.
-  final List<SongModel> songs;
+  /// Fila de `playlists` más sus canciones, ya ordenadas.
+  factory PlaylistModel.fromRow(
+    Map<String, Object?> row, {
+    List<SongModel> songs = const [],
+  }) => PlaylistModel.fromJson(row).copyWith(songs: songs);
 
   int get length => songs.length;
   bool get isEmpty => songs.isEmpty;
@@ -76,24 +95,6 @@ class PlaylistModel {
     return distinct.take(1).toList();
   }
 
-  PlaylistModel copyWith({
-    String? name,
-    String? description,
-    String? coverUrl,
-    DateTime? updatedAt,
-    List<SongModel>? songs,
-  }) {
-    return PlaylistModel(
-      id: id,
-      name: name ?? this.name,
-      description: description ?? this.description,
-      coverUrl: coverUrl ?? this.coverUrl,
-      createdAt: createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
-      songs: songs ?? this.songs,
-    );
-  }
-
   /// Devuelve una copia con la canción movida (para ReorderableListView).
   PlaylistModel reorder(int oldIndex, int newIndex) {
     final updated = [...songs];
@@ -111,29 +112,6 @@ class PlaylistModel {
     createdAt: createdAt,
     updatedAt: updatedAt,
     songs: [for (final song in songs) song.toEntity()],
-  );
-
-  /// Fila de la tabla `playlists` (las canciones van en `playlist_songs`).
-  Map<String, Object?> toMap() => {
-    'id': id,
-    'name': name,
-    'description': description,
-    'cover_url': coverUrl,
-    'created_at': createdAt.millisecondsSinceEpoch,
-    'updated_at': updatedAt.millisecondsSinceEpoch,
-  };
-
-  factory PlaylistModel.fromMap(
-    Map<String, Object?> map, {
-    List<SongModel> songs = const [],
-  }) => PlaylistModel(
-    id: map['id']! as String,
-    name: map['name']! as String,
-    description: map['description'] as String?,
-    coverUrl: map['cover_url'] as String?,
-    createdAt: DateTime.fromMillisecondsSinceEpoch(map['created_at']! as int),
-    updatedAt: DateTime.fromMillisecondsSinceEpoch(map['updated_at']! as int),
-    songs: songs,
   );
 
   @override

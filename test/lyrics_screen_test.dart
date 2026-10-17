@@ -19,11 +19,15 @@ class _FakeRepo implements ILyricsRepository {
   _FakeRepo(this.responses);
 
   final List<Future<Lyrics> Function()> responses;
-  final requested = <Song>[];
+  final requested = <(String, String)>[];
 
   @override
-  Future<Result<Lyrics>> getLyrics(Song song) async {
-    requested.add(song);
+  Future<Result<Lyrics>> getLyrics(
+    String title,
+    String artist, {
+    int durationSeconds = 0,
+  }) async {
+    requested.add((title, artist));
     try {
       return Ok(await responses.removeAt(0)());
     } on Exception catch (e) {
@@ -132,7 +136,10 @@ void main() {
     await tester.pump();
 
     expect(find.text('Ya cargó'), findsOneWidget);
-    expect(repo.requested, [_songA, _songA]);
+    expect(repo.requested, [
+      (_songA.title, _songA.artist),
+      (_songA.title, _songA.artist),
+    ]);
   });
 
   testWidgets('sincronizada: resalta la línea actual y busca al tocar', (
@@ -180,7 +187,10 @@ void main() {
 
     expect(find.text('Letra B'), findsOneWidget);
     expect(find.text('Canción B'), findsOneWidget);
-    expect(repo.requested, [_songA, _songB]);
+    expect(repo.requested, [
+      (_songA.title, _songA.artist),
+      (_songB.title, _songB.artist),
+    ]);
   });
 
   testWidgets('sin canción sonando', (tester) async {
