@@ -8,7 +8,10 @@ import '../../../core/utils/formatters.dart';
 import '../../../shared/widgets/dialogs.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/error_view.dart';
+import '../../../core/error/failure.dart';
 import '../domain/i_playlist_importer.dart';
+import '../domain/spotify_playlist_link.dart';
+import 'import_summary.dart';
 import 'playlist_detail_screen.dart';
 import 'playlists_providers.dart';
 import 'widgets/playlist_cover.dart';
@@ -37,15 +40,16 @@ class PlaylistsScreen extends ConsumerWidget {
     }
   }
 
-  Future<void> _importFromYoutube(BuildContext context, WidgetRef ref) async {
+  Future<void> _importFromLink(BuildContext context, WidgetRef ref) async {
     final link = await showTextInputDialog(
       context,
-      title: 'Importar de YouTube',
-      hint: 'Pega el enlace de la playlist',
+      title: 'Importar playlist',
+      hint: 'Pega el enlace de YouTube o Spotify',
       confirmLabel: 'Importar',
     );
     if (link == null || !context.mounted) return;
 
+    final spotify = isSpotifyLink(link);
     final playlists = ref.read(playlistsProvider.notifier);
     final progress = ValueNotifier<(int, int)?>(null);
     final navigator = Navigator.of(context, rootNavigator: true);
@@ -53,22 +57,31 @@ class PlaylistsScreen extends ConsumerWidget {
       context: context,
       useRootNavigator: true,
       barrierDismissible: false,
-      builder: (_) => _ImportProgressDialog(progress),
+      builder: (_) => _ImportProgressDialog(
+        progress,
+        source: spotify ? 'Spotify' : 'YouTube',
+      ),
     );
 
     ImportResult? result;
     String? error;
     try {
-      switch (await playlists.importFromYoutube(
+      switch (await playlists.importFromLink(
         link,
         onProgress: (done, total) => progress.value = (done, total),
       )) {
         case Ok(:final value):
           result = value;
         case Err(failure: InvalidPlaylistLinkFailure()):
-          error = 'Ese enlace no es de una playlist de YouTube';
+          error = spotify
+              ? 'Ese enlace no es de una playlist de Spotify'
+              : 'Ese enlace no es de una playlist de YouTube';
         case Err(failure: EmptyPlaylistFailure()):
-          error = 'La playlist no tiene canciones que importar';
+          error = spotify
+              ? 'No se encontró en YouTube ninguna canción de la playlist'
+              : 'La playlist no tiene canciones que importar';
+        case Err(failure: NotFoundFailure()):
+          error = 'No se encontró la playlist. ¿Es pública?';
         case Err():
           error = _importFailed;
       }
@@ -82,9 +95,27 @@ class PlaylistsScreen extends ConsumerWidget {
       showSnack(context, error!);
       return;
     }
-    final skipped = result.skipped > 0 ? ' (${result.skipped} omitidas)' : '';
-    final verb = result.imported == 1 ? 'Importada' : 'Importadas';
-    showSnack(context, '$verb ${songCount(result.imported)}$skipped');
+    final summary = importSummary(result);
+    if (result.isPartial) {
+      // Mensaje largo con instrucciones: en un diálogo para que dé tiempo a
+      // leerlo.
+      await showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Importación incompleta'),
+          content: Text(summary),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Entendido'),
+            ),
+          ],
+        ),
+      );
+      if (!context.mounted) return;
+    } else {
+      showSnack(context, summary);
+    }
     openPlaylist(context, result.playlistId);
   }
 
@@ -97,9 +128,9 @@ class PlaylistsScreen extends ConsumerWidget {
         title: const Text('Playlists'),
         actions: [
           IconButton(
-            tooltip: 'Importar de YouTube',
+            tooltip: 'Importar de YouTube o Spotify',
             icon: const Icon(Icons.cloud_download_outlined),
-            onPressed: () => _importFromYoutube(context, ref),
+            onPressed: () => _importFromLink(context, ref),
           ),
         ],
       ),
@@ -157,9 +188,12 @@ class PlaylistsScreen extends ConsumerWidget {
 /// Diálogo bloqueante mientras se importa; muestra "N de M" cuando ya se
 /// conocen las canciones.
 class _ImportProgressDialog extends StatelessWidget {
-  const _ImportProgressDialog(this.progress);
+  const _ImportProgressDialog(this.progress, {required this.source});
 
   final ValueListenable<(int, int)?> progress;
+
+  /// Servicio del que se lee la playlist ("YouTube", "Spotify").
+  final String source;
 
   @override
   Widget build(BuildContext context) => PopScope(
@@ -180,7 +214,7 @@ class _ImportProgressDialog extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               value == null
-                  ? 'Leyendo la playlist de YouTube…'
+                  ? 'Leyendo la playlist de $source…'
                   : '${value.$1} de ${value.$2}',
             ),
           ],

@@ -10,19 +10,33 @@ final class ImportResult {
     required this.playlistId,
     required this.imported,
     required this.skipped,
+    this.remoteTotal,
   });
 
   final String playlistId;
   final int imported;
 
-  /// Vídeos omitidos: no disponibles como canción o repetidos.
+  /// Canciones omitidas: no disponibles como canción, sin coincidencia o
+  /// repetidas.
   final int skipped;
+
+  /// Canciones que tiene de verdad la playlist remota, si el origen lo dice
+  /// y puede ser más de las que deja leer (p. ej. Spotify sin sesión).
+  final int? remoteTotal;
+
+  /// Canciones leídas del origen: importadas más omitidas.
+  int get read => imported + skipped;
+
+  /// Si el origen tiene más canciones de las que se pudieron leer.
+  bool get isPartial => remoteTotal != null && read < remoteTotal!;
 }
 
-/// El texto pegado no es un enlace de playlist de YouTube.
+/// El texto pegado no es un enlace de playlist válido (por defecto, de
+/// YouTube).
 final class InvalidPlaylistLinkFailure extends ValidationFailure {
-  const InvalidPlaylistLinkFailure()
-    : super('El enlace no es de una playlist de YouTube');
+  const InvalidPlaylistLinkFailure([
+    super.message = 'El enlace no es de una playlist de YouTube',
+  ]);
 }
 
 /// La playlist no tiene ninguna canción que se pueda importar.

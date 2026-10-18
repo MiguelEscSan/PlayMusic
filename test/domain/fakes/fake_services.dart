@@ -8,6 +8,9 @@ import 'package:sponify/features/downloads/domain/i_download_service.dart';
 import 'package:sponify/features/favorites/domain/i_liked_playlist_sync.dart';
 import 'package:sponify/features/playlists/domain/i_playlist_cover_service.dart';
 import 'package:sponify/features/playlists/domain/i_playlist_importer.dart';
+import 'package:sponify/features/playlists/domain/i_spotify_playlist_source.dart';
+import 'package:sponify/features/playlists/domain/i_track_matcher.dart';
+import 'package:sponify/features/playlists/domain/remote_playlist.dart';
 
 /// Servicio de descargas falso: registra las llamadas y devuelve
 /// resultados configurables. Si [error] no es null, las acciones lo lanzan.
@@ -122,5 +125,44 @@ class FakeLikedPlaylistSync implements ILikedPlaylistSync {
   Future<Result<Unit>> sync(Song song) async {
     synced.add(song);
     return result;
+  }
+}
+
+/// Origen de Spotify falso: devuelve [result] y registra los ids pedidos.
+class FakeSpotifyPlaylistSource implements ISpotifyPlaylistSource {
+  Result<RemotePlaylist> result = const Ok(
+    RemotePlaylist(name: 'Mix', tracks: []),
+  );
+  final List<String> calls = [];
+
+  @override
+  Future<Result<RemotePlaylist>> fetch(String playlistId) async {
+    calls.add(playlistId);
+    return result;
+  }
+}
+
+/// Emparejador falso: responde con [answer] (por defecto, una canción de
+/// YouTube con el título de la pista) o lanza [error]; registra las pistas.
+class FakeTrackMatcher implements ITrackMatcher {
+  Future<Result<Song?>> Function(RemoteTrack track)? answer;
+  Object? error;
+  final List<RemoteTrack> calls = [];
+
+  @override
+  Future<Result<Song?>> match(RemoteTrack track) async {
+    calls.add(track);
+    if (error case final e?) throw e;
+    if (answer case final a?) return a(track);
+    return Ok(
+      Song(
+        id: '',
+        title: track.title,
+        artist: track.artists.join(', '),
+        durationMs: track.durationMs,
+        source: SongSource.youtube,
+        sourceId: 'yt-${track.title}',
+      ),
+    );
   }
 }

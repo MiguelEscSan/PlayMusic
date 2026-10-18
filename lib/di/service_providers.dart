@@ -10,9 +10,13 @@ import '../features/favorites/domain/i_liked_playlist_sync.dart';
 import '../features/history/domain/history_events.dart';
 import '../features/lyrics/data/lyrics_repository.dart';
 import '../features/lyrics/domain/i_lyrics_repository.dart';
+import '../features/playlists/data/spotify_embed_playlist_source.dart';
+import '../features/playlists/data/spotify_playlist_importer.dart';
 import '../features/playlists/data/youtube_playlist_importer.dart';
+import '../features/playlists/data/youtube_track_matcher.dart';
 import '../features/playlists/domain/i_playlist_cover_service.dart';
 import '../features/playlists/domain/i_playlist_importer.dart';
+import '../features/playlists/domain/usecases/import_playlist_from_link_use_case.dart';
 import '../features/radio/domain/radio_service.dart';
 import '../features/search/data/youtube_innertube.dart';
 import '../features/search/data/youtube_search_source.dart';
@@ -66,6 +70,27 @@ final youtubePlaylistImporterProvider = Provider<IPlaylistImporter>(
     YoutubeInnertube(),
   ),
 );
+
+/// Importador de playlists públicas de Spotify, sin iniciar sesión: lee la
+/// playlist de sus páginas públicas y busca cada canción en YouTube. Crear
+/// los clientes no toca la red.
+final spotifyPlaylistImporterProvider = Provider<IPlaylistImporter>(
+  (ref) => SpotifyPlaylistImporter(
+    ref.watch(playlistRepositoryProvider),
+    SpotifyEmbedPlaylistSource.create(),
+    YoutubeTrackMatcher.youtube(YoutubeInnertube()),
+  ),
+);
+
+/// Importa una playlist de YouTube o de Spotify según el enlace. Vive junto
+/// a los importadores que elige.
+final importPlaylistFromLinkUseCaseProvider =
+    Provider<ImportPlaylistFromLinkUseCase>(
+      (ref) => ImportPlaylistFromLinkUseCase(
+        youtube: ref.watch(youtubePlaylistImporterProvider),
+        spotify: ref.watch(spotifyPlaylistImporterProvider),
+      ),
+    );
 
 /// Repositorio único para que la caché en memoria dure toda la sesión.
 final lyricsRepositoryProvider = Provider<ILyricsRepository>(
