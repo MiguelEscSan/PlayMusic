@@ -28,7 +28,7 @@ returns the first 100 tracks; the public playlist page exposes the real total.
 - [x] S1 Domain ports: `ISpotifyPlaylistSource` (plain domain playlist: name,
       tracks with title/artists/durationMs, nullable totalCount) and
       `ITrackMatcher`
-- [ ] S2 `SpotifyEmbedPlaylistSource` adapter (dio): `__NEXT_DATA__` parser,
+- [x] S2 `SpotifyEmbedPlaylistSource` adapter (dio): `__NEXT_DATA__` parser,
       totalCount from public page via crawler User-Agent, retries; fixture tests
 - [ ] S3 `YouTubeTrackMatcher` adapter: scoring by duration (~10 s), title
       similarity, official/Topic channels, live filtering; scoring tests
@@ -46,5 +46,8 @@ Route: delegated direct (writer trigger: 2+ non-trivial files).
 - Baseline (before changes): `flutter test` 502 passed, 0 failed; `flutter analyze` 31 issues (all pre-existing).
 - S1 (inline in writer): `RemoteTrack`/`RemotePlaylist`, `ISpotifyPlaylistSource`, `ITrackMatcher` in `lib/features/playlists/domain/`. No meaningful RED (types only); `flutter test test/spotify` 2 passed, `dart analyze` clean.
 
+- S1 commit: dab496c.
+- S2 (inline in writer): `spotify_page_parser.dart` (pure) + `SpotifyEmbedPlaylistSource` (dio, 3 attempts with doubling backoff on 5xx/timeouts/connection errors; 404 -> NotFoundFailure; total via crawler UA, any failure -> null). Fixtures trimmed from a real embed response (3 tracks) and a public-page meta; the `initialState` fixture is synthetic (the crawler page fetched on 2026-10-18 had no `initialState`). RED: compile failure (missing files); GREEN: `flutter test test/spotify` 17 passed; `dart analyze` clean.
+
 ## Next step
-S2.
+S3.
