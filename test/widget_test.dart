@@ -27,6 +27,7 @@ import 'package:sponify/core/domain/sources/i_track_search.dart';
 import 'package:sponify/features/search/domain/suggestion_source.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
+import 'domain/fakes/fake_radio_source.dart';
 import 'helpers/liked_playlist_override.dart';
 
 Song _song(String id, String title) => Song(
@@ -151,7 +152,7 @@ void main() {
           suggestionSourceProvider.overrideWithValue(_NoSuggestions()),
           radioServiceProvider.overrideWithValue(
             RadioService(
-              fetchRelated: (_) async => const [],
+              radioSources: radioFrom((_) async => const []),
               songRepository: SongRepositoryImpl(songDao),
               settings: SettingsRepositoryImpl(SettingsDao(db)),
             ),

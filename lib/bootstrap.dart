@@ -1,6 +1,5 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
 import 'core/audio/audio_bootstrap.dart';
 import 'core/audio/playback_source_resolver_impl.dart';
@@ -27,10 +26,10 @@ import 'features/history/domain/history_events.dart';
 import 'features/history/domain/i_history_repository.dart';
 import 'features/playlists/data/playlist_cover_service.dart';
 import 'core/database/playlist_dao.dart';
-import 'features/radio/data/youtube_mix_songs.dart';
 import 'features/radio/domain/radio_service.dart';
 import 'features/search/data/search_history_dao.dart';
 import 'features/settings/data/download_policy.dart';
+import 'sources/youtube/youtube_radio_source.dart';
 import 'sources/youtube/youtube_stream_resolver.dart';
 
 /// Servicios de vida larga que se crean una vez al arrancar.
@@ -120,7 +119,7 @@ Future<AppDependencies> bootstrap() async {
   // Radio automática: al acabarse la cola sigue con canciones parecidas,
   // ordenadas por los gustos del usuario.
   final radio = RadioService(
-    fetchRelated: youtubeMixSongs(YoutubeExplode()),
+    radioSources: SourceRegistry([YoutubeRadioSource.create()]),
     songRepository: songRepository,
     settings: settingsRepository,
     history: historyRepository,

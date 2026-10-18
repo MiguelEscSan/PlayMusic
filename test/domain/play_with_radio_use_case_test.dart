@@ -7,6 +7,7 @@ import 'package:sponify/features/radio/domain/usecases/play_with_radio_use_case.
 
 import 'fakes/fake_audio_player_service.dart';
 import 'fakes/fake_feature_repositories.dart';
+import 'fakes/fake_radio_source.dart';
 import 'fakes/fake_song_repository.dart';
 
 Song _song(String id) => Song(
@@ -45,7 +46,7 @@ void main() {
         songs,
         audio,
         RadioService(
-          fetchRelated: fetch,
+          radioSources: radioFrom(fetch),
           songRepository: songs,
           settings: settings,
           history: FakeHistoryRepository(),

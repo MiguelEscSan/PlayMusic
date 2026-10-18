@@ -28,6 +28,8 @@ import 'package:sponify/features/search/data/search_history_dao.dart';
 import 'package:sponify/features/radio/domain/radio_service.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
+import '../domain/fakes/fake_radio_source.dart';
+
 class _FakeAudio implements AudioPlayerService {
   @override
   Stream<Song> get songStarted => const Stream.empty();
@@ -93,7 +95,7 @@ void main() {
       settingsRepository: settingsRepository,
       searchHistory: SearchHistoryDao(db),
       radio: RadioService(
-        fetchRelated: (_) async => const [],
+        radioSources: radioFrom((_) async => const []),
         songRepository: songs,
         settings: settingsRepository,
         history: historyRepository,

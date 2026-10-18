@@ -1,30 +1,38 @@
 import 'package:dio/dio.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
-import '../../../core/domain/entities/song.dart';
+import 'package:sponify/core/domain/entities/song.dart';
+import 'package:sponify/core/domain/sources/i_radio_source.dart';
 
-import 'package:sponify/sources/youtube/youtube_innertube.dart';
-import 'package:sponify/sources/youtube/youtube_track_search.dart';
-
-import '../domain/radio_service.dart';
-import 'youtube_related_songs.dart';
+import 'youtube_innertube.dart';
+import 'youtube_track_search.dart';
 
 /// Candidatas que se leen del Mix; luego se ordenan por gustos y se quedan
-/// [RadioService.maxSongs].
+/// `RadioService.maxSongs`.
 const _mixLimit = 40;
 
-/// [RelatedSongsFetcher] real: el Mix de YouTube de la semilla (la lista
-/// automática `RD<id>`, más musical que las relacionadas).
+/// Radio de YouTube: el Mix de la semilla (la lista automática `RD<id>`, más
+/// musical que las relacionadas).
 ///
 /// youtube_explode no sabe leer listas, así que el Mix se pide a mano a la
 /// API interna de YouTube (`next`). Si falla o viene vacío se prueba con las
 /// relacionadas y, en último caso, con una búsqueda `<artista> mix`.
-RelatedSongsFetcher youtubeMixSongs(YoutubeExplode yt, {Dio? dio}) {
-  final innertube = YoutubeInnertube(dio);
-  final related = youtubeRelatedSongs(yt);
-  return (seed) async {
+class YoutubeRadioSource implements IRadioSource {
+  YoutubeRadioSource(this._yt, {Dio? dio}) : _innertube = YoutubeInnertube(dio);
+
+  /// Versión real, con su propio cliente de youtube_explode_dart.
+  factory YoutubeRadioSource.create() => YoutubeRadioSource(YoutubeExplode());
+
+  final YoutubeExplode _yt;
+  final YoutubeInnertube _innertube;
+
+  @override
+  SongSource get source => SongSource.youtube;
+
+  @override
+  Future<List<Song>> relatedTo(Song seed) async {
     try {
-      final json = await innertube.post('next', {
+      final json = await _innertube.post('next', {
         'videoId': seed.sourceId,
         'playlistId': 'RD${seed.sourceId}',
       });
@@ -34,18 +42,29 @@ RelatedSongsFetcher youtubeMixSongs(YoutubeExplode yt, {Dio? dio}) {
       // Sin Mix: se prueba con las relacionadas.
     }
     try {
-      final songs = await related(seed);
+      final songs = await _related(seed);
       if (songs.isNotEmpty) return songs;
     } catch (_) {
       // Sin relacionadas: se busca por artista.
     }
-    final results = await yt.search.search('${seed.artist} mix');
+    final results = await _yt.search.search('${seed.artist} mix');
     return results
         .map(YoutubeTrackSearch.songFromVideo)
         .whereType<Song>()
         .where((s) => s.sourceId != seed.sourceId)
         .toList();
-  };
+  }
+
+  /// Relacionadas de YouTube (solo metadatos, sin streams).
+  Future<List<Song>> _related(Song seed) async {
+    final video = await _yt.videos.get(seed.sourceId);
+    final related = await _yt.videos.getRelatedVideos(video);
+    if (related == null) return const [];
+    return related
+        .map(YoutubeTrackSearch.songFromVideo)
+        .whereType<Song>()
+        .toList();
+  }
 }
 
 /// Canciones del Mix en la respuesta de `next`, en su orden. Quita la

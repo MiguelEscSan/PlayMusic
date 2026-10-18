@@ -5,12 +5,14 @@ import 'package:sponify/core/data/repositories/song_repository_impl.dart';
 import 'package:sponify/core/database/app_database.dart';
 import 'package:sponify/core/database/song_dao.dart';
 import 'package:sponify/core/domain/entities/song.dart';
+import 'package:sponify/core/domain/sources/source_registry.dart';
 import 'package:sponify/core/error/failure.dart';
 import 'package:sponify/core/settings/settings_dao.dart';
 import 'package:sponify/features/radio/domain/radio_service.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import 'domain/fakes/fake_feature_repositories.dart';
+import 'domain/fakes/fake_radio_source.dart';
 import 'domain/fakes/fake_song_repository.dart';
 
 Song _song(String id, {SongSource source = SongSource.youtube}) => Song(
@@ -41,7 +43,7 @@ void main() {
 
   RadioService radio(Future<List<Song>> Function(Song seed) fetch) =>
       RadioService(
-        fetchRelated: fetch,
+        radioSources: radioFrom(fetch),
         songRepository: SongRepositoryImpl(songs),
         settings: SettingsRepositoryImpl(settings),
       );
@@ -94,7 +96,7 @@ void main() {
 
   test('si falla al guardar (Err) devuelve vacío sin lanzar', () async {
     final service = RadioService(
-      fetchRelated: (_) async => [_song('r1')],
+      radioSources: radioFrom((_) async => [_song('r1')]),
       songRepository: FakeSongRepository(),
       settings: SettingsRepositoryImpl(settings),
     );
@@ -104,10 +106,10 @@ void main() {
   test('si no se puede leer el ajuste (Err) devuelve vacío', () async {
     var called = false;
     final service = RadioService(
-      fetchRelated: (_) async {
+      radioSources: radioFrom((_) async {
         called = true;
         return [_song('r1')];
-      },
+      }),
       songRepository: SongRepositoryImpl(songs),
       settings: FakeSettingsRepository()
         ..failure = const DatabaseFailure('disk full'),
@@ -145,11 +147,9 @@ void main() {
       await songs.setLiked(liked.id, true);
     }
     final service = RadioService(
-      fetchRelated: (_) async => [
-        by('x', 'Otro'),
-        by('old', 'Otro2'),
-        by('f', 'Fav'),
-      ],
+      radioSources: radioFrom(
+        (_) async => [by('x', 'Otro'), by('old', 'Otro2'), by('f', 'Fav')],
+      ),
       songRepository: SongRepositoryImpl(songs),
       settings: SettingsRepositoryImpl(settings),
       history: FakeHistoryRepository(recent: [by('old', 'Otro2')]),
@@ -163,7 +163,7 @@ void main() {
 
   test('si falla el historial, la radio sigue', () async {
     final service = RadioService(
-      fetchRelated: (_) async => [_song('r1')],
+      radioSources: radioFrom((_) async => [_song('r1')]),
       songRepository: SongRepositoryImpl(songs),
       settings: SettingsRepositoryImpl(settings),
       history: FakeHistoryRepository()
@@ -171,5 +171,30 @@ void main() {
     );
     final next = await service.forSeed((await queueOf(['s'])).single);
     expect([for (final s in next) s.sourceId], ['r1']);
+  });
+
+  test('pide la radio al adaptador del origen de la semilla', () async {
+    final asked = <String>[];
+    FakeRadioSource fake(SongSource source) => FakeRadioSource((seed) async {
+      asked.add('${source.name}:${seed.sourceId}');
+      return [_song('${source.name}-r1', source: source)];
+    }, source: source);
+    final service = RadioService(
+      radioSources: SourceRegistry([
+        fake(SongSource.youtube),
+        fake(SongSource.jamendo),
+      ]),
+      songRepository: SongRepositoryImpl(songs),
+      settings: SettingsRepositoryImpl(settings),
+    );
+    final seed = (await songs.upsert(
+      SongModel.fromEntity(_song('j', source: SongSource.jamendo)),
+    )).toEntity();
+
+    final next = await service.forSeed(seed);
+
+    expect(asked, ['jamendo:j']);
+    expect([for (final s in next) s.sourceId], ['jamendo-r1']);
+    expect(next.single.source, SongSource.jamendo);
   });
 }
