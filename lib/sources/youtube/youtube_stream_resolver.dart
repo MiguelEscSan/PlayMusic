@@ -5,16 +5,9 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
-import '../domain/entities/song.dart';
-import 'playback_source.dart';
-
-/// Obtiene una URL de streaming fresca a partir del id de la canción en su
-/// origen. Hay una implementación por cada [SongSource] que la necesite.
-abstract interface class StreamUrlProvider {
-  SongSource get source;
-
-  Future<Uri> fetchStreamUrl(String sourceId);
-}
+import 'package:sponify/core/audio/playback_source.dart';
+import 'package:sponify/core/domain/entities/song.dart';
+import 'package:sponify/core/domain/sources/i_stream_resolver.dart';
 
 /// Pide a YouTube la URL de audio de [videoId] con [clients] (null = los
 /// clientes por defecto de youtube_explode_dart). Devuelve null si no hay
@@ -52,14 +45,18 @@ typedef VisitorDataLoader = Future<String?> Function();
 /// Plan B por si YouTube restringe también visionOS: antes de devolver una
 /// URL se pide un byte pasado ese límite ([httpRangeProbe]); si responde 403
 /// se prueba el siguiente cliente de [fallbackClients] y, si ninguno vale, se
-/// lanza [YoutubeBlockedException] con un mensaje claro para el usuario.
+/// lanza [SourceBlockedException] con un mensaje claro para el usuario.
 ///
 /// Elige el stream de solo audio en contenedor MP4 (AAC/m4a) con más
 /// bitrate: ExoPlayer lo reproduce en cualquier versión de Android y el
 /// archivo descargado queda como .m4a estándar. WebM/Opus solo se usa si no
 /// hay MP4.
-class YoutubeStreamUrlProvider implements StreamUrlProvider {
-  YoutubeStreamUrlProvider(
+class YoutubeStreamResolver implements IStreamResolver {
+  /// Versión real, con su propio cliente de youtube_explode_dart.
+  factory YoutubeStreamResolver.create() =>
+      YoutubeStreamResolver(YoutubeExplode());
+
+  YoutubeStreamResolver(
     YoutubeExplode yt, {
     StreamUrlProbe? probe,
     DateTime Function()? clock,
@@ -79,7 +76,7 @@ class YoutubeStreamUrlProvider implements StreamUrlProvider {
        );
 
   /// Sin [visitorData] no se pide ninguno (los clientes van tal cual).
-  YoutubeStreamUrlProvider.withLoader(
+  YoutubeStreamResolver.withLoader(
     this._load, {
     StreamUrlProbe? probe,
     DateTime Function()? clock,
@@ -184,17 +181,17 @@ class YoutubeStreamUrlProvider implements StreamUrlProvider {
 
   /// Prueba cada cliente de [fallbackClients] y devuelve la primera URL que
   /// pasa la sonda. Si alguna URL existía pero todas daban 403 lanza
-  /// [YoutubeBlockedException]; si no, el último error (o [StateError] si
+  /// [SourceBlockedException]; si no, el último error (o [StateError] si
   /// ningún cliente devolvió audio).
   ///
-  /// Si YouTube limita las peticiones lanza [YoutubeRateLimitedException]
+  /// Si YouTube limita las peticiones lanza [SourceRateLimitedException]
   /// sin probar más clientes (cada uno sería otra petición) y, durante
   /// [rateLimitCooldown], falla igual sin tocar la red.
   @override
   Future<Uri> fetchStreamUrl(String sourceId) async {
     final until = _rateLimitedUntil;
     if (until != null && _clock().isBefore(until)) {
-      throw const YoutubeRateLimitedException();
+      throw const SourceRateLimitedException();
     }
     Object? lastError;
     StackTrace? lastStack;
@@ -209,7 +206,7 @@ class YoutubeStreamUrlProvider implements StreamUrlProvider {
         url = await _load(sourceId, clients);
       } on RequestLimitExceededException {
         _rateLimitedUntil = _clock().add(rateLimitCooldown);
-        throw const YoutubeRateLimitedException();
+        throw const SourceRateLimitedException();
       } catch (e, st) {
         // Este cliente no sirve para este vídeo: probamos el siguiente. Por
         // si el fallo es un visitorData caducado, se pide otro la próxima.
@@ -222,7 +219,7 @@ class YoutubeStreamUrlProvider implements StreamUrlProvider {
       if (await _passesProbe(url)) return url;
       blocked = true;
     }
-    if (blocked) throw const YoutubeBlockedException();
+    if (blocked) throw const SourceBlockedException();
     if (lastError != null) Error.throwWithStackTrace(lastError, lastStack!);
     throw StateError('YouTube no devolvió streams de audio para $sourceId');
   }

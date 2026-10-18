@@ -261,10 +261,10 @@ void main() {
       return handler;
     }
 
-    test('si el resolver lanza YoutubeBlockedException muestra un error '
+    test('si el resolver lanza SourceBlockedException muestra un error '
         'claro', () async {
       final handler = handlerWith(
-        _FnResolver((s, _) async => throw const YoutubeBlockedException()),
+        _FnResolver((s, _) async => throw const SourceBlockedException()),
       );
 
       await handler.playQueue([song('a')]);
@@ -272,7 +272,7 @@ void main() {
       expect(handler.current.status, PlaybackStatus.error);
       expect(
         handler.current.errorMessage,
-        YoutubeBlockedException.defaultMessage,
+        SourceBlockedException.defaultMessage,
       );
       expect(player.loaded, isEmpty);
     });
@@ -281,7 +281,7 @@ void main() {
         '(las siguientes también fallarían)', () async {
       final handler = handlerWith(
         _FnResolver((s, _) async {
-          if (s.id == 'a') throw const YoutubeRateLimitedException();
+          if (s.id == 'a') throw const SourceRateLimitedException();
           return LocalFileSource('/music/${s.id}.m4a');
         }),
       );
@@ -291,7 +291,7 @@ void main() {
       expect(handler.current.status, PlaybackStatus.error);
       expect(
         handler.current.errorMessage,
-        YoutubeRateLimitedException.rateLimitedMessage,
+        SourceRateLimitedException.rateLimitedMessage,
       );
       expect(handler.current.currentSong?.id, 'a');
       expect(player.loaded, isEmpty);
@@ -300,7 +300,7 @@ void main() {
     test('con autoplay salta a la siguiente que sí se puede', () async {
       final handler = handlerWith(
         _FnResolver((s, _) async {
-          if (s.id == 'a') throw const YoutubeBlockedException();
+          if (s.id == 'a') throw const SourceBlockedException();
           return LocalFileSource('/music/${s.id}.m4a');
         }),
       );
@@ -346,7 +346,7 @@ void main() {
         expect(handler.current.status, PlaybackStatus.error);
         expect(
           handler.current.errorMessage,
-          YoutubeBlockedException.defaultMessage,
+          SourceBlockedException.defaultMessage,
         );
       },
     );

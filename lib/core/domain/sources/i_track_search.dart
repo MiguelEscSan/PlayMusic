@@ -1,6 +1,6 @@
 import 'package:sponify/core/domain/entities/song.dart';
 
-/// Una página de resultados tal como la da un [SearchSource]. [loadMore] es
+/// Una página de resultados tal como la da un [ITrackSearch]. [loadMore] es
 /// null cuando no hay más; puede lanzar (red), por eso la UI no la usa
 /// directamente: pasa por `SearchSongsUseCase`, que da `SearchResultsPage`.
 class SearchPage {
@@ -10,7 +10,8 @@ class SearchPage {
   final Future<SearchPage> Function()? loadMore;
 }
 
-/// Origen de búsqueda (YouTube, Jamendo…). Puede lanzar si falla la red.
-abstract interface class SearchSource {
+/// Búsqueda de canciones en un origen (YouTube, Jamendo…). Puede lanzar si
+/// falla la red.
+abstract interface class ITrackSearch {
   Future<SearchPage> search(String query);
 }

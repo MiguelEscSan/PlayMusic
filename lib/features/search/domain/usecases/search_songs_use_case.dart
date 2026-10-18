@@ -2,7 +2,7 @@ import 'package:sponify/core/domain/guard.dart';
 import 'package:sponify/core/error/failure.dart';
 import 'package:sponify/core/error/result.dart';
 import 'package:sponify/features/search/domain/search_results_page.dart';
-import 'package:sponify/features/search/domain/search_source.dart';
+import 'package:sponify/core/domain/sources/i_track_search.dart';
 
 /// Busca canciones. `Ok` con la primera página; su `loadMore` (y el de las
 /// siguientes) también devuelve `Result`. Sin conexión llega como
@@ -10,7 +10,7 @@ import 'package:sponify/features/search/domain/search_source.dart';
 final class SearchSongsUseCase {
   const SearchSongsUseCase(this._source);
 
-  final SearchSource _source;
+  final ITrackSearch _source;
 
   Future<Result<SearchResultsPage>> call(String query) =>
       _guarded(() => _source.search(query));

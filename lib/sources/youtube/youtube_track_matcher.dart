@@ -1,10 +1,12 @@
-import '../../../core/domain/entities/song.dart';
-import '../../../core/error/failure.dart';
-import '../../../core/error/result.dart';
-import '../../search/data/youtube_innertube.dart';
-import '../domain/i_track_matcher.dart';
-import '../domain/remote_playlist.dart';
-import 'track_match_scoring.dart';
+import 'package:sponify/core/domain/entities/song.dart';
+import 'package:sponify/core/error/failure.dart';
+import 'package:sponify/core/error/result.dart';
+
+import 'package:sponify/features/playlists/domain/i_track_matcher.dart';
+import 'package:sponify/features/playlists/domain/remote_playlist.dart';
+import 'package:sponify/features/playlists/data/track_match_scoring.dart';
+
+import 'youtube_innertube.dart';
 
 /// Busca candidatos para un texto. Puede lanzar si falla la red.
 typedef CandidateSearch = Future<List<MatchCandidate>> Function(String query);
@@ -23,6 +25,11 @@ class YoutubeTrackMatcher implements ITrackMatcher {
   /// tras unas 20 búsquedas seguidas YouTube la bloquea por abuso.
   factory YoutubeTrackMatcher.youtube(YoutubeInnertube innertube) =>
       YoutubeTrackMatcher(innertubeCandidateSearch(innertube));
+
+  /// [YoutubeTrackMatcher.youtube] con su propio cliente. Crearlo no toca la
+  /// red.
+  factory YoutubeTrackMatcher.create() =>
+      YoutubeTrackMatcher.youtube(YoutubeInnertube());
 
   /// Búsqueda real de candidatos: solo vídeos (`params` = filtro "Vídeos").
   static CandidateSearch innertubeCandidateSearch(YoutubeInnertube innertube) =>

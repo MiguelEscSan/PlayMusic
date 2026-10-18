@@ -6,7 +6,7 @@ import 'package:sponify/core/domain/entities/song.dart';
 import 'package:sponify/core/error/failure.dart';
 import 'package:sponify/core/error/result.dart';
 import 'package:sponify/features/playlists/data/track_match_scoring.dart';
-import 'package:sponify/features/playlists/data/youtube_track_matcher.dart';
+import 'package:sponify/sources/youtube/youtube_track_matcher.dart';
 import 'package:sponify/features/playlists/domain/remote_playlist.dart';
 
 const _track = RemoteTrack(

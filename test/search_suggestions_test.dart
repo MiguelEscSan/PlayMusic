@@ -4,12 +4,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sponify/core/database/app_database.dart';
 import 'package:sponify/di/providers.dart';
 import 'package:sponify/features/search/data/search_history_dao.dart';
-import 'package:sponify/features/search/domain/search_source.dart';
+import 'package:sponify/core/domain/sources/i_track_search.dart';
 import 'package:sponify/features/search/domain/suggestion_source.dart';
 import 'package:sponify/features/search/presentation/search_screen.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
-class _FakeSearch implements SearchSource {
+class _FakeSearch implements ITrackSearch {
   final queries = <String>[];
 
   @override
@@ -62,7 +62,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          searchSourceProvider.overrideWithValue(search),
+          trackSearchProvider.overrideWithValue(search),
           searchHistoryDaoProvider.overrideWithValue(history),
           suggestionSourceProvider.overrideWithValue(source),
         ],

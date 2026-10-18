@@ -1,16 +1,15 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
 import 'core/audio/audio_bootstrap.dart';
 import 'core/audio/playback_source_resolver_impl.dart';
 import 'core/audio/audio_player_service.dart';
-import 'core/audio/stream_url_provider.dart';
 import 'core/data/repositories/playlist_repository_impl.dart';
 import 'core/data/repositories/settings_repository_impl.dart';
 import 'core/data/repositories/song_repository_impl.dart';
 import 'core/database/app_database.dart';
 import 'core/database/song_dao.dart';
+import 'core/domain/sources/source_registry.dart';
 import 'core/domain/repositories/i_playlist_repository.dart';
 import 'core/domain/repositories/i_settings_repository.dart';
 import 'core/domain/repositories/i_song_repository.dart';
@@ -27,10 +26,11 @@ import 'features/history/domain/history_events.dart';
 import 'features/history/domain/i_history_repository.dart';
 import 'features/playlists/data/playlist_cover_service.dart';
 import 'core/database/playlist_dao.dart';
-import 'features/radio/data/youtube_mix_songs.dart';
 import 'features/radio/domain/radio_service.dart';
 import 'features/search/data/search_history_dao.dart';
 import 'features/settings/data/download_policy.dart';
+import 'sources/youtube/youtube_radio_source.dart';
+import 'sources/youtube/youtube_stream_resolver.dart';
 
 /// Servicios de vida larga que se crean una vez al arrancar.
 class AppDependencies {
@@ -103,7 +103,7 @@ Future<AppDependencies> bootstrap() async {
   // Un único resolver compartido: reproductor y descargas aprovechan la
   // misma caché de URLs de streaming.
   final resolver = DefaultPlaybackSourceResolver(
-    providers: [YoutubeStreamUrlProvider(YoutubeExplode())],
+    streams: SourceRegistry([YoutubeStreamResolver.create()]),
     onLocalFileMissing: onLocalFileMissing.call,
   );
 
@@ -119,7 +119,7 @@ Future<AppDependencies> bootstrap() async {
   // Radio automática: al acabarse la cola sigue con canciones parecidas,
   // ordenadas por los gustos del usuario.
   final radio = RadioService(
-    fetchRelated: youtubeMixSongs(YoutubeExplode()),
+    radioSources: SourceRegistry([YoutubeRadioSource.create()]),
     songRepository: songRepository,
     settings: settingsRepository,
     history: historyRepository,

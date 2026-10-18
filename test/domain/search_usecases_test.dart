@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sponify/core/domain/entities/song.dart';
 import 'package:sponify/core/error/failure.dart';
 import 'package:sponify/core/error/result.dart';
-import 'package:sponify/features/search/domain/search_source.dart';
+import 'package:sponify/core/domain/sources/i_track_search.dart';
 import 'package:sponify/features/search/domain/suggestion_source.dart';
 import 'package:sponify/features/search/domain/usecases/clear_recent_searches_use_case.dart';
 import 'package:sponify/features/search/domain/usecases/get_recent_searches_use_case.dart';
@@ -25,7 +25,7 @@ Song _song(String id) => Song(
 const _failure = DatabaseFailure('disk full');
 
 /// Origen falso: [pages] se sirven en orden; [error] se lanza si no es null.
-class _FakeSource implements SearchSource {
+class _FakeSource implements ITrackSearch {
   _FakeSource(this.pages);
 
   final List<List<Song>> pages;

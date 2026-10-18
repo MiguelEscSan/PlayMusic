@@ -40,8 +40,8 @@ abstract interface class PlaybackSourceResolver {
 /// YouTube entrega URLs pero las corta con 403 pasado ~1 MB (le falta el PO
 /// token) en todos los clientes que sabemos usar. No se arregla reintentando:
 /// hay que esperar o actualizar la app con un cliente nuevo.
-class YoutubeBlockedException implements Exception {
-  const YoutubeBlockedException([this.message = defaultMessage]);
+class SourceBlockedException implements Exception {
+  const SourceBlockedException([this.message = defaultMessage]);
 
   static const defaultMessage =
       'YouTube ha bloqueado esta canción. Prueba más tarde o actualiza la app.';
@@ -49,21 +49,21 @@ class YoutubeBlockedException implements Exception {
   final String message;
 
   @override
-  String toString() => 'YoutubeBlockedException: $message';
+  String toString() => 'SourceBlockedException: $message';
 }
 
 /// YouTube responde 429 (o manda a google.com/sorry): demasiadas peticiones
 /// desde esta IP. Pasa con toda la red, no con una canción, así que el
 /// reproductor no salta a la siguiente (fallaría igual).
-class YoutubeRateLimitedException extends YoutubeBlockedException {
-  const YoutubeRateLimitedException() : super(rateLimitedMessage);
+class SourceRateLimitedException extends SourceBlockedException {
+  const SourceRateLimitedException() : super(rateLimitedMessage);
 
   static const rateLimitedMessage =
       'YouTube está limitando las peticiones desde esta red. Espera unos '
       'minutos o cambia de wifi a datos.';
 
   @override
-  String toString() => 'YoutubeRateLimitedException: $message';
+  String toString() => 'SourceRateLimitedException: $message';
 }
 
 class SongUnavailableException implements Exception {

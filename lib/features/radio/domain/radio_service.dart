@@ -1,14 +1,11 @@
 import 'package:sponify/core/domain/entities/song.dart';
 import 'package:sponify/core/domain/repositories/i_settings_repository.dart';
 import 'package:sponify/core/domain/repositories/i_song_repository.dart';
+import 'package:sponify/core/domain/sources/i_radio_source.dart';
+import 'package:sponify/core/domain/sources/source_registry.dart';
 import 'package:sponify/core/error/result.dart';
 import 'package:sponify/features/history/domain/i_history_repository.dart';
 import 'package:sponify/features/radio/domain/taste_ranker.dart';
-
-/// Busca canciones parecidas a [seed] (sin guardar todavía). Puede lanzar
-/// si falla la red. La versión real (Mix de YouTube, con las relacionadas
-/// de respaldo) vive en `radio/data/youtube_mix_songs.dart`.
-typedef RelatedSongsFetcher = Future<List<Song>> Function(Song seed);
 
 /// Radio: canciones parecidas a una semilla, ordenadas según los gustos
 /// del usuario ("me gusta" e historial) y sin repetir las recientes.
@@ -17,7 +14,7 @@ typedef RelatedSongsFetcher = Future<List<Song>> Function(Song seed);
 /// acaba la cola ([nextFor], que `bootstrap()` engancha a `onQueueEnded`).
 class RadioService {
   RadioService({
-    required this.fetchRelated,
+    required this.radioSources,
     required this.songRepository,
     required this.settings,
     this.history,
@@ -26,7 +23,9 @@ class RadioService {
   /// Máximo de canciones que se añaden cada vez.
   static const maxSongs = 10;
 
-  final RelatedSongsFetcher fetchRelated;
+  /// Adaptador de cada origen que sabe dar canciones parecidas. Una semilla
+  /// de un origen sin adaptador no tiene radio.
+  final SourceRegistry<IRadioSource> radioSources;
   final ISongRepository songRepository;
   final ISettingsRepository settings;
 
@@ -52,13 +51,14 @@ class RadioService {
   /// guardar) no debe romper la reproducción.
   Future<List<Song>> _pick(Song seed, {required List<Song> exclude}) async {
     try {
-      if (seed.source != SongSource.youtube) return const [];
+      final source = radioSources.forSong(seed);
+      if (source == null) return const [];
       // Desactivada, o sin poder leer el ajuste: no se añade nada.
       if (!await isEnabled()) return const [];
 
       final seen = {for (final s in exclude) TasteProfile.songKey(s)};
       final candidates = [
-        for (final song in await fetchRelated(seed))
+        for (final song in await source.relatedTo(seed))
           if (seen.add(TasteProfile.songKey(song))) song,
       ];
       final ranked = rankByTaste(candidates, await _taste());

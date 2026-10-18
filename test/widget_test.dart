@@ -23,10 +23,11 @@ import 'package:sponify/core/database/playlist_dao.dart';
 import 'package:sponify/features/playlists/presentation/playlists_providers.dart';
 import 'package:sponify/features/radio/domain/radio_service.dart';
 import 'package:sponify/features/search/data/search_history_dao.dart';
-import 'package:sponify/features/search/domain/search_source.dart';
+import 'package:sponify/core/domain/sources/i_track_search.dart';
 import 'package:sponify/features/search/domain/suggestion_source.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
+import 'domain/fakes/fake_radio_source.dart';
 import 'helpers/liked_playlist_override.dart';
 
 Song _song(String id, String title) => Song(
@@ -38,7 +39,7 @@ Song _song(String id, String title) => Song(
   sourceId: id,
 );
 
-class _FakeSearch implements SearchSource {
+class _FakeSearch implements ITrackSearch {
   final queries = <String>[];
 
   @override
@@ -146,12 +147,12 @@ void main() {
           historyDaoProvider.overrideWithValue(historyDao),
           settingsDaoProvider.overrideWithValue(SettingsDao(db)),
           likedPlaylistFromRepositories,
-          searchSourceProvider.overrideWithValue(search),
+          trackSearchProvider.overrideWithValue(search),
           searchHistoryDaoProvider.overrideWithValue(SearchHistoryDao(db)),
           suggestionSourceProvider.overrideWithValue(_NoSuggestions()),
           radioServiceProvider.overrideWithValue(
             RadioService(
-              fetchRelated: (_) async => const [],
+              radioSources: radioFrom((_) async => const []),
               songRepository: SongRepositoryImpl(songDao),
               settings: SettingsRepositoryImpl(SettingsDao(db)),
             ),

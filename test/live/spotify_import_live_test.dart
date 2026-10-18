@@ -14,11 +14,11 @@ import 'package:sponify/core/error/result.dart';
 import 'package:sponify/features/playlists/data/spotify_embed_playlist_source.dart';
 import 'package:sponify/features/playlists/data/spotify_playlist_importer.dart';
 import 'package:sponify/features/playlists/data/track_match_scoring.dart';
-import 'package:sponify/features/playlists/data/youtube_track_matcher.dart';
+import 'package:sponify/sources/youtube/youtube_track_matcher.dart';
 import 'package:sponify/features/playlists/domain/i_spotify_playlist_source.dart';
 import 'package:sponify/features/playlists/domain/remote_playlist.dart';
 import 'package:sponify/features/playlists/presentation/import_summary.dart';
-import 'package:sponify/features/search/data/youtube_innertube.dart';
+import 'package:sponify/sources/youtube/youtube_innertube.dart';
 
 import '../domain/fakes/fake_playlist_repository.dart';
 
