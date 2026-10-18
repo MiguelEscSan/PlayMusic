@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/audio/audio_player_service.dart';
+import '../core/domain/sources/i_track_search.dart';
 import '../features/downloads/domain/i_download_service.dart';
 import '../features/export/data/method_channel_song_exporter.dart';
 import '../features/export/domain/i_song_exporter.dart';
@@ -12,16 +13,15 @@ import '../features/lyrics/domain/i_lyrics_repository.dart';
 import '../features/playlists/data/spotify_embed_playlist_source.dart';
 import '../features/playlists/data/spotify_playlist_importer.dart';
 import '../features/playlists/data/youtube_playlist_importer.dart';
-import '../features/playlists/data/youtube_track_matcher.dart';
 import '../features/playlists/domain/i_playlist_cover_service.dart';
 import '../features/playlists/domain/i_playlist_importer.dart';
 import '../features/playlists/domain/usecases/import_playlist_from_link_use_case.dart';
 import '../features/radio/domain/radio_service.dart';
-import '../sources/youtube/youtube_innertube.dart';
-import '../sources/youtube/youtube_track_search.dart';
-import '../sources/youtube/youtube_suggestion_source.dart';
-import '../core/domain/sources/i_track_search.dart';
 import '../features/search/domain/suggestion_source.dart';
+import '../sources/youtube/youtube_playlist_source.dart';
+import '../sources/youtube/youtube_suggestion_source.dart';
+import '../sources/youtube/youtube_track_matcher.dart';
+import '../sources/youtube/youtube_track_search.dart';
 import 'data_providers.dart';
 
 /// Servicio de audio único de la app. Se crea en `bootstrap()`
@@ -64,9 +64,9 @@ final radioServiceProvider = Provider<RadioService>(
 /// Importador de playlists de YouTube. Crear el cliente no toca la red:
 /// solo se conecta al importar.
 final youtubePlaylistImporterProvider = Provider<IPlaylistImporter>(
-  (ref) => YoutubePlaylistImporter.youtube(
+  (ref) => YoutubePlaylistImporter(
     ref.watch(playlistRepositoryProvider),
-    YoutubeInnertube(),
+    YoutubePlaylistSource.create(),
   ),
 );
 
@@ -77,7 +77,7 @@ final spotifyPlaylistImporterProvider = Provider<IPlaylistImporter>(
   (ref) => SpotifyPlaylistImporter(
     ref.watch(playlistRepositoryProvider),
     SpotifyEmbedPlaylistSource.create(),
-    YoutubeTrackMatcher.youtube(YoutubeInnertube()),
+    YoutubeTrackMatcher.create(),
   ),
 );
 

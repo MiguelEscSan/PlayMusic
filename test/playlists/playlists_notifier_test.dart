@@ -22,6 +22,7 @@ import 'package:sponify/features/playlists/presentation/playlists_providers.dart
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import '../domain/fakes/fake_playlist_repository.dart';
+import '../domain/fakes/fake_remote_playlist_source.dart';
 import '../helpers/liked_playlist_override.dart';
 
 Song _song(int i) => Song(
@@ -213,7 +214,9 @@ void main() {
         youtubePlaylistImporterProvider.overrideWithValue(
           YoutubePlaylistImporter(
             flaky,
-            (_) async => ('Mi mix', [_song(1), _song(2)]),
+            FakeRemotePlaylistSource(
+              (_) async => ('Mi mix', [_song(1), _song(2)]),
+            ),
           ),
         ),
       ],

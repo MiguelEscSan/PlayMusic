@@ -3,6 +3,7 @@ import 'package:sponify/core/data/repositories/playlist_repository_impl.dart';
 import 'package:sponify/core/database/app_database.dart';
 import 'package:sponify/core/database/song_dao.dart';
 import 'package:sponify/core/domain/entities/song.dart';
+import 'package:sponify/core/domain/repositories/i_playlist_repository.dart';
 import 'package:sponify/core/error/failure.dart';
 import 'package:sponify/core/error/result.dart';
 import 'package:sponify/core/database/playlist_dao.dart';
@@ -11,6 +12,12 @@ import 'package:sponify/features/playlists/domain/i_playlist_importer.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import 'domain/fakes/fake_playlist_repository.dart';
+import 'domain/fakes/fake_remote_playlist_source.dart';
+
+YoutubePlaylistImporter _importer(
+  IPlaylistRepository playlists,
+  Future<(String, List<Song?>)> Function(String id) fetch,
+) => YoutubePlaylistImporter(playlists, FakeRemotePlaylistSource(fetch));
 
 Song _song(String id) => Song(
   id: '',
@@ -51,7 +58,7 @@ void main() {
 
   test('importa la playlist con su título y las canciones en orden', () async {
     String? requested;
-    final importer = YoutubePlaylistImporter(repo, (id) async {
+    final importer = _importer(repo, (id) async {
       requested = id;
       return ('Mi mix', [_song('1'), _song('2'), _song('3')]);
     });
@@ -68,7 +75,7 @@ void main() {
 
   test('un enlace no válido da error y no crea playlist', () async {
     var fetched = false;
-    final importer = YoutubePlaylistImporter(repo, (_) async {
+    final importer = _importer(repo, (_) async {
       fetched = true;
       return ('X', [_song('1')]);
     });
@@ -81,7 +88,7 @@ void main() {
   });
 
   test('las canciones repetidas y no disponibles se omiten', () async {
-    final importer = YoutubePlaylistImporter(
+    final importer = _importer(
       repo,
       (_) async => ('Mix', [_song('1'), null, _song('2'), _song('1')]),
     );
@@ -95,7 +102,7 @@ void main() {
   });
 
   test('avisa del progreso tras cada canción', () async {
-    final importer = YoutubePlaylistImporter(
+    final importer = _importer(
       repo,
       (_) async => ('Mix', [_song('1'), _song('2')]),
     );
@@ -110,7 +117,7 @@ void main() {
   });
 
   test('importa como mucho 500 canciones', () async {
-    final importer = YoutubePlaylistImporter(
+    final importer = _importer(
       repo,
       (_) async => ('Larga', [for (var i = 0; i < 510; i++) _song('$i')]),
     );
@@ -121,10 +128,7 @@ void main() {
   });
 
   test('sin canciones importables da error y no crea playlist', () async {
-    final importer = YoutubePlaylistImporter(
-      repo,
-      (_) async => ('Vacía', <Song?>[null]),
-    );
+    final importer = _importer(repo, (_) async => ('Vacía', <Song?>[null]));
 
     final result = await importer.importFromUrl(_url);
 
@@ -133,7 +137,7 @@ void main() {
   });
 
   test('un fallo del repositorio llega como Err, sin lanzar', () async {
-    final importer = YoutubePlaylistImporter(
+    final importer = _importer(
       FakePlaylistRepository(),
       (_) async => ('Mix', [_song('1')]),
     );
@@ -144,7 +148,7 @@ void main() {
   });
 
   test('un error al leer la playlist remota es Err(NetworkFailure)', () async {
-    final importer = YoutubePlaylistImporter(
+    final importer = _importer(
       repo,
       (_) async => throw Exception('sin conexión'),
     );
