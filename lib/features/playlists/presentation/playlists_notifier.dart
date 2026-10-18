@@ -82,6 +82,22 @@ class PlaylistsNotifier extends AsyncNotifier<List<Playlist>> {
     return result;
   }
 
+  /// Importa una playlist de YouTube o de Spotify, eligiendo el importador
+  /// por el enlace. Nunca lanza: como [importFromYoutube] (ver
+  /// `ImportPlaylistFromLinkUseCase`).
+  Future<Result<ImportResult>> importFromLink(
+    String link, {
+    ImportProgress? onProgress,
+  }) async {
+    final result = await ref.read(importPlaylistFromLinkUseCaseProvider)(
+      link,
+      onProgress: onProgress,
+    );
+    // Aunque falle a medias, la playlist puede haberse creado.
+    _refresh();
+    return result;
+  }
+
   Future<Result<Unit>> _mutate(
     String id,
     Future<Result<Unit>> Function() change,

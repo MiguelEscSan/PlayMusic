@@ -35,7 +35,7 @@ returns the first 100 tracks; the public playlist page exposes the real total.
 - [x] S4 `SpotifyPlaylistImporter` implementing `IPlaylistImporter`: link
       parsing (URL with query params, `spotify:playlist:` URI, bare id),
       progress, `ImportResult` remote total; tests with fake ports
-- [ ] S5 UI: import dialog picks importer by link; partial-import message;
+- [x] S5 UI: import dialog picks importer by link; partial-import message;
       di wiring
 - [ ] S6 Live check against playlist 3IH9vnqULmvIUyXAzlL9zl (122 tracks)
 
@@ -52,6 +52,8 @@ Route: delegated direct (writer trigger: 2+ non-trivial files).
 - S3 (inline in writer): pure `track_match_scoring.dart` (rejects live/cover/karaoke/remix/sped-up unless the Spotify title has it, duration >30 s, title coverage <0.5, no artist token; score = 0.35 title + 0.25 artist + 0.25 duration (full within 10 s) + 0.15 official/Topic/VEVO channel; accept >= 0.6) and `YoutubeTrackMatcher` (youtube_explode search, top 10, stores Spotify title/artists on the Song). RED: compile failure; GREEN: `flutter test test/spotify` 35 passed; `dart analyze` clean.
 - S3 commit: dfaed5c.
 - S4 (inline in writer): `parseSpotifyPlaylistId`/`isSpotifyLink` (domain), `SpotifyPlaylistImporter` (matches all tracks first, 4 at a time, order kept, progress per match; creates the playlist only if something matched), `ImportResult.remoteTotal` + `read`/`isPartial`, `InvalidPlaylistLinkFailure` takes an optional message, `ImportPlaylistFromLinkUseCase` routes Spotify-looking links to Spotify and everything else to YouTube. Fakes `FakeSpotifyPlaylistSource`/`FakeTrackMatcher`. RED: compile failure; GREEN: `flutter test test/spotify test/domain test/youtube_playlist_importer_test.dart` 218 passed; `dart analyze` clean.
+- S4 commit: 81fb852.
+- S5 (inline in writer): import dialog accepts YouTube or Spotify links (`PlaylistsNotifier.importFromLink` -> `ImportPlaylistFromLinkUseCase`); `importFromYoutube` kept unchanged. Spotify-specific error texts (invalid link, not found/not public, no match); partial imports show `importSummary` in a dialog ("Importadas X de Y ... Spotify solo deja leer las N primeras ..."), otherwise the usual snack. Providers `spotifyPlaylistImporterProvider` and `importPlaylistFromLinkUseCaseProvider` live in `lib/di/service_providers.dart` (deviation: `use_case_providers.dart` was outside the allowed edit surface). RED: compile failure; GREEN: `flutter test test/spotify test/playlists` 99 passed; `dart analyze lib test/spotify` clean.
 
 ## Next step
-S5.
+S6.
