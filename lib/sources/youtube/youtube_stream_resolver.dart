@@ -45,7 +45,7 @@ typedef VisitorDataLoader = Future<String?> Function();
 /// Plan B por si YouTube restringe también visionOS: antes de devolver una
 /// URL se pide un byte pasado ese límite ([httpRangeProbe]); si responde 403
 /// se prueba el siguiente cliente de [fallbackClients] y, si ninguno vale, se
-/// lanza [YoutubeBlockedException] con un mensaje claro para el usuario.
+/// lanza [SourceBlockedException] con un mensaje claro para el usuario.
 ///
 /// Elige el stream de solo audio en contenedor MP4 (AAC/m4a) con más
 /// bitrate: ExoPlayer lo reproduce en cualquier versión de Android y el
@@ -181,17 +181,17 @@ class YoutubeStreamResolver implements IStreamResolver {
 
   /// Prueba cada cliente de [fallbackClients] y devuelve la primera URL que
   /// pasa la sonda. Si alguna URL existía pero todas daban 403 lanza
-  /// [YoutubeBlockedException]; si no, el último error (o [StateError] si
+  /// [SourceBlockedException]; si no, el último error (o [StateError] si
   /// ningún cliente devolvió audio).
   ///
-  /// Si YouTube limita las peticiones lanza [YoutubeRateLimitedException]
+  /// Si YouTube limita las peticiones lanza [SourceRateLimitedException]
   /// sin probar más clientes (cada uno sería otra petición) y, durante
   /// [rateLimitCooldown], falla igual sin tocar la red.
   @override
   Future<Uri> fetchStreamUrl(String sourceId) async {
     final until = _rateLimitedUntil;
     if (until != null && _clock().isBefore(until)) {
-      throw const YoutubeRateLimitedException();
+      throw const SourceRateLimitedException();
     }
     Object? lastError;
     StackTrace? lastStack;
@@ -206,7 +206,7 @@ class YoutubeStreamResolver implements IStreamResolver {
         url = await _load(sourceId, clients);
       } on RequestLimitExceededException {
         _rateLimitedUntil = _clock().add(rateLimitCooldown);
-        throw const YoutubeRateLimitedException();
+        throw const SourceRateLimitedException();
       } catch (e, st) {
         // Este cliente no sirve para este vídeo: probamos el siguiente. Por
         // si el fallo es un visitorData caducado, se pide otro la próxima.
@@ -219,7 +219,7 @@ class YoutubeStreamResolver implements IStreamResolver {
       if (await _passesProbe(url)) return url;
       blocked = true;
     }
-    if (blocked) throw const YoutubeBlockedException();
+    if (blocked) throw const SourceBlockedException();
     if (lastError != null) Error.throwWithStackTrace(lastError, lastStack!);
     throw StateError('YouTube no devolvió streams de audio para $sourceId');
   }

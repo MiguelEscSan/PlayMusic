@@ -100,21 +100,21 @@ void main() {
     );
   });
 
-  test('YouTube bloqueado -> propaga YoutubeBlockedException', () async {
-    yt.error = const YoutubeBlockedException();
+  test('YouTube bloqueado -> propaga SourceBlockedException', () async {
+    yt.error = const SourceBlockedException();
     await expectLater(
       resolver.resolve(_song()),
-      throwsA(isA<YoutubeBlockedException>()),
+      throwsA(isA<SourceBlockedException>()),
     );
   });
 
   routingTests();
 
   test('YouTube limitando peticiones -> propaga el aviso tal cual', () async {
-    yt.error = const YoutubeRateLimitedException();
+    yt.error = const SourceRateLimitedException();
     await expectLater(
       resolver.resolve(_song()),
-      throwsA(isA<YoutubeRateLimitedException>()),
+      throwsA(isA<SourceRateLimitedException>()),
     );
   });
 }

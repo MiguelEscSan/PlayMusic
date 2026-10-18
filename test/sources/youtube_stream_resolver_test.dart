@@ -87,7 +87,7 @@ void main() {
     });
 
     test(
-      'si ningún cliente pasa la sonda lanza YoutubeBlockedException',
+      'si ningún cliente pasa la sonda lanza SourceBlockedException',
       () async {
         final provider = YoutubeStreamResolver.withLoader(
           (id, clients) async => clients != null ? bigVision : bigDefault,
@@ -97,10 +97,10 @@ void main() {
         await expectLater(
           provider.fetchStreamUrl('abc'),
           throwsA(
-            isA<YoutubeBlockedException>().having(
+            isA<SourceBlockedException>().having(
               (e) => e.message,
               'message',
-              YoutubeBlockedException.defaultMessage,
+              SourceBlockedException.defaultMessage,
             ),
           ),
         );
@@ -110,17 +110,14 @@ void main() {
     test(
       'bloqueado en un cliente y error en otro sigue siendo bloqueo',
       () async {
-        final provider = YoutubeStreamResolver.withLoader((
-          id,
-          clients,
-        ) async {
+        final provider = YoutubeStreamResolver.withLoader((id, clients) async {
           if (clients == null) throw Exception('defaults caídos');
           return bigVision;
         }, probe: (url) async => false);
 
         await expectLater(
           provider.fetchStreamUrl('abc'),
-          throwsA(isA<YoutubeBlockedException>()),
+          throwsA(isA<SourceBlockedException>()),
         );
       },
     );
@@ -253,10 +250,7 @@ void main() {
       'si visionOS falla, la próxima canción pide otro visitorData',
       () async {
         var visitorCalls = 0;
-        final provider = YoutubeStreamResolver.withLoader((
-          id,
-          clients,
-        ) async {
+        final provider = YoutubeStreamResolver.withLoader((id, clients) async {
           if (clients != null && id == 'a') throw Exception('unplayable');
           return clients != null ? visionOsUrl : defaultUrl;
         }, visitorData: () async => 'VD${++visitorCalls}');
@@ -289,10 +283,10 @@ void main() {
       await expectLater(
         provider.fetchStreamUrl('abc'),
         throwsA(
-          isA<YoutubeRateLimitedException>().having(
+          isA<SourceRateLimitedException>().having(
             (e) => e.message,
             'message',
-            YoutubeRateLimitedException.rateLimitedMessage,
+            SourceRateLimitedException.rateLimitedMessage,
           ),
         ),
       );
@@ -311,13 +305,13 @@ void main() {
 
       await expectLater(
         provider.fetchStreamUrl('a'),
-        throwsA(isA<YoutubeRateLimitedException>()),
+        throwsA(isA<SourceRateLimitedException>()),
       );
       limited = false;
       now = now.add(const Duration(minutes: 1));
       await expectLater(
         provider.fetchStreamUrl('b'),
-        throwsA(isA<YoutubeRateLimitedException>()),
+        throwsA(isA<SourceRateLimitedException>()),
       );
       expect(calls, 1, reason: 'no vuelve a llamar a YouTube');
 

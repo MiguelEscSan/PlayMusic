@@ -360,13 +360,13 @@ class SponifyAudioHandler extends BaseAudioHandler
       // (normalmente una descargada).
       if (autoplay && _hasNext) await _loadAt(index + 1);
       return;
-    } on YoutubeRateLimitedException catch (e) {
+    } on SourceRateLimitedException catch (e) {
       // Afecta a toda la red: la siguiente fallaría igual, así que no se
       // salta (recorrería la cola entera mostrando errores).
       if (generation != _loadGeneration) return;
       _fail(e.message);
       return;
-    } on YoutubeBlockedException catch (e) {
+    } on SourceBlockedException catch (e) {
       if (generation != _loadGeneration) return;
       _fail(e.message);
       if (autoplay && _hasNext) await _loadAt(index + 1);
@@ -470,7 +470,7 @@ class SponifyAudioHandler extends BaseAudioHandler
   /// bloqueo de YouTube en vez del críptico del reproductor.
   String _playerErrorMessage(PlayerException e, String fallback) =>
       _sourceForbidden
-      ? YoutubeBlockedException.defaultMessage
+      ? SourceBlockedException.defaultMessage
       : e.message ?? fallback;
 
   void _fail(String message) {

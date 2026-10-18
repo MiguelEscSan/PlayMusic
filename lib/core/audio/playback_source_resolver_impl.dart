@@ -77,7 +77,7 @@ class DefaultPlaybackSourceResolver implements PlaybackSourceResolver {
     } on SocketException {
       // 5. Sin red y sin archivo.
       throw SongUnavailableException(song, 'sin conexión');
-    } on YoutubeBlockedException {
+    } on SourceBlockedException {
       rethrow; // el reproductor muestra su mensaje tal cual
     } catch (e) {
       throw SongUnavailableException(song, e.toString());
