@@ -77,7 +77,7 @@ void main() {
 
   testWidgets('sin historial se ve el estado inicial', (tester) async {
     await pumpScreen(tester);
-    expect(find.text('Busca cualquier canción'), findsOneWidget);
+    expect(find.text('Explorar por género'), findsOneWidget);
     expect(find.text('Búsquedas recientes'), findsNothing);
   });
 
@@ -123,7 +123,7 @@ void main() {
     await settle(tester);
     expect(await recent(tester), isEmpty);
     expect(find.text('Búsquedas recientes'), findsNothing);
-    expect(find.text('Busca cualquier canción'), findsOneWidget);
+    expect(find.text('Explorar por género'), findsOneWidget);
   });
 
   testWidgets('al enviar la búsqueda se guarda en el historial', (

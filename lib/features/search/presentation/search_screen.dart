@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../di/providers.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/song_tile.dart';
+import '../domain/genre.dart';
 import 'search_controller.dart';
 import 'search_history_providers.dart';
 import 'search_suggestions_controller.dart';
@@ -59,8 +60,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final recents = ref.watch(recentSearchesProvider).value ?? const [];
     final typed = _text.text.trim();
     final showRecents = typed.isEmpty && recents.isNotEmpty;
+    final matched = _editing ? matchGenres(typed) : const <Genre>[];
     final showSuggestions =
-        _editing && typed.isNotEmpty && suggestions.isNotEmpty;
+        _editing &&
+        typed.isNotEmpty &&
+        (suggestions.isNotEmpty || matched.isNotEmpty);
 
     return Scaffold(
       body: SafeArea(
@@ -105,12 +109,18 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               ..._recentSlivers(context, recents)
             else if (showSuggestions)
               SliverList.builder(
-                itemCount: suggestions.length,
-                itemBuilder: (context, i) => ListTile(
-                  leading: const Icon(Icons.search_rounded),
-                  title: Text(suggestions[i]),
-                  onTap: () => _submit(suggestions[i]),
-                ),
+                itemCount: matched.length + suggestions.length,
+                itemBuilder: (context, i) => i < matched.length
+                    ? ListTile(
+                        leading: const Icon(Icons.category_rounded),
+                        title: Text('Género: ${matched[i].name}'),
+                        onTap: () => _submit(matched[i].query),
+                      )
+                    : ListTile(
+                        leading: const Icon(Icons.search_rounded),
+                        title: Text(suggestions[i - matched.length]),
+                        onTap: () => _submit(suggestions[i - matched.length]),
+                      ),
               )
             else if (state.isLoading)
               const SliverFillRemaining(
@@ -130,16 +140,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 ),
               )
             else if (state.query.isEmpty)
-              const SliverFillRemaining(
-                hasScrollBody: false,
-                child: EmptyState(
-                  icon: Icons.library_music_rounded,
-                  title: 'Busca cualquier canción',
-                  message:
-                      'Tócala para escucharla al instante o descárgala '
-                      'para oírla sin conexión.',
-                ),
-              )
+              ..._genreSlivers(context)
             else if (state.results.isEmpty)
               SliverFillRemaining(
                 hasScrollBody: false,
@@ -179,6 +180,37 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     );
   }
 
+  /// "Explorar por género": cada tarjeta lanza la búsqueda de su género.
+  List<Widget> _genreSlivers(BuildContext context) {
+    return [
+      SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          child: Text(
+            'Explorar por género',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+        ),
+      ),
+      SliverPadding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        sliver: SliverGrid.builder(
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            childAspectRatio: 1.9,
+          ),
+          itemCount: genres.length,
+          itemBuilder: (context, i) => _GenreCard(
+            genre: genres[i],
+            onTap: () => _submit(genres[i].query),
+          ),
+        ),
+      ),
+    ];
+  }
+
   /// "Búsquedas recientes": tocar repite la búsqueda; la X la quita.
   List<Widget> _recentSlivers(BuildContext context, List<String> recents) {
     final history = ref.read(recentSearchesProvider.notifier);
@@ -215,6 +247,37 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           onTap: () => _submit(recents[i]),
         ),
       ),
+      ..._genreSlivers(context),
     ];
+  }
+}
+
+class _GenreCard extends StatelessWidget {
+  const _GenreCard({required this.genre, required this.onTap});
+
+  final Genre genre;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Color(genre.color),
+      borderRadius: BorderRadius.circular(12),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Align(
+            alignment: Alignment.topLeft,
+            child: Text(
+              genre.name,
+              style: Theme.of(context).textTheme.titleMedium
+                  ?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

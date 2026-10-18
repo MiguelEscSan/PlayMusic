@@ -241,7 +241,7 @@ void main() {
     await pumpApp(tester);
     await tester.tap(find.text('Buscar'));
     await settle(tester);
-    expect(find.text('Busca cualquier canción'), findsOneWidget);
+    expect(find.text('Explorar por género'), findsOneWidget);
 
     await tester.enterText(find.byType(SearchBar), 'rosalia');
     await tester.testTextInput.receiveAction(TextInputAction.search);
