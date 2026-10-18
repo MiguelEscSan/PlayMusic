@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sponify/core/domain/entities/song.dart';
 import 'package:sponify/core/error/failure.dart';
@@ -29,6 +32,8 @@ MatchCandidate _candidate(String title, String channel, int seconds) =>
     );
 
 void main() {
+  _innertubeSearchTests();
+
   test('busca "artista título" y devuelve la mejor con los datos de '
       'Spotify', () async {
     String? query;
@@ -61,5 +66,40 @@ void main() {
     final matcher = YoutubeTrackMatcher((_) async => throw Exception('red'));
     final result = await matcher.match(_track);
     expect(result.failureOrNull, isA<NetworkFailure>());
+  });
+}
+
+void _innertubeSearchTests() {
+  group('parseInnertubeSearch', () {
+    final json = jsonDecode(
+      File('test/fixtures/spotify/innertube_search.json').readAsStringSync(),
+    ) as Map<String, dynamic>;
+
+    test('lee los vídeos con título y canal en bruto', () {
+      final candidates = parseInnertubeSearch(json);
+
+      expect(candidates.map((c) => c.song.sourceId), [
+        'D6XR9GfBfwY',
+        '7KrNh9YaeDg',
+        'y-9VnzyQ_Yc',
+      ]);
+      final first = candidates.first;
+      expect(
+        first.title,
+        'Romeo Santos, Prince Royce - Dardos (Official Lyric Video)',
+      );
+      expect(first.channel, 'Romeo Santos y Prince Royce');
+      expect(first.duration, const Duration(minutes: 4, seconds: 4));
+      expect(first.isLive, isFalse);
+      expect(first.song.source, SongSource.youtube);
+    });
+
+    test('salta directos, elementos que no son vídeos y JSON raro', () {
+      expect(
+        parseInnertubeSearch(json).map((c) => c.song.sourceId),
+        isNot(contains('liveLIVE001')),
+      );
+      expect(parseInnertubeSearch(const {}), isEmpty);
+    });
   });
 }

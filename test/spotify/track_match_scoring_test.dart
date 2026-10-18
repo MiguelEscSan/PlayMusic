@@ -96,6 +96,8 @@ void main() {
         'Dardos - Romeo Santos (Cover)',
         'Dardos Karaoke - Romeo Santos',
         'Romeo Santos - Dardos (sped up)',
+        'Romeo Santos te enseña a tocar Dardos en piano',
+        'Dardos - Spotify Sessions',
       ]) {
         expect(scoreCandidate(_dardos, _c(title)), isNull, reason: title);
       }

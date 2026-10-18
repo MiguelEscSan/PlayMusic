@@ -1,0 +1,150 @@
+{
+ "contents": {
+  "twoColumnSearchResultsRenderer": {
+   "primaryContents": {
+    "sectionListRenderer": {
+     "contents": [
+      {
+       "itemSectionRenderer": {
+        "contents": [
+         {
+          "videoRenderer": {
+           "videoId": "D6XR9GfBfwY",
+           "title": {
+            "runs": [
+             {
+              "text": "Romeo Santos, Prince Royce - Dardos (Official Lyric Video)"
+             }
+            ]
+           },
+           "ownerText": {
+            "runs": [
+             {
+              "text": "Romeo Santos y Prince Royce"
+             }
+            ]
+           },
+           "longBylineText": {
+            "runs": [
+             {
+              "text": "Romeo Santos y Prince Royce"
+             }
+            ]
+           },
+           "lengthText": {
+            "simpleText": "4:04"
+           }
+          }
+         },
+         {
+          "shelfRenderer": {
+           "title": {
+            "simpleText": "Otros"
+           }
+          }
+         },
+         {
+          "videoRenderer": {
+           "videoId": "7KrNh9YaeDg",
+           "title": {
+            "runs": [
+             {
+              "text": "Romeo Santos, Prince Royce - Dardos (Official Video)"
+             }
+            ]
+           },
+           "ownerText": {
+            "runs": [
+             {
+              "text": "Romeo Santos y Prince Royce"
+             }
+            ]
+           },
+           "longBylineText": {
+            "runs": [
+             {
+              "text": "Romeo Santos y Prince Royce"
+             }
+            ]
+           },
+           "lengthText": {
+            "simpleText": "4:08"
+           },
+           "badges": [
+            {
+             "metadataBadgeRenderer": {
+              "style": "BADGE_STYLE_TYPE_SIMPLE",
+              "label": "4K"
+             }
+            }
+           ]
+          }
+         },
+         {
+          "videoRenderer": {
+           "videoId": "y-9VnzyQ_Yc",
+           "title": {
+            "runs": [
+             {
+              "text": "Romeo Santos, Prince Royce - Dardos"
+             }
+            ]
+           },
+           "ownerText": {
+            "runs": [
+             {
+              "text": "LatinHype"
+             }
+            ]
+           },
+           "longBylineText": {
+            "runs": [
+             {
+              "text": "LatinHype"
+             }
+            ]
+           },
+           "lengthText": {
+            "simpleText": "4:04"
+           }
+          }
+         },
+         {
+          "videoRenderer": {
+           "videoId": "liveLIVE001",
+           "title": {
+            "runs": [
+             {
+              "text": "Romeo Santos - Dardos EN VIVO"
+             }
+            ]
+           },
+           "ownerText": {
+            "runs": [
+             {
+              "text": "Canal Directo"
+             }
+            ]
+           },
+           "badges": [
+            {
+             "metadataBadgeRenderer": {
+              "style": "BADGE_STYLE_TYPE_LIVE_NOW",
+              "label": "EN DIRECTO"
+             }
+            }
+           ]
+          }
+         }
+        ]
+       }
+      },
+      {
+       "continuationItemRenderer": {}
+      }
+     ]
+    }
+   }
+  }
+ }
+}

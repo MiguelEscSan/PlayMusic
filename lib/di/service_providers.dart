@@ -74,15 +74,13 @@ final youtubePlaylistImporterProvider = Provider<IPlaylistImporter>(
 /// Importador de playlists públicas de Spotify, sin iniciar sesión: lee la
 /// playlist de sus páginas públicas y busca cada canción en YouTube. Crear
 /// los clientes no toca la red.
-final spotifyPlaylistImporterProvider = Provider<IPlaylistImporter>((ref) {
-  final yt = YoutubeExplode();
-  ref.onDispose(yt.close);
-  return SpotifyPlaylistImporter(
+final spotifyPlaylistImporterProvider = Provider<IPlaylistImporter>(
+  (ref) => SpotifyPlaylistImporter(
     ref.watch(playlistRepositoryProvider),
     SpotifyEmbedPlaylistSource.create(),
-    YoutubeTrackMatcher.youtube(yt),
-  );
-});
+    YoutubeTrackMatcher.youtube(YoutubeInnertube()),
+  ),
+);
 
 /// Importa una playlist de YouTube o de Spotify según el enlace. Vive junto
 /// a los importadores que elige.

@@ -51,6 +51,8 @@ const _variantWords = [
   'nightcore',
   'reverb',
   'tutorial',
+  'piano',
+  'sessions',
   'reaction',
 ];
 
