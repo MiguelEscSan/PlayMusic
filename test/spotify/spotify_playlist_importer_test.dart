@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sponify/core/domain/entities/playlist.dart';
 import 'package:sponify/core/domain/entities/song.dart';
@@ -20,6 +22,8 @@ RemoteTrack _track(int i) =>
 List<RemoteTrack> _tracks(int n) => [for (var i = 0; i < n; i++) _track(i)];
 
 void main() {
+  _timeoutTests();
+
   late FakePlaylistRepository repo;
   late FakeSpotifyPlaylistSource source;
   late FakeTrackMatcher matcher;
@@ -217,5 +221,48 @@ void main() {
     final result = await importer.importFromUrl(_id);
 
     expect(result.failureOrNull, isA<DatabaseFailure>());
+  });
+}
+
+void _timeoutTests() {
+  test('una búsqueda colgada no bloquea la importación: se omite', () async {
+    final repo = FakePlaylistRepository()
+      ..createResult = Ok(
+        Playlist(
+          id: 'p1',
+          name: 'Mix',
+          createdAt: DateTime(2026),
+          updatedAt: DateTime(2026),
+        ),
+      );
+    final source = FakeSpotifyPlaylistSource()
+      ..result = Ok(RemotePlaylist(name: 'Mix', tracks: _tracks(3)));
+    final matcher = FakeTrackMatcher();
+    matcher.answer = (t) => t.title == 'T1'
+        ? Completer<Result<Song?>>()
+              .future // Nunca termina.
+        : Future.value(
+            Ok(
+              Song(
+                id: '',
+                title: t.title,
+                artist: 'A',
+                durationMs: 1,
+                source: SongSource.youtube,
+                sourceId: t.title,
+              ),
+            ),
+          );
+    final importer = SpotifyPlaylistImporter(
+      repo,
+      source,
+      matcher,
+      matchTimeout: const Duration(milliseconds: 50),
+    );
+
+    final result = (await importer.importFromUrl(_id)).valueOrNull!;
+
+    expect(result.imported, 2);
+    expect(result.skipped, 1);
   });
 }

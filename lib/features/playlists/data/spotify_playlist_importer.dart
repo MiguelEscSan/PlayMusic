@@ -20,6 +20,7 @@ class SpotifyPlaylistImporter implements IPlaylistImporter {
     this._source,
     this._matcher, {
     this.concurrency = 4,
+    this.matchTimeout = const Duration(seconds: 30),
   });
 
   final IPlaylistRepository _playlists;
@@ -28,6 +29,10 @@ class SpotifyPlaylistImporter implements IPlaylistImporter {
 
   /// Búsquedas a la vez: acelera las playlists largas sin saturar YouTube.
   final int concurrency;
+
+  /// Tiempo máximo por búsqueda: una petición colgada no bloquea la
+  /// importación; esa pista se omite.
+  final Duration matchTimeout;
 
   /// Nunca lanza:
   /// - `Err(InvalidPlaylistLinkFailure)` si no es una playlist de Spotify.
@@ -128,7 +133,7 @@ class SpotifyPlaylistImporter implements IPlaylistImporter {
 
   Future<Object?> _matchOne(RemoteTrack track) async {
     try {
-      return switch (await _matcher.match(track)) {
+      return switch (await _matcher.match(track).timeout(matchTimeout)) {
         Ok(:final value) => value,
         Err(:final failure) => failure,
       };
