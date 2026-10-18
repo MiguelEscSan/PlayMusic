@@ -1,13 +1,19 @@
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
-import '../../../core/domain/entities/song.dart';
-import '../domain/search_source.dart';
+import 'package:sponify/core/domain/entities/song.dart';
+import 'package:sponify/core/domain/sources/i_track_search.dart';
 
 /// Búsqueda en YouTube con youtube_explode_dart (20 resultados por página).
-class YoutubeSearchSource implements SearchSource {
-  YoutubeSearchSource(this._yt);
+class YoutubeTrackSearch implements ITrackSearch {
+  YoutubeTrackSearch(this._yt);
+
+  /// Versión real, con su propio cliente de youtube_explode_dart; hay que
+  /// cerrarla con [close].
+  factory YoutubeTrackSearch.create() => YoutubeTrackSearch(YoutubeExplode());
 
   final YoutubeExplode _yt;
+
+  void close() => _yt.close();
 
   /// Vídeos más largos que esto casi nunca son canciones (directos,
   /// recopilatorios de horas…).

@@ -1,6 +1,5 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
 import '../core/audio/audio_player_service.dart';
 import '../features/downloads/domain/i_download_service.dart';
@@ -18,10 +17,10 @@ import '../features/playlists/domain/i_playlist_cover_service.dart';
 import '../features/playlists/domain/i_playlist_importer.dart';
 import '../features/playlists/domain/usecases/import_playlist_from_link_use_case.dart';
 import '../features/radio/domain/radio_service.dart';
-import '../features/search/data/youtube_innertube.dart';
-import '../features/search/data/youtube_search_source.dart';
-import '../features/search/data/youtube_suggestion_source.dart';
-import '../features/search/domain/search_source.dart';
+import '../sources/youtube/youtube_innertube.dart';
+import '../sources/youtube/youtube_track_search.dart';
+import '../sources/youtube/youtube_suggestion_source.dart';
+import '../core/domain/sources/i_track_search.dart';
 import '../features/search/domain/suggestion_source.dart';
 import 'data_providers.dart';
 
@@ -104,16 +103,16 @@ final lyricsRepositoryProvider = Provider<ILyricsRepository>(
   ),
 );
 
-final searchSourceProvider = Provider<SearchSource>((ref) {
-  final yt = YoutubeExplode();
-  ref.onDispose(yt.close);
-  return YoutubeSearchSource(yt);
+final trackSearchProvider = Provider<ITrackSearch>((ref) {
+  final search = YoutubeTrackSearch.create();
+  ref.onDispose(search.close);
+  return search;
 });
 
 final suggestionSourceProvider = Provider<SuggestionSource>((ref) {
-  final yt = YoutubeExplode();
-  ref.onDispose(yt.close);
-  return YoutubeSuggestionSource(yt);
+  final suggestions = YoutubeSuggestionSource.create();
+  ref.onDispose(suggestions.close);
+  return suggestions;
 });
 
 /// Sobrescribible en tests.

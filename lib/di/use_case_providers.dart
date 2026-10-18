@@ -321,7 +321,7 @@ final watchHistoryChangedUseCaseProvider = Provider<WatchHistoryChangedUseCase>(
 // ---------------------------------------------------------------------------
 
 final searchSongsUseCaseProvider = Provider<SearchSongsUseCase>(
-  (ref) => SearchSongsUseCase(ref.watch(searchSourceProvider)),
+  (ref) => SearchSongsUseCase(ref.watch(trackSearchProvider)),
 );
 
 final getSuggestionsUseCaseProvider = Provider<GetSuggestionsUseCase>(

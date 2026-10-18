@@ -1,7 +1,9 @@
 import '../../../core/domain/entities/song.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/error/result.dart';
-import '../../search/data/youtube_innertube.dart';
+
+import 'package:sponify/sources/youtube/youtube_innertube.dart';
+
 import '../domain/i_track_matcher.dart';
 import '../domain/remote_playlist.dart';
 import 'track_match_scoring.dart';

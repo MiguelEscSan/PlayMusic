@@ -1,7 +1,8 @@
 import 'package:dio/dio.dart';
 
-import '../../../core/domain/entities/song.dart';
-import 'youtube_search_source.dart';
+import 'package:sponify/core/domain/entities/song.dart';
+
+import 'youtube_track_search.dart';
 
 /// Cliente mínimo de la API interna de YouTube (InnerTube), para lo que
 /// youtube_explode ya no sabe leer (listas y Mix).
@@ -85,7 +86,7 @@ Duration? parseVideoLength(String? text) {
 
 /// Canción a partir de los datos sueltos de InnerTube; null si no lo parece
 /// (sin duración o demasiado larga), como
-/// [YoutubeSearchSource.songFromVideo].
+/// [YoutubeTrackSearch.songFromVideo].
 Song? innertubeSong({
   required String videoId,
   required String? title,
@@ -93,11 +94,11 @@ Song? innertubeSong({
   required Duration? duration,
 }) {
   if (title == null || author == null || duration == null) return null;
-  if (duration > YoutubeSearchSource.maxDuration) return null;
-  final artist = YoutubeSearchSource.cleanArtist(_mainArtist(author));
+  if (duration > YoutubeTrackSearch.maxDuration) return null;
+  final artist = YoutubeTrackSearch.cleanArtist(_mainArtist(author));
   return Song(
     id: '', // se asigna al guardarla en la BD
-    title: _withoutArtist(YoutubeSearchSource.cleanTitle(title), artist),
+    title: _withoutArtist(YoutubeTrackSearch.cleanTitle(title), artist),
     artist: artist,
     durationMs: duration.inMilliseconds,
     artworkUrl: 'https://i.ytimg.com/vi/$videoId/hqdefault.jpg',

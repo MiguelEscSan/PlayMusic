@@ -2,8 +2,10 @@ import 'package:dio/dio.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
 import '../../../core/domain/entities/song.dart';
-import '../../search/data/youtube_innertube.dart';
-import '../../search/data/youtube_search_source.dart';
+
+import 'package:sponify/sources/youtube/youtube_innertube.dart';
+import 'package:sponify/sources/youtube/youtube_track_search.dart';
+
 import '../domain/radio_service.dart';
 import 'youtube_related_songs.dart';
 
@@ -39,7 +41,7 @@ RelatedSongsFetcher youtubeMixSongs(YoutubeExplode yt, {Dio? dio}) {
     }
     final results = await yt.search.search('${seed.artist} mix');
     return results
-        .map(YoutubeSearchSource.songFromVideo)
+        .map(YoutubeTrackSearch.songFromVideo)
         .whereType<Song>()
         .where((s) => s.sourceId != seed.sourceId)
         .toList();
@@ -48,7 +50,7 @@ RelatedSongsFetcher youtubeMixSongs(YoutubeExplode yt, {Dio? dio}) {
 
 /// Canciones del Mix en la respuesta de `next`, en su orden. Quita la
 /// semilla y lo que no parezca una canción (sin duración o demasiado
-/// largo), como [YoutubeSearchSource.songFromVideo].
+/// largo), como [YoutubeTrackSearch.songFromVideo].
 List<Song> parseMixSongs(
   Map<String, dynamic> json, {
   required String seedId,

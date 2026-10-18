@@ -8,7 +8,7 @@ import 'package:sponify/core/database/playlist_dao.dart';
 import 'package:sponify/core/database/song_dao.dart';
 import 'package:sponify/core/error/result.dart';
 import 'package:sponify/features/playlists/data/youtube_playlist_importer.dart';
-import 'package:sponify/features/search/data/youtube_innertube.dart';
+import 'package:sponify/sources/youtube/youtube_innertube.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 /// Respuestas reales de `youtubei/v1/browse` para "Top 500 Classic Rock

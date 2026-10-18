@@ -4,7 +4,9 @@ import '../../../core/domain/entities/song.dart';
 import '../../../core/domain/repositories/i_playlist_repository.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/error/result.dart';
-import '../../search/data/youtube_innertube.dart';
+
+import 'package:sponify/sources/youtube/youtube_innertube.dart';
+
 import '../domain/i_playlist_importer.dart';
 
 /// Descarga el título y los vídeos de una playlist de YouTube. Cada vídeo
