@@ -57,18 +57,18 @@ Behaviour must not change.
 - Baseline: 568 tests passing, 1 skipped; `flutter analyze` clean.
 
 ## Tasks
-- [ ] P1 Ports + `SourceRegistry`, with registry tests (route: inline)
-- [ ] P2 Streams: YouTube stream resolver moved to `sources/youtube`,
+- [x] P1 Ports + `SourceRegistry`, with registry tests (route: inline)
+- [x] P2 Streams: YouTube stream resolver moved to `sources/youtube`,
       implements `IStreamResolver`; resolver routes through the registry;
       routing tests with fake adapters (route: inline)
-- [ ] P3 Search: `ITrackSearch`; InnerTube client, search and suggestions
+- [x] P3 Search: `ITrackSearch`; InnerTube client, search and suggestions
       moved to `sources/youtube` (route: inline)
-- [ ] P4 Radio: `IRadioSource`; Mix/related moved; `RadioService` routes by
+- [x] P4 Radio: `IRadioSource`; Mix/related moved; `RadioService` routes by
       seed source; tests with fake adapters (route: inline)
-- [ ] P5 Playlists: `IRemotePlaylistSource`; browse parser and track matcher
+- [x] P5 Playlists: `IRemotePlaylistSource`; browse parser and track matcher
       moved; `YoutubePlaylistImporter` keeps only the generic import
       (route: inline)
-- [ ] P6 Boundary test: no YouTube imports outside the adapter folder and the
+- [x] P6 Boundary test: no YouTube imports outside the adapter folder and the
       composition root (route: inline)
 
 Route note: all tasks inline; the parent already holds the full map of the
@@ -79,4 +79,25 @@ YouTube code, so a delegated writer would re-derive it.
 `flutter analyze` (no issues).
 
 ## Progress
-(updated per task)
+All tasks done. Commits: P1 c8c8c17, P2 55a6b9f, P3 5083119, P4 3b81cda,
+P5 1e49d06, P6 71a924c (plan c438cf0).
+
+Verification (observed): `flutter test` 581 passing, 1 skipped (baseline
+568 + 13 new: 3 registry, 4 stream routing, 1 radio routing, 5 boundary);
+`flutter analyze` no issues.
+
+Not cleanly separated:
+- `YoutubeBlockedException` / `YoutubeRateLimitedException` still live in
+  `core/audio/playback_source.dart`, and the audio handler catches them by
+  name. They mean "source blocked / rate limited", but renaming them touches
+  the player and its user messages; left for a follow-up.
+- `YoutubePlaylistImporter` (playlists/data) now depends only on
+  `IRemotePlaylistSource`, but keeps its name and its YouTube wording in user
+  messages ("Playlist de YouTube"), so the UI text does not change.
+- `YoutubeTrackMatcher` (adapter) reuses the source-agnostic scoring in
+  `features/playlists/data/track_match_scoring.dart`.
+- Search and playlist import are not routed by `Song.source` (there is no
+  song yet): DI binds the YouTube adapter directly. A second source would
+  need a choice there (for example by link, as the Spotify import does).
+
+Next step: Trepu reviews the branch locally; push and merge are their call.
