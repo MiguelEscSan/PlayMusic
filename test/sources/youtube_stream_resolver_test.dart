@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sponify/core/audio/playback_source.dart';
-import 'package:sponify/core/audio/stream_url_provider.dart';
+import 'package:sponify/sources/youtube/youtube_stream_resolver.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
 void main() {
@@ -11,7 +11,7 @@ void main() {
 
   test('usa primero el cliente visionOS', () async {
     final calls = <List<YoutubeApiClient>?>[];
-    final provider = YoutubeStreamUrlProvider.withLoader((id, clients) async {
+    final provider = YoutubeStreamResolver.withLoader((id, clients) async {
       calls.add(clients);
       return visionOsUrl;
     });
@@ -20,12 +20,12 @@ void main() {
 
     expect(url, visionOsUrl);
     expect(calls, hasLength(1));
-    expect(calls.single, [YoutubeStreamUrlProvider.visionOs]);
+    expect(calls.single, [YoutubeStreamResolver.visionOs]);
   });
 
   test('si visionOS falla cae a los clientes por defecto', () async {
     final calls = <List<YoutubeApiClient>?>[];
-    final provider = YoutubeStreamUrlProvider.withLoader((id, clients) async {
+    final provider = YoutubeStreamResolver.withLoader((id, clients) async {
       calls.add(clients);
       if (clients != null) throw Exception('visionOS caído');
       return defaultUrl;
@@ -35,13 +35,13 @@ void main() {
 
     expect(url, defaultUrl);
     expect(calls, [
-      [YoutubeStreamUrlProvider.visionOs],
+      [YoutubeStreamResolver.visionOs],
       null,
     ]);
   });
 
   test('si visionOS no da audio cae a los clientes por defecto', () async {
-    final provider = YoutubeStreamUrlProvider.withLoader(
+    final provider = YoutubeStreamResolver.withLoader(
       (id, clients) async => clients != null ? null : defaultUrl,
     );
 
@@ -49,7 +49,7 @@ void main() {
   });
 
   test('si ningún cliente da audio lanza StateError', () async {
-    final provider = YoutubeStreamUrlProvider.withLoader(
+    final provider = YoutubeStreamResolver.withLoader(
       (id, clients) async => null,
     );
 
@@ -57,7 +57,7 @@ void main() {
   });
 
   test('si todos los clientes fallan propaga el último error', () async {
-    final provider = YoutubeStreamUrlProvider.withLoader(
+    final provider = YoutubeStreamResolver.withLoader(
       (id, clients) async => throw const SocketException('offline'),
     );
 
@@ -74,7 +74,7 @@ void main() {
 
     test('si visionOS no pasa la sonda prueba el siguiente cliente', () async {
       final probed = <Uri>[];
-      final provider = YoutubeStreamUrlProvider.withLoader(
+      final provider = YoutubeStreamResolver.withLoader(
         (id, clients) async => clients != null ? bigVision : bigDefault,
         probe: (url) async {
           probed.add(url);
@@ -89,7 +89,7 @@ void main() {
     test(
       'si ningún cliente pasa la sonda lanza YoutubeBlockedException',
       () async {
-        final provider = YoutubeStreamUrlProvider.withLoader(
+        final provider = YoutubeStreamResolver.withLoader(
           (id, clients) async => clients != null ? bigVision : bigDefault,
           probe: (url) async => false,
         );
@@ -110,7 +110,7 @@ void main() {
     test(
       'bloqueado en un cliente y error en otro sigue siendo bloqueo',
       () async {
-        final provider = YoutubeStreamUrlProvider.withLoader((
+        final provider = YoutubeStreamResolver.withLoader((
           id,
           clients,
         ) async {
@@ -133,13 +133,13 @@ void main() {
       }
 
       final small = Uri.parse('https://example.com/visionos?clen=1000000');
-      final smallProvider = YoutubeStreamUrlProvider.withLoader(
+      final smallProvider = YoutubeStreamResolver.withLoader(
         (id, clients) async => small,
         probe: probe,
       );
       expect(await smallProvider.fetchStreamUrl('abc'), small);
 
-      final unknownProvider = YoutubeStreamUrlProvider.withLoader(
+      final unknownProvider = YoutubeStreamResolver.withLoader(
         (id, clients) async => visionOsUrl,
         probe: probe,
       );
@@ -149,7 +149,7 @@ void main() {
     });
 
     test('si la sonda falla por red no bloquea la canción', () async {
-      final provider = YoutubeStreamUrlProvider.withLoader(
+      final provider = YoutubeStreamResolver.withLoader(
         (id, clients) async => bigVision,
         probe: (url) async => throw const SocketException('timeout'),
       );
@@ -158,10 +158,10 @@ void main() {
     });
 
     test('pide un byte pasado el límite: min(clen - 1, 2 MB)', () {
-      expect(YoutubeStreamUrlProvider.probeOffset(bigVision), 2 * 1024 * 1024);
+      expect(YoutubeStreamResolver.probeOffset(bigVision), 2 * 1024 * 1024);
       final justAbove = Uri.parse('https://e.com/a?clen=1600000');
-      expect(YoutubeStreamUrlProvider.probeOffset(justAbove), 1599999);
-      expect(YoutubeStreamUrlProvider.probeOffset(visionOsUrl), isNull);
+      expect(YoutubeStreamResolver.probeOffset(justAbove), 1599999);
+      expect(YoutubeStreamResolver.probeOffset(visionOsUrl), isNull);
     });
 
     test('la sonda HTTP acepta 206 y rechaza 403', () async {
@@ -179,9 +179,9 @@ void main() {
       Uri at(String path) =>
           Uri.parse('http://127.0.0.1:${server.port}$path?clen=4000000');
 
-      expect(await YoutubeStreamUrlProvider.httpRangeProbe(at('/ok')), isTrue);
+      expect(await YoutubeStreamResolver.httpRangeProbe(at('/ok')), isTrue);
       expect(
-        await YoutubeStreamUrlProvider.httpRangeProbe(at('/blocked')),
+        await YoutubeStreamResolver.httpRangeProbe(at('/blocked')),
         isFalse,
       );
       expect(ranges.first, 'bytes=2097152-2097152');
@@ -191,7 +191,7 @@ void main() {
   group('límite de peticiones de YouTube', () {
     test('solo descarga la página del vídeo si falta el visitorData', () async {
       final requested = <bool>[];
-      final load = YoutubeStreamUrlProvider.manifestLoader((
+      final load = YoutubeStreamResolver.manifestLoader((
         id,
         clients, {
         required bool requireWatchPage,
@@ -199,14 +199,14 @@ void main() {
         requested.add(requireWatchPage);
         throw Exception('sin red');
       });
-      final withVisitor = YoutubeStreamUrlProvider.withVisitorData(
-        YoutubeStreamUrlProvider.visionOs,
+      final withVisitor = YoutubeStreamResolver.withVisitorData(
+        YoutubeStreamResolver.visionOs,
         'VD',
       );
 
       for (final clients in [
         [withVisitor],
-        [YoutubeStreamUrlProvider.visionOs],
+        [YoutubeStreamResolver.visionOs],
         null,
       ]) {
         await expectLater(load('abc', clients), throwsException);
@@ -216,8 +216,8 @@ void main() {
     });
 
     test('withVisitorData lo pone en el contexto y en la cabecera', () {
-      final client = YoutubeStreamUrlProvider.withVisitorData(
-        YoutubeStreamUrlProvider.visionOs,
+      final client = YoutubeStreamResolver.withVisitorData(
+        YoutubeStreamResolver.visionOs,
         'VD',
       );
 
@@ -225,13 +225,13 @@ void main() {
       expect(client.payload['context']['client']['clientName'], 'VISIONOS');
       expect(client.headers['X-Goog-Visitor-Id'], 'VD');
       expect(client.headers['X-YouTube-Client-Name'], '101');
-      expect(client.apiUrl, YoutubeStreamUrlProvider.visionOs.apiUrl);
+      expect(client.apiUrl, YoutubeStreamResolver.visionOs.apiUrl);
     });
 
     test('pide el visitorData una vez y lo reutiliza', () async {
       var visitorCalls = 0;
       final sent = <String?>[];
-      final provider = YoutubeStreamUrlProvider.withLoader(
+      final provider = YoutubeStreamResolver.withLoader(
         (id, clients) async {
           sent.add(clients?.single.payload['context']['client']['visitorData']);
           return visionOsUrl;
@@ -253,7 +253,7 @@ void main() {
       'si visionOS falla, la próxima canción pide otro visitorData',
       () async {
         var visitorCalls = 0;
-        final provider = YoutubeStreamUrlProvider.withLoader((
+        final provider = YoutubeStreamResolver.withLoader((
           id,
           clients,
         ) async {
@@ -269,19 +269,19 @@ void main() {
 
     test('sin visitorData usa el cliente tal cual', () async {
       final calls = <List<YoutubeApiClient>?>[];
-      final provider = YoutubeStreamUrlProvider.withLoader((id, clients) async {
+      final provider = YoutubeStreamResolver.withLoader((id, clients) async {
         calls.add(clients);
         return visionOsUrl;
       }, visitorData: () async => null);
 
       await provider.fetchStreamUrl('a');
 
-      expect(calls.single, [YoutubeStreamUrlProvider.visionOs]);
+      expect(calls.single, [YoutubeStreamResolver.visionOs]);
     });
 
     test('al primer límite para y no prueba más clientes', () async {
       var calls = 0;
-      final provider = YoutubeStreamUrlProvider.withLoader((id, clients) async {
+      final provider = YoutubeStreamResolver.withLoader((id, clients) async {
         calls++;
         throw RequestLimitExceededException('429');
       });
@@ -303,7 +303,7 @@ void main() {
       var now = DateTime(2026, 10, 17, 12);
       var limited = true;
       var calls = 0;
-      final provider = YoutubeStreamUrlProvider.withLoader((id, clients) async {
+      final provider = YoutubeStreamResolver.withLoader((id, clients) async {
         calls++;
         if (limited) throw RequestLimitExceededException('429');
         return visionOsUrl;
@@ -321,7 +321,7 @@ void main() {
       );
       expect(calls, 1, reason: 'no vuelve a llamar a YouTube');
 
-      now = now.add(YoutubeStreamUrlProvider.rateLimitCooldown);
+      now = now.add(YoutubeStreamResolver.rateLimitCooldown);
       expect(await provider.fetchStreamUrl('c'), visionOsUrl);
       expect(calls, 2);
     });

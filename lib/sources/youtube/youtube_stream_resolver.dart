@@ -5,16 +5,9 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
-import '../domain/entities/song.dart';
-import 'playback_source.dart';
-
-/// Obtiene una URL de streaming fresca a partir del id de la canción en su
-/// origen. Hay una implementación por cada [SongSource] que la necesite.
-abstract interface class StreamUrlProvider {
-  SongSource get source;
-
-  Future<Uri> fetchStreamUrl(String sourceId);
-}
+import 'package:sponify/core/audio/playback_source.dart';
+import 'package:sponify/core/domain/entities/song.dart';
+import 'package:sponify/core/domain/sources/i_stream_resolver.dart';
 
 /// Pide a YouTube la URL de audio de [videoId] con [clients] (null = los
 /// clientes por defecto de youtube_explode_dart). Devuelve null si no hay
@@ -58,8 +51,12 @@ typedef VisitorDataLoader = Future<String?> Function();
 /// bitrate: ExoPlayer lo reproduce en cualquier versión de Android y el
 /// archivo descargado queda como .m4a estándar. WebM/Opus solo se usa si no
 /// hay MP4.
-class YoutubeStreamUrlProvider implements StreamUrlProvider {
-  YoutubeStreamUrlProvider(
+class YoutubeStreamResolver implements IStreamResolver {
+  /// Versión real, con su propio cliente de youtube_explode_dart.
+  factory YoutubeStreamResolver.create() =>
+      YoutubeStreamResolver(YoutubeExplode());
+
+  YoutubeStreamResolver(
     YoutubeExplode yt, {
     StreamUrlProbe? probe,
     DateTime Function()? clock,
@@ -79,7 +76,7 @@ class YoutubeStreamUrlProvider implements StreamUrlProvider {
        );
 
   /// Sin [visitorData] no se pide ninguno (los clientes van tal cual).
-  YoutubeStreamUrlProvider.withLoader(
+  YoutubeStreamResolver.withLoader(
     this._load, {
     StreamUrlProbe? probe,
     DateTime Function()? clock,

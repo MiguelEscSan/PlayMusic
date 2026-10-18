@@ -2,7 +2,8 @@ import 'dart:io';
 
 import '../domain/entities/song.dart';
 import 'playback_source.dart';
-import 'stream_url_provider.dart';
+import '../domain/sources/i_stream_resolver.dart';
+import '../domain/sources/source_registry.dart';
 
 typedef LocalFileMissingCallback = Future<void> Function(Song song);
 typedef FileProbe = Future<bool> Function(String path);
@@ -12,15 +13,16 @@ typedef FileProbe = Future<bool> Function(String path);
 /// pedida de nuevo al origen).
 class DefaultPlaybackSourceResolver implements PlaybackSourceResolver {
   DefaultPlaybackSourceResolver({
-    required List<StreamUrlProvider> providers,
+    required this.streams,
     this.onLocalFileMissing,
     FileProbe? fileProbe,
     DateTime Function()? clock,
-  }) : _providers = {for (final p in providers) p.source: p},
-       _fileProbe = fileProbe ?? _defaultFileProbe,
+  }) : _fileProbe = fileProbe ?? _defaultFileProbe,
        _clock = clock ?? DateTime.now;
 
-  final Map<SongSource, StreamUrlProvider> _providers;
+  /// Adaptador de cada origen para pedir URLs frescas. El archivo local se
+  /// mira antes: una canción descargada nunca pasa por la red.
+  final SourceRegistry<IStreamResolver> streams;
   final FileProbe _fileProbe;
   final DateTime Function() _clock;
 
@@ -60,9 +62,9 @@ class DefaultPlaybackSourceResolver implements PlaybackSourceResolver {
     }
 
     // 4. URL nueva desde el origen.
-    final provider = _providers[song.source];
+    final provider = streams.forSong(song);
     if (provider == null) {
-      // Orígenes con URL estable (p. ej. Jamendo) no necesitan provider.
+      // Orígenes con URL estable (p. ej. Jamendo) no necesitan adaptador.
       final direct = _tryParse(song.streamUrl);
       if (direct != null) return RemoteStreamSource(direct);
       throw SongUnavailableException(song, 'sin archivo local ni URL');

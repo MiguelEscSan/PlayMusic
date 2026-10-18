@@ -3,10 +3,11 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sponify/core/audio/playback_source.dart';
 import 'package:sponify/core/audio/playback_source_resolver_impl.dart';
-import 'package:sponify/core/audio/stream_url_provider.dart';
+import 'package:sponify/core/domain/sources/i_stream_resolver.dart';
+import 'package:sponify/core/domain/sources/source_registry.dart';
 import 'package:sponify/core/domain/entities/song.dart';
 
-class _FakeYoutube implements StreamUrlProvider {
+class _FakeYoutube implements IStreamResolver {
   int calls = 0;
   Object? error;
 
@@ -44,7 +45,7 @@ void main() {
     missing = [];
     existingFiles = {};
     resolver = DefaultPlaybackSourceResolver(
-      providers: [yt],
+      streams: SourceRegistry([yt]),
       onLocalFileMissing: (s) async => missing.add(s),
       fileProbe: (path) async => existingFiles.contains(path),
       clock: () => now,
@@ -107,11 +108,98 @@ void main() {
     );
   });
 
+  routingTests();
+
   test('YouTube limitando peticiones -> propaga el aviso tal cual', () async {
     yt.error = const YoutubeRateLimitedException();
     await expectLater(
       resolver.resolve(_song()),
       throwsA(isA<YoutubeRateLimitedException>()),
     );
+  });
+}
+
+class _FakeSource implements IStreamResolver {
+  _FakeSource(this.source);
+
+  @override
+  final SongSource source;
+  final calls = <String>[];
+
+  @override
+  Future<Uri> fetchStreamUrl(String sourceId) async {
+    calls.add(sourceId);
+    return Uri.parse('https://${source.name}.example/$sourceId');
+  }
+}
+
+Song _from(SongSource source, {String? localPath, String? streamUrl}) => Song(
+  id: '1',
+  title: 'T',
+  artist: 'A',
+  durationMs: 1000,
+  source: source,
+  sourceId: 'id-${source.name}',
+  localPath: localPath,
+  streamUrl: streamUrl,
+);
+
+void routingTests() {
+  group('enrutado por origen', () {
+    late _FakeSource youtube;
+    late _FakeSource jamendo;
+    late Set<String> existingFiles;
+    late DefaultPlaybackSourceResolver resolver;
+
+    setUp(() {
+      youtube = _FakeSource(SongSource.youtube);
+      jamendo = _FakeSource(SongSource.jamendo);
+      existingFiles = {};
+      resolver = DefaultPlaybackSourceResolver(
+        streams: SourceRegistry([youtube, jamendo]),
+        fileProbe: (path) async => existingFiles.contains(path),
+      );
+    });
+
+    test('cada canción pide la URL al adaptador de su origen', () async {
+      final yt = await resolver.resolve(_from(SongSource.youtube));
+      final ja = await resolver.resolve(_from(SongSource.jamendo));
+
+      expect((yt as RemoteStreamSource).uri.host, 'youtube.example');
+      expect((ja as RemoteStreamSource).uri.host, 'jamendo.example');
+      expect(youtube.calls, ['id-youtube']);
+      expect(jamendo.calls, ['id-jamendo']);
+    });
+
+    test('una descarga nunca pasa por ningún adaptador', () async {
+      existingFiles.add('/music/1.m4a');
+      final src = await resolver.resolve(
+        _from(SongSource.youtube, localPath: '/music/1.m4a'),
+        forceRefresh: true,
+      );
+
+      expect(src, isA<LocalFileSource>());
+      expect(youtube.calls, isEmpty);
+      expect(jamendo.calls, isEmpty);
+    });
+
+    test('origen sin adaptador: usa su URL estable', () async {
+      final src = await resolver.resolve(
+        _from(SongSource.local, streamUrl: 'https://cdn.example/a.mp3'),
+      );
+
+      expect(
+        (src as RemoteStreamSource).uri.toString(),
+        'https://cdn.example/a.mp3',
+      );
+      expect(youtube.calls, isEmpty);
+    });
+
+    test('origen sin adaptador ni URL -> SongUnavailableException', () async {
+      await expectLater(
+        resolver.resolve(_from(SongSource.local)),
+        throwsA(isA<SongUnavailableException>()),
+      );
+    });
   });
 }
