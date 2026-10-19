@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sponify/core/error/failure.dart';
-import 'package:sponify/core/error/result.dart';
+import 'package:koda/core/error/failure.dart';
+import 'package:koda/core/error/result.dart';
 
 void main() {
   const failure = DatabaseFailure('boom');

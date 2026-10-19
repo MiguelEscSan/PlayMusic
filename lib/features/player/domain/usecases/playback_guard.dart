@@ -1,6 +1,6 @@
-import 'package:sponify/core/domain/guard.dart';
-import 'package:sponify/core/error/failure.dart';
-import 'package:sponify/core/error/result.dart';
+import 'package:koda/core/domain/guard.dart';
+import 'package:koda/core/error/failure.dart';
+import 'package:koda/core/error/result.dart';
 
 /// Ejecuta una acción del reproductor y devuelve `Ok(unit)`; si lanza,
 /// `Err(PlaybackFailure)` con [message]. Así ningún caso de uso del

@@ -1,4 +1,4 @@
-import 'package:sponify/core/error/result.dart';
+import 'package:koda/core/error/result.dart';
 
 /// Búsquedas recientes. Nunca lanza: un fallo de la BD llega como `Err`.
 abstract interface class ISearchHistoryRepository {

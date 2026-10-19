@@ -1,10 +1,10 @@
-import 'package:sponify/core/audio/audio_player_service.dart';
-import 'package:sponify/core/domain/entities/song.dart';
-import 'package:sponify/core/domain/repositories/i_song_repository.dart';
-import 'package:sponify/core/error/result.dart';
-import 'package:sponify/features/player/domain/usecases/play_queue_use_case.dart';
-import 'package:sponify/features/player/domain/usecases/playback_guard.dart';
-import 'package:sponify/features/radio/domain/radio_service.dart';
+import 'package:koda/core/audio/audio_player_service.dart';
+import 'package:koda/core/domain/entities/song.dart';
+import 'package:koda/core/domain/repositories/i_song_repository.dart';
+import 'package:koda/core/error/result.dart';
+import 'package:koda/features/player/domain/usecases/play_queue_use_case.dart';
+import 'package:koda/features/player/domain/usecases/playback_guard.dart';
+import 'package:koda/features/radio/domain/radio_service.dart';
 
 /// Al tocar un resultado de búsqueda: suena esa canción sola y, detrás, la
 /// radio (canciones parecidas según los gustos del usuario).

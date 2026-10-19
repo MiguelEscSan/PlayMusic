@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sponify/features/playlists/data/spotify_page_parser.dart';
-import 'package:sponify/features/playlists/domain/remote_playlist.dart';
+import 'package:koda/features/playlists/data/spotify_page_parser.dart';
+import 'package:koda/features/playlists/domain/remote_playlist.dart';
 
 String _fixture(String name) =>
     File('test/fixtures/spotify/$name').readAsStringSync();

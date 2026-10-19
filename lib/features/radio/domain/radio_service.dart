@@ -1,11 +1,11 @@
-import 'package:sponify/core/domain/entities/song.dart';
-import 'package:sponify/core/domain/repositories/i_settings_repository.dart';
-import 'package:sponify/core/domain/repositories/i_song_repository.dart';
-import 'package:sponify/core/domain/sources/i_radio_source.dart';
-import 'package:sponify/core/domain/sources/source_registry.dart';
-import 'package:sponify/core/error/result.dart';
-import 'package:sponify/features/history/domain/i_history_repository.dart';
-import 'package:sponify/features/radio/domain/taste_ranker.dart';
+import 'package:koda/core/domain/entities/song.dart';
+import 'package:koda/core/domain/repositories/i_settings_repository.dart';
+import 'package:koda/core/domain/repositories/i_song_repository.dart';
+import 'package:koda/core/domain/sources/i_radio_source.dart';
+import 'package:koda/core/domain/sources/source_registry.dart';
+import 'package:koda/core/error/result.dart';
+import 'package:koda/features/history/domain/i_history_repository.dart';
+import 'package:koda/features/radio/domain/taste_ranker.dart';
 
 /// Radio: canciones parecidas a una semilla, ordenadas según los gustos
 /// del usuario ("me gusta" e historial) y sin repetir las recientes.

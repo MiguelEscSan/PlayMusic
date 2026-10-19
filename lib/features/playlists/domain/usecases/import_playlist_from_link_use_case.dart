@@ -1,8 +1,8 @@
-import 'package:sponify/core/domain/guard.dart';
-import 'package:sponify/core/error/failure.dart';
-import 'package:sponify/core/error/result.dart';
-import 'package:sponify/features/playlists/domain/i_playlist_importer.dart';
-import 'package:sponify/features/playlists/domain/spotify_playlist_link.dart';
+import 'package:koda/core/domain/guard.dart';
+import 'package:koda/core/error/failure.dart';
+import 'package:koda/core/error/result.dart';
+import 'package:koda/features/playlists/domain/i_playlist_importer.dart';
+import 'package:koda/features/playlists/domain/spotify_playlist_link.dart';
 
 /// Servicio del que viene un enlace de playlist.
 enum PlaylistLinkSource { youtube, spotify }

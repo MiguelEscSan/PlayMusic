@@ -1,6 +1,6 @@
-import 'package:sponify/core/domain/entities/song.dart';
-import 'package:sponify/core/error/failure.dart';
-import 'package:sponify/core/error/result.dart';
+import 'package:koda/core/domain/entities/song.dart';
+import 'package:koda/core/error/failure.dart';
+import 'package:koda/core/error/result.dart';
 
 /// Copia una canción descargada a la carpeta pública de Música del móvil,
 /// para que otras apps (reproductores, gestores de archivos) la vean.

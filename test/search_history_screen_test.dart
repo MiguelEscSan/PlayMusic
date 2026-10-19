@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sponify/core/database/app_database.dart';
-import 'package:sponify/di/providers.dart';
-import 'package:sponify/features/search/data/search_history_dao.dart';
-import 'package:sponify/core/domain/sources/i_track_search.dart';
-import 'package:sponify/features/search/domain/suggestion_source.dart';
-import 'package:sponify/features/search/presentation/search_screen.dart';
+import 'package:koda/core/database/app_database.dart';
+import 'package:koda/di/providers.dart';
+import 'package:koda/features/search/data/search_history_dao.dart';
+import 'package:koda/core/domain/sources/i_track_search.dart';
+import 'package:koda/features/search/domain/suggestion_source.dart';
+import 'package:koda/features/search/presentation/search_screen.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 /// Búsqueda falsa sin resultados: así no hace falta reproductor ni BD de

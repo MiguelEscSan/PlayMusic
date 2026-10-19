@@ -3,10 +3,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sponify/core/audio/audio_player_service.dart';
-import 'package:sponify/di/providers.dart';
-import 'package:sponify/features/player/sleep_timer/sleep_timer_controller.dart';
-import 'package:sponify/features/player/sleep_timer/sleep_timer_sheet.dart';
+import 'package:koda/core/audio/audio_player_service.dart';
+import 'package:koda/di/providers.dart';
+import 'package:koda/features/player/sleep_timer/sleep_timer_controller.dart';
+import 'package:koda/features/player/sleep_timer/sleep_timer_sheet.dart';
 
 /// Servicio de audio falso: solo registra las llamadas que nos interesan.
 class _FakeAudio implements AudioPlayerService {

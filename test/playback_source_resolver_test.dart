@@ -1,11 +1,11 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sponify/core/audio/playback_source.dart';
-import 'package:sponify/core/audio/playback_source_resolver_impl.dart';
-import 'package:sponify/core/domain/sources/i_stream_resolver.dart';
-import 'package:sponify/core/domain/sources/source_registry.dart';
-import 'package:sponify/core/domain/entities/song.dart';
+import 'package:koda/core/audio/playback_source.dart';
+import 'package:koda/core/audio/playback_source_resolver_impl.dart';
+import 'package:koda/core/domain/sources/i_stream_resolver.dart';
+import 'package:koda/core/domain/sources/source_registry.dart';
+import 'package:koda/core/domain/entities/song.dart';
 
 class _FakeYoutube implements IStreamResolver {
   int calls = 0;

@@ -8,7 +8,7 @@ import '../domain/i_song_exporter.dart';
 /// Los errores de la plataforma llegan como `Err(SongExportFailure)`.
 class MethodChannelSongExporter implements ISongExporter {
   MethodChannelSongExporter([
-    this._channel = const MethodChannel('sponify/export'),
+    this._channel = const MethodChannel('koda/export'),
   ]);
 
   final MethodChannel _channel;

@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:sponify/core/audio/audio_player_service.dart';
-import 'package:sponify/core/domain/entities/song.dart';
+import 'package:koda/core/audio/audio_player_service.dart';
+import 'package:koda/core/domain/entities/song.dart';
 
 /// Reproductor falso: registra cada llamada en [calls] (en orden) y, si
 /// [error] no es null, las acciones lo lanzan después de registrarse.

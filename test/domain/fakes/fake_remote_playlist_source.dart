@@ -1,6 +1,6 @@
-import 'package:sponify/core/domain/entities/song.dart';
-import 'package:sponify/core/domain/sources/i_remote_playlist_source.dart';
-import 'package:sponify/sources/youtube/youtube_playlist_source.dart';
+import 'package:koda/core/domain/entities/song.dart';
+import 'package:koda/core/domain/sources/i_remote_playlist_source.dart';
+import 'package:koda/sources/youtube/youtube_playlist_source.dart';
 
 /// Playlist remota falsa: lee lo que diga [_fetch] y reconoce los enlaces
 /// como YouTube.

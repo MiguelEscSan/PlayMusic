@@ -1,7 +1,7 @@
-import 'package:sponify/core/domain/entities/song.dart';
-import 'package:sponify/core/domain/guard.dart';
-import 'package:sponify/core/error/result.dart';
-import 'package:sponify/features/export/domain/i_song_exporter.dart';
+import 'package:koda/core/domain/entities/song.dart';
+import 'package:koda/core/domain/guard.dart';
+import 'package:koda/core/error/result.dart';
+import 'package:koda/features/export/domain/i_song_exporter.dart';
 
 /// Copia el archivo descargado de una canción a la carpeta pública de
 /// Música. `Err(SongExportFailure)` conserva el tipo de error para que la

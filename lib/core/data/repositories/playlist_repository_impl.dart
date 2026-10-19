@@ -1,12 +1,12 @@
-import 'package:sponify/core/data/models/playlist_model.dart';
-import 'package:sponify/core/data/models/song_model.dart';
-import 'package:sponify/core/data/repositories/guard.dart';
-import 'package:sponify/core/domain/entities/playlist.dart' as domain;
-import 'package:sponify/core/domain/entities/song.dart' as domain;
-import 'package:sponify/core/domain/repositories/i_playlist_repository.dart';
-import 'package:sponify/core/error/failure.dart';
-import 'package:sponify/core/error/result.dart';
-import 'package:sponify/core/database/playlist_dao.dart';
+import 'package:koda/core/data/models/playlist_model.dart';
+import 'package:koda/core/data/models/song_model.dart';
+import 'package:koda/core/data/repositories/guard.dart';
+import 'package:koda/core/domain/entities/playlist.dart' as domain;
+import 'package:koda/core/domain/entities/song.dart' as domain;
+import 'package:koda/core/domain/repositories/i_playlist_repository.dart';
+import 'package:koda/core/error/failure.dart';
+import 'package:koda/core/error/result.dart';
+import 'package:koda/core/database/playlist_dao.dart';
 
 /// [IPlaylistRepository] sobre [PlaylistDao]: traduce entre las entidades de
 /// dominio y [PlaylistModel]/[SongModel], y convierte toda excepción en un

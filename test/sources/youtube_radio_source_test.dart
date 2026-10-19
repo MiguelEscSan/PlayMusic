@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sponify/sources/youtube/youtube_radio_source.dart';
+import 'package:koda/sources/youtube/youtube_radio_source.dart';
 
 /// Respuesta real de `youtubei/v1/next` para el Mix de "Blinding Lights",
 /// recortada a 4 entradas y a los campos que se leen.

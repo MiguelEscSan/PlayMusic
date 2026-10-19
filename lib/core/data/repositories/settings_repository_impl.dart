@@ -1,7 +1,7 @@
-import 'package:sponify/core/data/repositories/guard.dart';
-import 'package:sponify/core/domain/repositories/i_settings_repository.dart';
-import 'package:sponify/core/error/result.dart';
-import 'package:sponify/core/settings/settings_dao.dart';
+import 'package:koda/core/data/repositories/guard.dart';
+import 'package:koda/core/domain/repositories/i_settings_repository.dart';
+import 'package:koda/core/error/result.dart';
+import 'package:koda/core/settings/settings_dao.dart';
 
 /// [ISettingsRepository] sobre la tabla `settings` ([SettingsDao]). Aquí
 /// viven las claves ([SettingsKeys]) y los valores por defecto.

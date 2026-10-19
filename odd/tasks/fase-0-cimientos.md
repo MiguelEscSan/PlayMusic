@@ -14,7 +14,7 @@ hasta terminar la fase y confirmarlo con el usuario.
 
 ## Tareas
 
-- [x] T1 Tests de la cola de `SponifyAudioHandler` (playQueue, playNext,
+- [x] T1 Tests de la cola de `KodaAudioHandler` (playQueue, playNext,
       addToQueue, removeFromQueue, moveInQueue, aleatorio). Ruta: inline.
       Se pensaron como tests de caracterización, pero 2 fallaron y
       destaparon un bug: `playNext`/`addToQueue` no refrescaban el

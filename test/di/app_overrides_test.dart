@@ -3,29 +3,29 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sponify/bootstrap.dart';
-import 'package:sponify/core/audio/audio_player_service.dart';
-import 'package:sponify/core/audio/playback_source.dart';
-import 'package:sponify/core/data/repositories/playlist_repository_impl.dart';
-import 'package:sponify/core/data/repositories/settings_repository_impl.dart';
-import 'package:sponify/core/data/repositories/song_repository_impl.dart';
-import 'package:sponify/core/database/app_database.dart';
-import 'package:sponify/core/database/playlist_dao.dart';
-import 'package:sponify/core/database/song_dao.dart';
-import 'package:sponify/core/domain/entities/song.dart';
-import 'package:sponify/core/settings/settings_dao.dart';
-import 'package:sponify/core/storage/file_paths.dart';
-import 'package:sponify/di/app_overrides.dart';
-import 'package:sponify/di/providers.dart';
-import 'package:sponify/features/downloads/data/download_manager.dart';
-import 'package:sponify/features/favorites/data/liked_playlist.dart';
-import 'package:sponify/features/history/data/history_dao.dart';
-import 'package:sponify/features/history/data/history_recorder.dart';
-import 'package:sponify/features/history/data/history_repository_impl.dart';
-import 'package:sponify/features/history/domain/history_events.dart';
-import 'package:sponify/features/playlists/data/playlist_cover_service.dart';
-import 'package:sponify/features/search/data/search_history_dao.dart';
-import 'package:sponify/features/radio/domain/radio_service.dart';
+import 'package:koda/bootstrap.dart';
+import 'package:koda/core/audio/audio_player_service.dart';
+import 'package:koda/core/audio/playback_source.dart';
+import 'package:koda/core/data/repositories/playlist_repository_impl.dart';
+import 'package:koda/core/data/repositories/settings_repository_impl.dart';
+import 'package:koda/core/data/repositories/song_repository_impl.dart';
+import 'package:koda/core/database/app_database.dart';
+import 'package:koda/core/database/playlist_dao.dart';
+import 'package:koda/core/database/song_dao.dart';
+import 'package:koda/core/domain/entities/song.dart';
+import 'package:koda/core/settings/settings_dao.dart';
+import 'package:koda/core/storage/file_paths.dart';
+import 'package:koda/di/app_overrides.dart';
+import 'package:koda/di/providers.dart';
+import 'package:koda/features/downloads/data/download_manager.dart';
+import 'package:koda/features/favorites/data/liked_playlist.dart';
+import 'package:koda/features/history/data/history_dao.dart';
+import 'package:koda/features/history/data/history_recorder.dart';
+import 'package:koda/features/history/data/history_repository_impl.dart';
+import 'package:koda/features/history/domain/history_events.dart';
+import 'package:koda/features/playlists/data/playlist_cover_service.dart';
+import 'package:koda/features/search/data/search_history_dao.dart';
+import 'package:koda/features/radio/domain/radio_service.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import '../domain/fakes/fake_radio_source.dart';
@@ -48,7 +48,7 @@ void main() {
   sqfliteFfiInit();
 
   test('the app reads the same instances bootstrap built', () async {
-    final tmp = Directory.systemTemp.createTempSync('sponify_di');
+    final tmp = Directory.systemTemp.createTempSync('koda_di');
     final db = await AppDatabase.open(
       factory: databaseFactoryFfiNoIsolate,
       path: inMemoryDatabasePath,

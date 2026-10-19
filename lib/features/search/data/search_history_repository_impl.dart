@@ -1,7 +1,7 @@
-import 'package:sponify/core/data/repositories/guard.dart';
-import 'package:sponify/core/error/result.dart';
-import 'package:sponify/features/search/data/search_history_dao.dart';
-import 'package:sponify/features/search/domain/i_search_history_repository.dart';
+import 'package:koda/core/data/repositories/guard.dart';
+import 'package:koda/core/error/result.dart';
+import 'package:koda/features/search/data/search_history_dao.dart';
+import 'package:koda/features/search/domain/i_search_history_repository.dart';
 
 /// [ISearchHistoryRepository] sobre la tabla `search_history`
 /// ([SearchHistoryDao]).

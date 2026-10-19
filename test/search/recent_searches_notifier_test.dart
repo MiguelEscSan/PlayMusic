@@ -1,9 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sponify/core/error/failure.dart';
-import 'package:sponify/core/error/result.dart';
-import 'package:sponify/di/providers.dart';
-import 'package:sponify/features/search/presentation/search_history_providers.dart';
+import 'package:koda/core/error/failure.dart';
+import 'package:koda/core/error/result.dart';
+import 'package:koda/di/providers.dart';
+import 'package:koda/features/search/presentation/search_history_providers.dart';
 
 import '../domain/fakes/fake_feature_repositories.dart';
 

@@ -1,10 +1,10 @@
-import 'package:sponify/core/data/models/song_model.dart';
-import 'package:sponify/core/data/repositories/guard.dart';
-import 'package:sponify/core/database/song_dao.dart';
-import 'package:sponify/core/domain/entities/song.dart' as domain;
-import 'package:sponify/core/domain/repositories/i_song_repository.dart';
-import 'package:sponify/core/error/failure.dart';
-import 'package:sponify/core/error/result.dart';
+import 'package:koda/core/data/models/song_model.dart';
+import 'package:koda/core/data/repositories/guard.dart';
+import 'package:koda/core/database/song_dao.dart';
+import 'package:koda/core/domain/entities/song.dart' as domain;
+import 'package:koda/core/domain/repositories/i_song_repository.dart';
+import 'package:koda/core/error/failure.dart';
+import 'package:koda/core/error/result.dart';
 
 /// [ISongRepository] sobre [SongDao]: traduce entre la entidad de dominio y
 /// [SongModel], y convierte toda excepción en un `Err` vía [guard].

@@ -1,5 +1,5 @@
-import 'package:sponify/core/error/result.dart';
-import 'package:sponify/features/search/domain/i_search_history_repository.dart';
+import 'package:koda/core/error/result.dart';
+import 'package:koda/features/search/domain/i_search_history_repository.dart';
 
 /// Búsquedas recientes, la última primero.
 final class GetRecentSearchesUseCase {

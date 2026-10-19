@@ -1,5 +1,5 @@
-import 'package:sponify/core/error/result.dart';
-import 'package:sponify/features/playlists/domain/remote_playlist.dart';
+import 'package:koda/core/error/result.dart';
+import 'package:koda/features/playlists/domain/remote_playlist.dart';
 
 /// Lee una playlist pública de Spotify sin iniciar sesión. Nunca lanza:
 /// - `Ok(RemotePlaylist)`: nombre y pistas leídas (puede ser solo una parte;

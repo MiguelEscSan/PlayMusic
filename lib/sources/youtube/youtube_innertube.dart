@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 
-import 'package:sponify/core/domain/entities/song.dart';
+import 'package:koda/core/domain/entities/song.dart';
 
 import 'youtube_track_search.dart';
 

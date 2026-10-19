@@ -1,4 +1,4 @@
-import 'package:sponify/core/audio/audio_player_service.dart';
+import 'package:koda/core/audio/audio_player_service.dart';
 
 /// Estado completo del reproductor; emite en cada cambio relevante.
 final class WatchPlayerSnapshotUseCase {

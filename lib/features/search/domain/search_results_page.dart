@@ -1,5 +1,5 @@
-import 'package:sponify/core/domain/entities/song.dart';
-import 'package:sponify/core/error/result.dart';
+import 'package:koda/core/domain/entities/song.dart';
+import 'package:koda/core/error/result.dart';
 
 /// Una página de resultados de `SearchSongsUseCase`. [loadMore] es null
 /// cuando no hay más; cuando la hay, nunca lanza: un fallo llega como `Err`.

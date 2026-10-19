@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:sponify/core/data/models/millis_date_time_converter.dart';
-import 'package:sponify/core/data/models/song_model.dart';
-import 'package:sponify/core/domain/entities/playlist.dart' as domain;
+import 'package:koda/core/data/models/millis_date_time_converter.dart';
+import 'package:koda/core/data/models/song_model.dart';
+import 'package:koda/core/domain/entities/playlist.dart' as domain;
 
 part 'playlist_model.freezed.dart';
 part 'playlist_model.g.dart';

@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sponify/features/playlists/domain/spotify_playlist_link.dart';
+import 'package:koda/features/playlists/domain/spotify_playlist_link.dart';
 
 const _id = '3IH9vnqULmvIUyXAzlL9zl';
 

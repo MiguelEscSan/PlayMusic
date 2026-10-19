@@ -1,5 +1,5 @@
-import 'package:sponify/core/domain/repositories/i_playlist_repository.dart';
-import 'package:sponify/core/error/result.dart';
+import 'package:koda/core/domain/repositories/i_playlist_repository.dart';
+import 'package:koda/core/error/result.dart';
 
 /// Quita de una playlist la canción que ocupa la posición [index] (una
 /// playlist puede tener la misma canción en varias posiciones).

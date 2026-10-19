@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sponify/core/domain/entities/song.dart';
-import 'package:sponify/core/domain/sources/source_registry.dart';
+import 'package:koda/core/domain/entities/song.dart';
+import 'package:koda/core/domain/sources/source_registry.dart';
 
 class _Adapter implements SourceAdapter {
   const _Adapter(this.source, [this.name = '']);

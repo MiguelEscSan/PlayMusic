@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sponify/core/domain/entities/song.dart';
-import 'package:sponify/features/radio/domain/taste_ranker.dart';
+import 'package:koda/core/domain/entities/song.dart';
+import 'package:koda/features/radio/domain/taste_ranker.dart';
 
 Song _song(String id, String artist) => Song(
   id: '',

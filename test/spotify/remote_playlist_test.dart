@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sponify/features/playlists/domain/remote_playlist.dart';
+import 'package:koda/features/playlists/domain/remote_playlist.dart';
 
 void main() {
   test('dos pistas con los mismos datos son iguales', () {

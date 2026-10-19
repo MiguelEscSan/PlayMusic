@@ -1,6 +1,6 @@
-import 'package:sponify/core/domain/entities/song.dart';
-import 'package:sponify/core/domain/repositories/i_song_repository.dart';
-import 'package:sponify/core/error/result.dart';
+import 'package:koda/core/domain/entities/song.dart';
+import 'package:koda/core/domain/repositories/i_song_repository.dart';
+import 'package:koda/core/error/result.dart';
 
 /// Guarda cada canción antes de reproducirla y devuelve las copias
 /// guardadas, en el mismo orden. Se vuelve a guardar aunque tenga id: su

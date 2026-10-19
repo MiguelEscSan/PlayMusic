@@ -1,4 +1,4 @@
-import 'package:sponify/core/domain/entities/song.dart';
+import 'package:koda/core/domain/entities/song.dart';
 
 /// Una playlist leída de un origen: su título y sus vídeos en orden. Cada
 /// elemento que no parezca una canción (directo, sin duración…) llega como

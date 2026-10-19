@@ -4,21 +4,21 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sponify/core/audio/playback_source.dart';
-import 'package:sponify/core/data/repositories/playlist_repository_impl.dart';
-import 'package:sponify/core/data/repositories/song_repository_impl.dart';
-import 'package:sponify/core/database/app_database.dart';
-import 'package:sponify/core/database/song_dao.dart';
-import 'package:sponify/di/providers.dart';
-import 'package:sponify/core/domain/entities/song.dart';
-import 'package:sponify/core/error/result.dart';
-import 'package:sponify/core/settings/settings_dao.dart';
-import 'package:sponify/core/storage/file_paths.dart';
-import 'package:sponify/features/downloads/data/download_manager.dart';
-import 'package:sponify/features/downloads/presentation/downloads_providers.dart';
-import 'package:sponify/features/favorites/domain/i_liked_playlist_sync.dart';
-import 'package:sponify/features/favorites/presentation/favorites_providers.dart';
-import 'package:sponify/core/database/playlist_dao.dart';
+import 'package:koda/core/audio/playback_source.dart';
+import 'package:koda/core/data/repositories/playlist_repository_impl.dart';
+import 'package:koda/core/data/repositories/song_repository_impl.dart';
+import 'package:koda/core/database/app_database.dart';
+import 'package:koda/core/database/song_dao.dart';
+import 'package:koda/di/providers.dart';
+import 'package:koda/core/domain/entities/song.dart';
+import 'package:koda/core/error/result.dart';
+import 'package:koda/core/settings/settings_dao.dart';
+import 'package:koda/core/storage/file_paths.dart';
+import 'package:koda/features/downloads/data/download_manager.dart';
+import 'package:koda/features/downloads/presentation/downloads_providers.dart';
+import 'package:koda/features/favorites/domain/i_liked_playlist_sync.dart';
+import 'package:koda/features/favorites/presentation/favorites_providers.dart';
+import 'package:koda/core/database/playlist_dao.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import '../domain/fakes/fake_services.dart';
@@ -60,7 +60,7 @@ void main() {
   late ProviderContainer container;
 
   setUp(() async {
-    tmp = await Directory.systemTemp.createTemp('sponify_liked');
+    tmp = await Directory.systemTemp.createTemp('koda_liked');
     db = await AppDatabase.open(
       factory: databaseFactoryFfi,
       path: inMemoryDatabasePath,

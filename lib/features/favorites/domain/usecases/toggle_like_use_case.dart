@@ -1,7 +1,7 @@
-import 'package:sponify/core/domain/entities/song.dart';
-import 'package:sponify/core/domain/repositories/i_song_repository.dart';
-import 'package:sponify/core/error/result.dart';
-import 'package:sponify/features/favorites/domain/i_liked_playlist_sync.dart';
+import 'package:koda/core/domain/entities/song.dart';
+import 'package:koda/core/domain/repositories/i_song_repository.dart';
+import 'package:koda/core/error/result.dart';
+import 'package:koda/features/favorites/domain/i_liked_playlist_sync.dart';
 
 /// Alterna el "me gusta" de una canción y lo refleja en "Me encanta".
 ///

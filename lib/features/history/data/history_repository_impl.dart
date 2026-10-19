@@ -1,8 +1,8 @@
-import 'package:sponify/core/data/repositories/guard.dart';
-import 'package:sponify/core/domain/entities/song.dart';
-import 'package:sponify/core/error/result.dart';
-import 'package:sponify/features/history/data/history_dao.dart';
-import 'package:sponify/features/history/domain/i_history_repository.dart';
+import 'package:koda/core/data/repositories/guard.dart';
+import 'package:koda/core/domain/entities/song.dart';
+import 'package:koda/core/error/result.dart';
+import 'package:koda/features/history/data/history_dao.dart';
+import 'package:koda/features/history/domain/i_history_repository.dart';
 
 /// [IHistoryRepository] sobre la tabla `play_history` ([HistoryDao]):
 /// convierte los `SongModel` en entidades y los fallos en `Err`.

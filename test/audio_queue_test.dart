@@ -6,10 +6,10 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:just_audio/just_audio.dart';
-import 'package:sponify/core/audio/audio_player_service.dart';
-import 'package:sponify/core/audio/playback_source.dart';
-import 'package:sponify/core/audio/sponify_audio_handler.dart';
-import 'package:sponify/core/domain/entities/song.dart';
+import 'package:koda/core/audio/audio_player_service.dart';
+import 'package:koda/core/audio/playback_source.dart';
+import 'package:koda/core/audio/koda_audio_handler.dart';
+import 'package:koda/core/domain/entities/song.dart';
 
 /// just_audio sin plataforma: registra lo que se carga y permite simular el
 /// final de una canción.
@@ -113,11 +113,11 @@ Song song(String id) => Song(
 
 void main() {
   late FakePlayer player;
-  late SponifyAudioHandler audio;
+  late KodaAudioHandler audio;
 
   setUp(() {
     player = FakePlayer();
-    audio = SponifyAudioHandler(resolver: _LocalResolver(), player: player);
+    audio = KodaAudioHandler(resolver: _LocalResolver(), player: player);
   });
 
   tearDown(() => audio.dispose());
@@ -255,8 +255,8 @@ void main() {
   });
 
   group('YouTube bloqueado', () {
-    SponifyAudioHandler handlerWith(_FnResolver resolver) {
-      final handler = SponifyAudioHandler(resolver: resolver, player: player);
+    KodaAudioHandler handlerWith(_FnResolver resolver) {
+      final handler = KodaAudioHandler(resolver: resolver, player: player);
       addTearDown(handler.dispose);
       return handler;
     }

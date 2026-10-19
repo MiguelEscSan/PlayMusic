@@ -56,7 +56,7 @@ Kept where they were: `SuggestionSource`, `ITrackMatcher`,
 
 - `YoutubeBlockedException` / `YoutubeRateLimitedException` still live in
   `core/audio/playback_source.dart` and are caught by name in
-  `sponify_audio_handler.dart`. Stream resolution throws; it is not
+  `koda_audio_handler.dart`. Stream resolution throws; it is not
   `Result`-based, so a `RateLimitedFailure` needs a wider change. A neutral
   rename (`SourceRateLimitedException`) is a safe follow-up.
 - `core/audio/http_range_audio_source.dart` only mentions `youtube_explode`

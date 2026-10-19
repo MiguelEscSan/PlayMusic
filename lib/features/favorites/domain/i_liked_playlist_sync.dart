@@ -1,6 +1,6 @@
-import 'package:sponify/core/domain/entities/song.dart';
-import 'package:sponify/core/error/failure.dart';
-import 'package:sponify/core/error/result.dart';
+import 'package:koda/core/domain/entities/song.dart';
+import 'package:koda/core/error/failure.dart';
+import 'package:koda/core/error/result.dart';
 
 /// Mantiene la playlist "Me encanta" igual que los "me gusta". Nunca lanza:
 /// todo error se devuelve como `Err`.

@@ -1,16 +1,16 @@
 import 'dart:async';
 
-import 'package:sponify/core/domain/entities/song.dart';
-import 'package:sponify/core/error/failure.dart';
-import 'package:sponify/core/error/result.dart';
-import 'package:sponify/features/downloads/domain/download_task.dart';
-import 'package:sponify/features/downloads/domain/i_download_service.dart';
-import 'package:sponify/features/favorites/domain/i_liked_playlist_sync.dart';
-import 'package:sponify/features/playlists/domain/i_playlist_cover_service.dart';
-import 'package:sponify/features/playlists/domain/i_playlist_importer.dart';
-import 'package:sponify/features/playlists/domain/i_spotify_playlist_source.dart';
-import 'package:sponify/features/playlists/domain/i_track_matcher.dart';
-import 'package:sponify/features/playlists/domain/remote_playlist.dart';
+import 'package:koda/core/domain/entities/song.dart';
+import 'package:koda/core/error/failure.dart';
+import 'package:koda/core/error/result.dart';
+import 'package:koda/features/downloads/domain/download_task.dart';
+import 'package:koda/features/downloads/domain/i_download_service.dart';
+import 'package:koda/features/favorites/domain/i_liked_playlist_sync.dart';
+import 'package:koda/features/playlists/domain/i_playlist_cover_service.dart';
+import 'package:koda/features/playlists/domain/i_playlist_importer.dart';
+import 'package:koda/features/playlists/domain/i_spotify_playlist_source.dart';
+import 'package:koda/features/playlists/domain/i_track_matcher.dart';
+import 'package:koda/features/playlists/domain/remote_playlist.dart';
 
 /// Servicio de descargas falso: registra las llamadas y devuelve
 /// resultados configurables. Si [error] no es null, las acciones lo lanzan.

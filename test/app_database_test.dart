@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
-import 'package:sponify/core/database/app_database.dart';
+import 'package:koda/core/database/app_database.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 Future<Set<String>> _columns(Database db, String table) async => {
@@ -36,8 +36,8 @@ void main() {
   });
 
   test('migrar de v1 a v2 conserva los datos', () async {
-    final tmp = await Directory.systemTemp.createTemp('sponify_db');
-    final path = p.join(tmp.path, 'sponify.db');
+    final tmp = await Directory.systemTemp.createTemp('koda_db');
+    final path = p.join(tmp.path, 'koda.db');
 
     // Esquema v1 tal como se publicó.
     final v1 = await databaseFactoryFfi.openDatabase(
@@ -90,6 +90,24 @@ void main() {
     expect(rows.single['title'], 'T');
     expect(rows.single['liked_at'], isNull);
     await app.close();
+    await tmp.delete(recursive: true);
+  });
+
+  test('copia sponify.db a koda.db una vez y no toca el original', () async {
+    final tmp = await Directory.systemTemp.createTemp('koda_legacy');
+    final legacy = File(p.join(tmp.path, 'sponify.db'))
+      ..writeAsStringSync('legacy');
+    final target = p.join(tmp.path, 'koda.db');
+
+    AppDatabase.copyLegacyDatabase(legacy.path, target);
+    expect(File(target).readAsStringSync(), 'legacy');
+    expect(legacy.existsSync(), isTrue);
+
+    // Si ya existe la BD nueva, no se sobrescribe.
+    File(target).writeAsStringSync('new');
+    AppDatabase.copyLegacyDatabase(legacy.path, target);
+    expect(File(target).readAsStringSync(), 'new');
+
     await tmp.delete(recursive: true);
   });
 }

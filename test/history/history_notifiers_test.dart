@@ -2,12 +2,12 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sponify/core/audio/audio_player_service.dart';
-import 'package:sponify/core/domain/entities/song.dart';
-import 'package:sponify/core/error/failure.dart';
-import 'package:sponify/di/providers.dart';
-import 'package:sponify/features/history/data/history_recorder.dart';
-import 'package:sponify/features/history/presentation/history_providers.dart';
+import 'package:koda/core/audio/audio_player_service.dart';
+import 'package:koda/core/domain/entities/song.dart';
+import 'package:koda/core/error/failure.dart';
+import 'package:koda/di/providers.dart';
+import 'package:koda/features/history/data/history_recorder.dart';
+import 'package:koda/features/history/presentation/history_providers.dart';
 
 import '../domain/fakes/fake_feature_repositories.dart';
 

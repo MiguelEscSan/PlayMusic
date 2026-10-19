@@ -1,5 +1,5 @@
-import 'package:sponify/core/error/failure.dart';
-import 'package:sponify/core/error/result.dart';
+import 'package:koda/core/error/failure.dart';
+import 'package:koda/core/error/result.dart';
 
 /// Progreso de una importación: canciones procesadas de [total].
 typedef ImportProgress = void Function(int done, int total);

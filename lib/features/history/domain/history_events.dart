@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:sponify/core/error/result.dart';
+import 'package:koda/core/error/result.dart';
 
 /// Aviso de que el historial cambió: lo anuncian quienes lo escriben (el
 /// `HistoryRecorder` tras guardar una escucha, `ClearHistoryUseCase` tras

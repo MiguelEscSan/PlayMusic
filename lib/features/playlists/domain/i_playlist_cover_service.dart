@@ -1,4 +1,4 @@
-import 'package:sponify/core/error/result.dart';
+import 'package:koda/core/error/result.dart';
 
 /// Portadas personalizadas de las playlists: copia la imagen elegida y
 /// borra la anterior al cambiarla, quitarla o borrar la playlist. Nunca

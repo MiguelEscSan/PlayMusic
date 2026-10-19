@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sponify/core/domain/entities/playlist.dart';
-import 'package:sponify/core/domain/entities/song.dart';
+import 'package:koda/core/domain/entities/playlist.dart';
+import 'package:koda/core/domain/entities/song.dart';
 
 Song _song(String id, {String? artwork, String? localPath, int ms = 1000}) =>
     Song(

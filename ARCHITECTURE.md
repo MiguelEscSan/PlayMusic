@@ -21,7 +21,7 @@ lib/
 ├── core/                             # lo que usan varias features
 │   ├── models/          song.dart · playlist.dart
 │   ├── audio/           audio_player_service.dart (interfaz)
-│   │                    sponify_audio_handler.dart (just_audio + audio_service)
+│   │                    koda_audio_handler.dart (just_audio + audio_service)
 │   │                    playback_source*.dart (local vs streaming)
 │   │                    stream_url_provider.dart (URLs frescas de YouTube)
 │   │                    audio_bootstrap.dart · audio_providers.dart

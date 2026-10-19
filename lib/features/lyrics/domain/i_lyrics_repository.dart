@@ -1,5 +1,5 @@
-import 'package:sponify/core/error/result.dart';
-import 'package:sponify/features/lyrics/domain/lyrics.dart';
+import 'package:koda/core/error/result.dart';
+import 'package:koda/features/lyrics/domain/lyrics.dart';
 
 /// Letras de canciones. Nunca lanza: un fallo del servicio (red, timeout,
 /// error 5xx…) llega como `Err(NetworkFailure)` y no se cachea, para que

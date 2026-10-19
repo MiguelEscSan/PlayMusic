@@ -1,5 +1,5 @@
-import 'package:sponify/core/domain/entities/song.dart';
-import 'package:sponify/core/error/result.dart';
+import 'package:koda/core/domain/entities/song.dart';
+import 'package:koda/core/error/result.dart';
 
 /// Contrato de acceso a canciones persistidas. Las implementaciones nunca
 /// lanzan: todo error se devuelve como `Err` con un `Failure`.

@@ -1,6 +1,6 @@
-import 'package:sponify/core/domain/entities/song.dart';
-import 'package:sponify/core/error/result.dart';
-import 'package:sponify/features/downloads/domain/download_task.dart';
+import 'package:koda/core/domain/entities/song.dart';
+import 'package:koda/core/error/result.dart';
+import 'package:koda/features/downloads/domain/download_task.dart';
 
 /// Contrato del gestor de descargas (cola, progreso, cancelación y
 /// borrado de archivos). Las implementaciones tocan archivos y red, así que

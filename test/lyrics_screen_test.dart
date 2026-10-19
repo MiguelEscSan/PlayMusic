@@ -3,15 +3,15 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sponify/core/audio/audio_player_service.dart';
-import 'package:sponify/di/providers.dart';
-import 'package:sponify/features/player/presentation/player_providers.dart';
-import 'package:sponify/core/domain/entities/song.dart';
-import 'package:sponify/core/error/failure.dart';
-import 'package:sponify/core/error/result.dart';
-import 'package:sponify/features/lyrics/domain/i_lyrics_repository.dart';
-import 'package:sponify/features/lyrics/domain/lyrics.dart';
-import 'package:sponify/features/lyrics/presentation/lyrics_screen.dart';
+import 'package:koda/core/audio/audio_player_service.dart';
+import 'package:koda/di/providers.dart';
+import 'package:koda/features/player/presentation/player_providers.dart';
+import 'package:koda/core/domain/entities/song.dart';
+import 'package:koda/core/error/failure.dart';
+import 'package:koda/core/error/result.dart';
+import 'package:koda/features/lyrics/domain/i_lyrics_repository.dart';
+import 'package:koda/features/lyrics/domain/lyrics.dart';
+import 'package:koda/features/lyrics/presentation/lyrics_screen.dart';
 
 /// Repositorio falso: cada llamada consume la siguiente respuesta preparada.
 /// Una respuesta que lanza se devuelve como `Err(NetworkFailure)`.

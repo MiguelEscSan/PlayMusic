@@ -1,4 +1,4 @@
-package com.sponify.sponify
+package com.koda.koda
 
 import android.Manifest
 import android.annotation.TargetApi
@@ -152,7 +152,7 @@ class MainActivity : AudioServiceActivity() {
     }
 
     private companion object {
-        const val EXPORT_CHANNEL = "sponify/export"
+        const val EXPORT_CHANNEL = "koda/export"
         const val FOLDER = "Koda"
         const val WRITE_PERMISSION_REQUEST = 4201
     }

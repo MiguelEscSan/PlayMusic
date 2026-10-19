@@ -12,7 +12,7 @@ editan en paralelo, las fusiones chocan.
 | Archivo compartido | Lo tocarían |
 |---|---|
 | `lib/core/database/app_database.dart` (`_version` y migraciones) | Favoritos, Historial, Búsquedas, Ajustes |
-| `lib/core/audio/sponify_audio_handler.dart` | Historial, Temporizador, Radio, Plan B 403 |
+| `lib/core/audio/koda_audio_handler.dart` | Historial, Temporizador, Radio, Plan B 403 |
 | `lib/features/home/home_shell.dart` (pestañas) | Inicio (Favoritos + Historial), Ajustes |
 | `lib/shared/widgets/song_tile.dart` | Favoritos |
 | `lib/features/player/presentation/now_playing_screen.dart` | Favoritos, Temporizador |
@@ -29,7 +29,7 @@ quitar iOS, cliente visionOS, portadas, etc.). Sin ese commit no se pueden
 crear worktrees limpios.
 
 1. **Tests de la cola** (mejora 8): `playNext`, `addToQueue`, quitar, mover y
-   aleatorio en `SponifyAudioHandler`. Sirven de red de seguridad antes de que
+   aleatorio en `KodaAudioHandler`. Sirven de red de seguridad antes de que
    otros agentes toquen el reproductor.
 2. **Esquema de BD v2** en una sola migración:
    - `songs.liked_at INTEGER NULL` (Favoritos)

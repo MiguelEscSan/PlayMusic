@@ -1,6 +1,6 @@
-import 'package:sponify/core/error/result.dart';
-import 'package:sponify/features/history/domain/history_events.dart';
-import 'package:sponify/features/history/domain/i_history_repository.dart';
+import 'package:koda/core/error/result.dart';
+import 'package:koda/features/history/domain/history_events.dart';
+import 'package:koda/features/history/domain/i_history_repository.dart';
 
 /// Borra el historial de escucha y, si lo consigue, lo anuncia para que
 /// las listas de Inicio se vacíen.

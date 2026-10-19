@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sponify/core/data/models/playlist_model.dart';
-import 'package:sponify/core/data/models/song_model.dart';
-import 'package:sponify/core/domain/entities/playlist.dart' as domain;
+import 'package:koda/core/data/models/playlist_model.dart';
+import 'package:koda/core/data/models/song_model.dart';
+import 'package:koda/core/domain/entities/playlist.dart' as domain;
 
 SongModel _song(String id) => SongModel(
   id: 'song-$id',

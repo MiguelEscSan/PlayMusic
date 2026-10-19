@@ -1,8 +1,8 @@
-import 'package:sponify/core/domain/entities/song.dart';
-import 'package:sponify/core/domain/guard.dart';
-import 'package:sponify/core/error/failure.dart';
-import 'package:sponify/core/error/result.dart';
-import 'package:sponify/features/downloads/domain/i_download_service.dart';
+import 'package:koda/core/domain/entities/song.dart';
+import 'package:koda/core/domain/guard.dart';
+import 'package:koda/core/error/failure.dart';
+import 'package:koda/core/error/result.dart';
+import 'package:koda/features/downloads/domain/i_download_service.dart';
 
 /// Encola la descarga de las canciones que aún no están descargadas, en
 /// orden. Una excepción detiene el resto y llega como `Err(StorageFailure)`.

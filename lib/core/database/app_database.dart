@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart';
 
@@ -11,7 +13,8 @@ class AppDatabase {
 
   final Database db;
 
-  static const _fileName = 'sponify.db';
+  static const _fileName = 'koda.db';
+  static const _legacyFileName = 'sponify.db';
   static const _version = 2;
 
   /// Abre (o crea) la BD en el directorio por defecto de sqflite.
@@ -21,7 +24,14 @@ class AppDatabase {
     String? path,
   }) async {
     final f = factory ?? databaseFactory;
-    final dbPath = path ?? p.join(await f.getDatabasesPath(), _fileName);
+    final String dbPath;
+    if (path != null) {
+      dbPath = path;
+    } else {
+      final dir = await f.getDatabasesPath();
+      dbPath = p.join(dir, _fileName);
+      copyLegacyDatabase(p.join(dir, _legacyFileName), dbPath);
+    }
     final db = await f.openDatabase(
       dbPath,
       options: OpenDatabaseOptions(
@@ -32,6 +42,20 @@ class AppDatabase {
       ),
     );
     return AppDatabase._(db);
+  }
+
+  /// Copia la BD de la versión con el nombre antiguo (sponify.db) una sola
+  /// vez, para que quienes ya usaban la app no pierdan su biblioteca.
+  /// Nunca borra el original; si la copia falla, se arranca con BD nueva.
+  static void copyLegacyDatabase(String legacyPath, String newPath) {
+    try {
+      final legacy = File(legacyPath);
+      final target = File(newPath);
+      if (target.existsSync() || !legacy.existsSync()) return;
+      legacy.copySync(newPath);
+    } on FileSystemException {
+      // Sin copia: la app arranca con una base vacía.
+    }
   }
 
   /// Crea el esquema v1 y le aplica las migraciones: así una instalación

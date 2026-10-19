@@ -1,6 +1,6 @@
-import 'package:sponify/core/domain/entities/song.dart';
-import 'package:sponify/core/domain/sources/i_radio_source.dart';
-import 'package:sponify/core/domain/sources/source_registry.dart';
+import 'package:koda/core/domain/entities/song.dart';
+import 'package:koda/core/domain/sources/i_radio_source.dart';
+import 'package:koda/core/domain/sources/source_registry.dart';
 
 /// Radio falsa: devuelve lo que diga [_fetch] para su [source].
 class FakeRadioSource implements IRadioSource {

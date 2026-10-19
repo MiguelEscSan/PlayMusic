@@ -1,6 +1,6 @@
-import 'package:sponify/core/domain/entities/song.dart';
-import 'package:sponify/core/domain/repositories/i_song_repository.dart';
-import 'package:sponify/core/error/result.dart';
+import 'package:koda/core/domain/entities/song.dart';
+import 'package:koda/core/domain/repositories/i_song_repository.dart';
+import 'package:koda/core/error/result.dart';
 
 /// Canciones descargadas, las más recientes primero.
 final class GetDownloadedSongsUseCase {

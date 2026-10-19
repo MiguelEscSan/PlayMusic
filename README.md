@@ -54,7 +54,7 @@ lib/
 
 1. **Clona el repositorio:**
 ```bash
-git clone [https://github.com/tu-usuario/sponify.git](https://github.com/tu-usuario/sponify.git)
+git clone [https://github.com/tu-usuario/koda.git](https://github.com/tu-usuario/koda.git)
 ```
 2. **Instala las dependencias:**
 ```bash

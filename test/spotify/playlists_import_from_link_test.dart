@@ -1,9 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sponify/core/error/result.dart';
-import 'package:sponify/di/providers.dart';
-import 'package:sponify/features/downloads/presentation/downloads_providers.dart';
-import 'package:sponify/features/playlists/presentation/playlists_providers.dart';
+import 'package:koda/core/error/result.dart';
+import 'package:koda/di/providers.dart';
+import 'package:koda/features/downloads/presentation/downloads_providers.dart';
+import 'package:koda/features/playlists/presentation/playlists_providers.dart';
 
 import '../domain/fakes/fake_playlist_repository.dart';
 import '../domain/fakes/fake_services.dart';

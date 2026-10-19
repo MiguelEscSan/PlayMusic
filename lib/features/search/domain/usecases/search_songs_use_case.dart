@@ -1,8 +1,8 @@
-import 'package:sponify/core/domain/guard.dart';
-import 'package:sponify/core/error/failure.dart';
-import 'package:sponify/core/error/result.dart';
-import 'package:sponify/features/search/domain/search_results_page.dart';
-import 'package:sponify/core/domain/sources/i_track_search.dart';
+import 'package:koda/core/domain/guard.dart';
+import 'package:koda/core/error/failure.dart';
+import 'package:koda/core/error/result.dart';
+import 'package:koda/features/search/domain/search_results_page.dart';
+import 'package:koda/core/domain/sources/i_track_search.dart';
 
 /// Busca canciones. `Ok` con la primera página; su `loadMore` (y el de las
 /// siguientes) también devuelve `Result`. Sin conexión llega como

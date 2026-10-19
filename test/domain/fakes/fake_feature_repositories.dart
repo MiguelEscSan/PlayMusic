@@ -1,9 +1,9 @@
-import 'package:sponify/core/domain/entities/song.dart';
-import 'package:sponify/core/domain/repositories/i_settings_repository.dart';
-import 'package:sponify/core/error/failure.dart';
-import 'package:sponify/core/error/result.dart';
-import 'package:sponify/features/history/domain/i_history_repository.dart';
-import 'package:sponify/features/search/domain/i_search_history_repository.dart';
+import 'package:koda/core/domain/entities/song.dart';
+import 'package:koda/core/domain/repositories/i_settings_repository.dart';
+import 'package:koda/core/error/failure.dart';
+import 'package:koda/core/error/result.dart';
+import 'package:koda/features/history/domain/i_history_repository.dart';
+import 'package:koda/features/search/domain/i_search_history_repository.dart';
 
 /// Ajustes en memoria. Si [failure] no es null, todas las operaciones
 /// devuelven `Err(failure)`.

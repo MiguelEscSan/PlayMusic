@@ -1,4 +1,4 @@
-import 'package:sponify/core/domain/entities/song.dart';
+import 'package:koda/core/domain/entities/song.dart';
 
 /// Adaptador de un origen de música concreto (YouTube, Jamendo…).
 abstract interface class SourceAdapter {

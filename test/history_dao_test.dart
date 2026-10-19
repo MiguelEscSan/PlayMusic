@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sponify/core/database/app_database.dart';
-import 'package:sponify/core/database/song_dao.dart';
-import 'package:sponify/core/data/models/song_model.dart';
-import 'package:sponify/features/history/data/history_dao.dart';
+import 'package:koda/core/database/app_database.dart';
+import 'package:koda/core/database/song_dao.dart';
+import 'package:koda/core/data/models/song_model.dart';
+import 'package:koda/features/history/data/history_dao.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 SongModel _song(String id) => SongModel(

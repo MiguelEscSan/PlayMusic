@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sponify/core/error/failure.dart';
-import 'package:sponify/core/error/result.dart';
-import 'package:sponify/features/playlists/domain/i_playlist_importer.dart';
-import 'package:sponify/features/playlists/domain/usecases/import_playlist_from_link_use_case.dart';
+import 'package:koda/core/error/failure.dart';
+import 'package:koda/core/error/result.dart';
+import 'package:koda/features/playlists/domain/i_playlist_importer.dart';
+import 'package:koda/features/playlists/domain/usecases/import_playlist_from_link_use_case.dart';
 
 import '../domain/fakes/fake_services.dart';
 

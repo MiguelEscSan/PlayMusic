@@ -1,5 +1,5 @@
-import 'package:sponify/core/domain/entities/song.dart';
-import 'package:sponify/features/downloads/domain/i_download_service.dart';
+import 'package:koda/core/domain/entities/song.dart';
+import 'package:koda/features/downloads/domain/i_download_service.dart';
 
 /// Avisa cada vez que el archivo local de una canción aparece o desaparece
 /// (descarga terminada, borrada o archivo perdido). Las listas que muestran

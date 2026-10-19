@@ -1,9 +1,9 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sponify/core/domain/entities/song.dart';
-import 'package:sponify/core/error/result.dart';
-import 'package:sponify/features/export/data/method_channel_song_exporter.dart';
-import 'package:sponify/features/export/domain/i_song_exporter.dart';
+import 'package:koda/core/domain/entities/song.dart';
+import 'package:koda/core/error/result.dart';
+import 'package:koda/features/export/data/method_channel_song_exporter.dart';
+import 'package:koda/features/export/domain/i_song_exporter.dart';
 
 Song _song({String? localPath, String title = 'Título', String artist = 'A'}) =>
     Song(
@@ -18,7 +18,7 @@ Song _song({String? localPath, String title = 'Título', String artist = 'A'}) =
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-  const channel = MethodChannel('sponify/export');
+  const channel = MethodChannel('koda/export');
   final messenger =
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
   final exporter = MethodChannelSongExporter();

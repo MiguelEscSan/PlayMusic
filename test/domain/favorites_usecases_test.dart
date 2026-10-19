@@ -1,10 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sponify/core/domain/entities/song.dart';
-import 'package:sponify/core/error/failure.dart';
-import 'package:sponify/core/error/result.dart';
-import 'package:sponify/features/favorites/domain/i_liked_playlist_sync.dart';
-import 'package:sponify/features/favorites/domain/usecases/get_liked_songs_use_case.dart';
-import 'package:sponify/features/favorites/domain/usecases/toggle_like_use_case.dart';
+import 'package:koda/core/domain/entities/song.dart';
+import 'package:koda/core/error/failure.dart';
+import 'package:koda/core/error/result.dart';
+import 'package:koda/features/favorites/domain/i_liked_playlist_sync.dart';
+import 'package:koda/features/favorites/domain/usecases/get_liked_songs_use_case.dart';
+import 'package:koda/features/favorites/domain/usecases/toggle_like_use_case.dart';
 
 import 'fakes/fake_services.dart';
 import 'fakes/fake_song_repository.dart';

@@ -1,4 +1,4 @@
-import 'package:sponify/core/error/failure.dart';
+import 'package:koda/core/error/failure.dart';
 
 /// Resultado de una operación que puede fallar: [Ok] con el valor o [Err]
 /// con un [Failure]. Sustituye a las excepciones en la frontera del dominio.

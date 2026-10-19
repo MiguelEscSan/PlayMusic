@@ -1,15 +1,15 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sponify/core/domain/entities/song.dart';
-import 'package:sponify/core/error/failure.dart';
-import 'package:sponify/core/error/result.dart';
-import 'package:sponify/core/domain/sources/i_track_search.dart';
-import 'package:sponify/features/search/domain/suggestion_source.dart';
-import 'package:sponify/features/search/domain/usecases/clear_recent_searches_use_case.dart';
-import 'package:sponify/features/search/domain/usecases/get_recent_searches_use_case.dart';
-import 'package:sponify/features/search/domain/usecases/get_suggestions_use_case.dart';
-import 'package:sponify/features/search/domain/usecases/record_search_use_case.dart';
-import 'package:sponify/features/search/domain/usecases/remove_recent_search_use_case.dart';
-import 'package:sponify/features/search/domain/usecases/search_songs_use_case.dart';
+import 'package:koda/core/domain/entities/song.dart';
+import 'package:koda/core/error/failure.dart';
+import 'package:koda/core/error/result.dart';
+import 'package:koda/core/domain/sources/i_track_search.dart';
+import 'package:koda/features/search/domain/suggestion_source.dart';
+import 'package:koda/features/search/domain/usecases/clear_recent_searches_use_case.dart';
+import 'package:koda/features/search/domain/usecases/get_recent_searches_use_case.dart';
+import 'package:koda/features/search/domain/usecases/get_suggestions_use_case.dart';
+import 'package:koda/features/search/domain/usecases/record_search_use_case.dart';
+import 'package:koda/features/search/domain/usecases/remove_recent_search_use_case.dart';
+import 'package:koda/features/search/domain/usecases/search_songs_use_case.dart';
 
 import 'fakes/fake_feature_repositories.dart';
 

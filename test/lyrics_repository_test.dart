@@ -3,10 +3,10 @@ import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sponify/core/domain/entities/song.dart';
-import 'package:sponify/core/error/failure.dart';
-import 'package:sponify/features/lyrics/data/lyrics_repository.dart';
-import 'package:sponify/features/lyrics/domain/lyrics.dart';
+import 'package:koda/core/domain/entities/song.dart';
+import 'package:koda/core/error/failure.dart';
+import 'package:koda/features/lyrics/data/lyrics_repository.dart';
+import 'package:koda/features/lyrics/domain/lyrics.dart';
 
 /// Adaptador HTTP falso: responde según la ruta y registra cada petición.
 /// Nunca toca la red.

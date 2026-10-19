@@ -49,13 +49,13 @@ jobs:
           cd build/ios/iphoneos
           mkdir Payload
           mv Runner.app Payload/
-          zip -qr Sponify.ipa Payload
+          zip -qr Koda.ipa Payload
           rm -rf Payload
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
         with:
-          name: sponify-ipa-${{ github.run_number }}
-          path: build/ios/iphoneos/Sponify.ipa
+          name: koda-ipa-${{ github.run_number }}
+          path: build/ios/iphoneos/Koda.ipa
           if-no-files-found: error
           retention-days: 14

@@ -1,4 +1,4 @@
-import 'package:sponify/core/domain/entities/song.dart';
+import 'package:koda/core/domain/entities/song.dart';
 
 /// Entidad de dominio: playlist del usuario. Puede mezclar canciones en
 /// streaming y descargadas: la playlist solo guarda el orden, cada [Song]

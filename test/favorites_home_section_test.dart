@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sponify/core/audio/audio_player_service.dart';
-import 'package:sponify/features/player/presentation/player_providers.dart';
-import 'package:sponify/core/domain/entities/song.dart';
-import 'package:sponify/features/favorites/presentation/favorites_providers.dart';
-import 'package:sponify/features/favorites/presentation/liked_home_section.dart';
+import 'package:koda/core/audio/audio_player_service.dart';
+import 'package:koda/features/player/presentation/player_providers.dart';
+import 'package:koda/core/domain/entities/song.dart';
+import 'package:koda/features/favorites/presentation/favorites_providers.dart';
+import 'package:koda/features/favorites/presentation/liked_home_section.dart';
 
 import 'helpers/fixed_notifiers.dart';
 

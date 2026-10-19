@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sponify/core/database/app_database.dart';
-import 'package:sponify/core/error/failure.dart';
-import 'package:sponify/core/error/result.dart';
-import 'package:sponify/features/search/data/search_history_dao.dart';
-import 'package:sponify/features/search/data/search_history_repository_impl.dart';
+import 'package:koda/core/database/app_database.dart';
+import 'package:koda/core/error/failure.dart';
+import 'package:koda/core/error/result.dart';
+import 'package:koda/features/search/data/search_history_dao.dart';
+import 'package:koda/features/search/data/search_history_repository_impl.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 void main() {

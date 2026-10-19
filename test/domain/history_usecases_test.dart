@@ -1,12 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sponify/core/domain/entities/song.dart';
-import 'package:sponify/core/error/failure.dart';
-import 'package:sponify/core/error/result.dart';
-import 'package:sponify/features/history/domain/history_events.dart';
-import 'package:sponify/features/history/domain/usecases/clear_history_use_case.dart';
-import 'package:sponify/features/history/domain/usecases/get_recent_songs_use_case.dart';
-import 'package:sponify/features/history/domain/usecases/get_top_songs_use_case.dart';
-import 'package:sponify/features/history/domain/usecases/watch_history_changed_use_case.dart';
+import 'package:koda/core/domain/entities/song.dart';
+import 'package:koda/core/error/failure.dart';
+import 'package:koda/core/error/result.dart';
+import 'package:koda/features/history/domain/history_events.dart';
+import 'package:koda/features/history/domain/usecases/clear_history_use_case.dart';
+import 'package:koda/features/history/domain/usecases/get_recent_songs_use_case.dart';
+import 'package:koda/features/history/domain/usecases/get_top_songs_use_case.dart';
+import 'package:koda/features/history/domain/usecases/watch_history_changed_use_case.dart';
 
 import 'fakes/fake_feature_repositories.dart';
 

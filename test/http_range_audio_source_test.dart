@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sponify/core/audio/http_range_audio_source.dart';
+import 'package:koda/core/audio/http_range_audio_source.dart';
 
 void main() {
   late HttpServer server;

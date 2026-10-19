@@ -1,5 +1,5 @@
-import 'package:sponify/core/domain/repositories/i_playlist_repository.dart';
-import 'package:sponify/core/error/result.dart';
+import 'package:koda/core/domain/repositories/i_playlist_repository.dart';
+import 'package:koda/core/error/result.dart';
 
 /// Mueve una canción de [oldIndex] a [newIndex] (posición final ya
 /// corregida, no la semántica de hueco de `ReorderableListView`).

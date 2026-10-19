@@ -1,5 +1,5 @@
-import 'package:sponify/core/domain/repositories/i_settings_repository.dart';
-import 'package:sponify/core/error/result.dart';
+import 'package:koda/core/domain/repositories/i_settings_repository.dart';
+import 'package:koda/core/error/result.dart';
 
 /// Si la radio automática sigue al acabar la cola.
 final class GetRadioEnabledUseCase {

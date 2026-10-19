@@ -1,10 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sponify/core/error/failure.dart';
-import 'package:sponify/core/error/result.dart';
-import 'package:sponify/features/settings/domain/usecases/get_download_only_wifi_use_case.dart';
-import 'package:sponify/features/settings/domain/usecases/get_radio_enabled_use_case.dart';
-import 'package:sponify/features/settings/domain/usecases/set_download_only_wifi_use_case.dart';
-import 'package:sponify/features/settings/domain/usecases/set_radio_enabled_use_case.dart';
+import 'package:koda/core/error/failure.dart';
+import 'package:koda/core/error/result.dart';
+import 'package:koda/features/settings/domain/usecases/get_download_only_wifi_use_case.dart';
+import 'package:koda/features/settings/domain/usecases/get_radio_enabled_use_case.dart';
+import 'package:koda/features/settings/domain/usecases/set_download_only_wifi_use_case.dart';
+import 'package:koda/features/settings/domain/usecases/set_radio_enabled_use_case.dart';
 
 import 'fakes/fake_feature_repositories.dart';
 

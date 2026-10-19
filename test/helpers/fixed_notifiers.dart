@@ -1,6 +1,6 @@
-import 'package:sponify/core/domain/entities/song.dart';
-import 'package:sponify/features/downloads/presentation/downloads_providers.dart';
-import 'package:sponify/features/favorites/presentation/favorites_providers.dart';
+import 'package:koda/core/domain/entities/song.dart';
+import 'package:koda/features/downloads/presentation/downloads_providers.dart';
+import 'package:koda/features/favorites/presentation/favorites_providers.dart';
 
 /// Favoritas fijas, sin repositorio: `likedSongsProvider.overrideWith(...)`.
 class FixedLikedSongs extends LikedSongsNotifier {

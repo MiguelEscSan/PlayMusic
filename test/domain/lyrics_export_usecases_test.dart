@@ -1,12 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sponify/core/domain/entities/song.dart';
-import 'package:sponify/core/error/failure.dart';
-import 'package:sponify/core/error/result.dart';
-import 'package:sponify/features/export/domain/i_song_exporter.dart';
-import 'package:sponify/features/export/domain/usecases/export_song_use_case.dart';
-import 'package:sponify/features/lyrics/domain/i_lyrics_repository.dart';
-import 'package:sponify/features/lyrics/domain/lyrics.dart';
-import 'package:sponify/features/lyrics/domain/usecases/get_lyrics_use_case.dart';
+import 'package:koda/core/domain/entities/song.dart';
+import 'package:koda/core/error/failure.dart';
+import 'package:koda/core/error/result.dart';
+import 'package:koda/features/export/domain/i_song_exporter.dart';
+import 'package:koda/features/export/domain/usecases/export_song_use_case.dart';
+import 'package:koda/features/lyrics/domain/i_lyrics_repository.dart';
+import 'package:koda/features/lyrics/domain/lyrics.dart';
+import 'package:koda/features/lyrics/domain/usecases/get_lyrics_use_case.dart';
 
 const _song = Song(
   id: '1',

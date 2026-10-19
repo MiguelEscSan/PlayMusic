@@ -2,11 +2,11 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
-import 'package:sponify/core/data/repositories/playlist_repository_impl.dart';
-import 'package:sponify/core/database/app_database.dart';
-import 'package:sponify/core/database/song_dao.dart';
-import 'package:sponify/features/playlists/data/playlist_cover_service.dart';
-import 'package:sponify/core/database/playlist_dao.dart';
+import 'package:koda/core/data/repositories/playlist_repository_impl.dart';
+import 'package:koda/core/database/app_database.dart';
+import 'package:koda/core/database/song_dao.dart';
+import 'package:koda/features/playlists/data/playlist_cover_service.dart';
+import 'package:koda/core/database/playlist_dao.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import 'domain/fakes/fake_playlist_repository.dart';
@@ -25,7 +25,7 @@ void main() {
       path: inMemoryDatabasePath,
     );
     dao = PlaylistDao(db, SongDao(db));
-    tmp = await Directory.systemTemp.createTemp('sponify_covers');
+    tmp = await Directory.systemTemp.createTemp('koda_covers');
     coversDir = Directory(p.join(tmp.path, 'covers'));
     covers = PlaylistCoverService(PlaylistRepositoryImpl(dao), coversDir);
   });

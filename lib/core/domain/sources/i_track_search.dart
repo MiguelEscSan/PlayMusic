@@ -1,4 +1,4 @@
-import 'package:sponify/core/domain/entities/song.dart';
+import 'package:koda/core/domain/entities/song.dart';
 
 /// Una página de resultados tal como la da un [ITrackSearch]. [loadMore] es
 /// null cuando no hay más; puede lanzar (red), por eso la UI no la usa

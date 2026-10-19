@@ -1,4 +1,4 @@
-import 'package:sponify/core/audio/audio_player_service.dart';
+import 'package:koda/core/audio/audio_player_service.dart';
 
 /// Posición de la canción actual, con alta frecuencia (barra de progreso).
 final class WatchPlayerPositionUseCase {

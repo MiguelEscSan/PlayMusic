@@ -4,10 +4,10 @@ import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sponify/core/error/failure.dart';
-import 'package:sponify/core/error/result.dart';
-import 'package:sponify/features/playlists/data/spotify_embed_playlist_source.dart';
-import 'package:sponify/features/playlists/domain/remote_playlist.dart';
+import 'package:koda/core/error/failure.dart';
+import 'package:koda/core/error/result.dart';
+import 'package:koda/features/playlists/data/spotify_embed_playlist_source.dart';
+import 'package:koda/features/playlists/domain/remote_playlist.dart';
 
 String _fixture(String name) =>
     File('test/fixtures/spotify/$name').readAsStringSync();

@@ -1,4 +1,4 @@
-import 'package:sponify/core/error/result.dart';
+import 'package:koda/core/error/result.dart';
 
 /// Ajustes de la app, con un método tipado por ajuste: las claves y el
 /// formato en que se guardan son cosa de la capa de datos.

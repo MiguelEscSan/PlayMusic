@@ -20,8 +20,8 @@ final _import = RegExp(
 /// Ruta de [uri] dentro del proyecto (`lib/...`) si es un archivo de la app,
 /// o el propio [uri] si es de un paquete externo.
 String _resolve(String file, String uri) {
-  if (uri.startsWith('package:sponify/')) {
-    return 'lib/${uri.substring('package:sponify/'.length)}';
+  if (uri.startsWith('package:koda/')) {
+    return 'lib/${uri.substring('package:koda/'.length)}';
   }
   if (uri.contains(':')) return uri;
   return p.posix.normalize(p.posix.join(p.posix.dirname(file), uri));
@@ -76,7 +76,7 @@ void main() {
       expect(
         sourceBoundaryViolations('lib/core/audio/x.dart', '''
 import '../../sources/youtube/youtube_innertube.dart';
-import 'package:sponify/sources/youtube/youtube_track_search.dart';
+import 'package:koda/sources/youtube/youtube_track_search.dart';
 '''),
         hasLength(2),
       );
@@ -105,7 +105,7 @@ import '../core/domain/sources/i_track_search.dart';
     expect(
       sourceBoundaryViolations(
         'lib/features/radio/domain/radio_service.dart',
-        "import 'package:sponify/core/domain/sources/i_radio_source.dart';",
+        "import 'package:koda/core/domain/sources/i_radio_source.dart';",
       ),
       isEmpty,
     );

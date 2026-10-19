@@ -1,7 +1,7 @@
-import 'package:sponify/core/audio/audio_player_service.dart';
-import 'package:sponify/core/error/result.dart';
-import 'package:sponify/features/player/domain/player_rules.dart';
-import 'package:sponify/features/player/domain/usecases/playback_guard.dart';
+import 'package:koda/core/audio/audio_player_service.dart';
+import 'package:koda/core/error/result.dart';
+import 'package:koda/features/player/domain/player_rules.dart';
+import 'package:koda/features/player/domain/usecases/playback_guard.dart';
 
 /// Deslizar hacia atrás: va siempre a la canción anterior de la cola de
 /// [snapshot] (sin reiniciar la actual, a diferencia de ⏮). Sin anterior,

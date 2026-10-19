@@ -1,5 +1,5 @@
-import 'package:sponify/core/error/failure.dart';
-import 'package:sponify/core/error/result.dart';
+import 'package:koda/core/error/failure.dart';
+import 'package:koda/core/error/result.dart';
 
 /// Traduce una excepción en el [Failure] que devuelve el caso de uso.
 typedef FailureMapper = Failure Function(Object error, StackTrace stackTrace);

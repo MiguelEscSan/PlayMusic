@@ -1,6 +1,6 @@
-import 'package:sponify/core/audio/audio_player_service.dart';
-import 'package:sponify/core/error/result.dart';
-import 'package:sponify/features/player/domain/usecases/playback_guard.dart';
+import 'package:koda/core/audio/audio_player_service.dart';
+import 'package:koda/core/error/result.dart';
+import 'package:koda/features/player/domain/usecases/playback_guard.dart';
 
 /// Botón ⏮: vuelve a la anterior o, pasados unos segundos, reinicia la
 /// actual (lo decide el reproductor).

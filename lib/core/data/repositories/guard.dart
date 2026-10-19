@@ -1,5 +1,5 @@
-import 'package:sponify/core/error/failure.dart';
-import 'package:sponify/core/error/result.dart';
+import 'package:koda/core/error/failure.dart';
+import 'package:koda/core/error/result.dart';
 import 'package:sqflite/sqflite.dart' show DatabaseException;
 
 /// Ejecuta [action] y convierte su resultado en un [Result]: el valor va en

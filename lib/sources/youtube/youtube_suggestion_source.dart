@@ -1,6 +1,6 @@
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
-import 'package:sponify/features/search/domain/suggestion_source.dart';
+import 'package:koda/features/search/domain/suggestion_source.dart';
 
 /// Autocompletado de YouTube con youtube_explode_dart.
 class YoutubeSuggestionSource implements SuggestionSource {

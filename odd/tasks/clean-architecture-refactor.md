@@ -68,7 +68,7 @@ Slice 2b:
 
 ## Progress
 - 2026-10-16: branch created, Phase 1 started.
-- 2026-10-16: Phase 1 done (delegated writer). RED: usecases_test failed to compile before use cases existed. GREEN: `flutter test test/domain` +33 passed (parent re-ran). `flutter analyze` scoped: no issues; whole project 31 issues = baseline. Flutter SDK at C:/dev/flutter (not on PATH); package name `sponify`.
+- 2026-10-16: Phase 1 done (delegated writer). RED: usecases_test failed to compile before use cases existed. GREEN: `flutter test test/domain` +33 passed (parent re-ran). `flutter analyze` scoped: no issues; whole project 31 issues = baseline. Flutter SDK at C:/dev/flutter (not on PATH); package name `koda`.
 - 2026-10-16: Phase 1 commit 0fcc512. Review assess: medium (slice_budget_reached, 1005 lines). Native review consent: declined by user; off-path medium tier = writer self-verification + parent spot check (`flutter test test/domain` +33 re-run). Reviewed boundary stays at main.
 - Next: Phase 2 (data layer), pending user go-ahead.
 - 2026-10-16: Slice 2a done (delegated writer). RED: test/data failed to compile before repos existed. GREEN: `flutter test test/data` +19 (parent re-ran with models/playlist_dao tests: +32). Full suite +257/-3; the 3 failures (history_section_test "pinta el título...", song_swipe_test "playlist derecha encola...", widget_test "Me gusta...") fail identically on ef55fb9 → pre-existing, not caused by this slice. analyze: 31 = baseline.

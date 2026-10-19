@@ -1,4 +1,4 @@
-import 'package:sponify/core/audio/audio_player_service.dart';
+import 'package:koda/core/audio/audio_player_service.dart';
 
 /// Siguiente modo de repetición al pulsar el botón: off → todo → una → off.
 PlayerRepeatMode nextRepeatMode(PlayerRepeatMode mode) => switch (mode) {

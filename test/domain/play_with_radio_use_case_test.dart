@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sponify/core/audio/audio_player_service.dart';
-import 'package:sponify/core/domain/entities/song.dart';
-import 'package:sponify/core/error/result.dart';
-import 'package:sponify/features/radio/domain/radio_service.dart';
-import 'package:sponify/features/radio/domain/usecases/play_with_radio_use_case.dart';
+import 'package:koda/core/audio/audio_player_service.dart';
+import 'package:koda/core/domain/entities/song.dart';
+import 'package:koda/core/error/result.dart';
+import 'package:koda/features/radio/domain/radio_service.dart';
+import 'package:koda/features/radio/domain/usecases/play_with_radio_use_case.dart';
 
 import 'fakes/fake_audio_player_service.dart';
 import 'fakes/fake_feature_repositories.dart';

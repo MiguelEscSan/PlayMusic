@@ -1,10 +1,10 @@
 import 'dart:async';
 
-import 'package:sponify/core/domain/entities/playlist.dart';
-import 'package:sponify/core/domain/entities/song.dart';
-import 'package:sponify/core/domain/repositories/i_playlist_repository.dart';
-import 'package:sponify/core/error/failure.dart';
-import 'package:sponify/core/error/result.dart';
+import 'package:koda/core/domain/entities/playlist.dart';
+import 'package:koda/core/domain/entities/song.dart';
+import 'package:koda/core/domain/repositories/i_playlist_repository.dart';
+import 'package:koda/core/error/failure.dart';
+import 'package:koda/core/error/result.dart';
 
 /// Fake escrito a mano: registra las llamadas a [addSong]/[removeSong] y
 /// devuelve resultados configurables. El resto de métodos devuelve un `Err`.

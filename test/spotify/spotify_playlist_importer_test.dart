@@ -1,13 +1,13 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sponify/core/domain/entities/playlist.dart';
-import 'package:sponify/core/domain/entities/song.dart';
-import 'package:sponify/core/error/failure.dart';
-import 'package:sponify/core/error/result.dart';
-import 'package:sponify/features/playlists/data/spotify_playlist_importer.dart';
-import 'package:sponify/features/playlists/domain/i_playlist_importer.dart';
-import 'package:sponify/features/playlists/domain/remote_playlist.dart';
+import 'package:koda/core/domain/entities/playlist.dart';
+import 'package:koda/core/domain/entities/song.dart';
+import 'package:koda/core/error/failure.dart';
+import 'package:koda/core/error/result.dart';
+import 'package:koda/features/playlists/data/spotify_playlist_importer.dart';
+import 'package:koda/features/playlists/domain/i_playlist_importer.dart';
+import 'package:koda/features/playlists/domain/remote_playlist.dart';
 
 import '../domain/fakes/fake_playlist_repository.dart';
 import '../domain/fakes/fake_services.dart';

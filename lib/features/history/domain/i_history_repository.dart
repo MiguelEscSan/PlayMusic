@@ -1,5 +1,5 @@
-import 'package:sponify/core/domain/entities/song.dart';
-import 'package:sponify/core/error/result.dart';
+import 'package:koda/core/domain/entities/song.dart';
+import 'package:koda/core/error/result.dart';
 
 /// Historial de escucha. Nunca lanza: un fallo de la BD llega como `Err`.
 abstract interface class IHistoryRepository {

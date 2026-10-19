@@ -1,16 +1,16 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sponify/core/audio/audio_player_service.dart';
-import 'package:sponify/core/data/models/song_model.dart';
-import 'package:sponify/core/database/app_database.dart';
-import 'package:sponify/core/database/song_dao.dart';
-import 'package:sponify/core/domain/entities/song.dart';
-import 'package:sponify/core/error/failure.dart';
-import 'package:sponify/features/history/data/history_dao.dart';
-import 'package:sponify/features/history/data/history_recorder.dart';
-import 'package:sponify/features/history/data/history_repository_impl.dart';
-import 'package:sponify/features/history/domain/history_events.dart';
+import 'package:koda/core/audio/audio_player_service.dart';
+import 'package:koda/core/data/models/song_model.dart';
+import 'package:koda/core/database/app_database.dart';
+import 'package:koda/core/database/song_dao.dart';
+import 'package:koda/core/domain/entities/song.dart';
+import 'package:koda/core/error/failure.dart';
+import 'package:koda/features/history/data/history_dao.dart';
+import 'package:koda/features/history/data/history_recorder.dart';
+import 'package:koda/features/history/data/history_repository_impl.dart';
+import 'package:koda/features/history/domain/history_events.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import 'domain/fakes/fake_feature_repositories.dart';

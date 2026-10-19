@@ -1,4 +1,4 @@
-import 'package:sponify/core/domain/entities/song.dart';
+import 'package:koda/core/domain/entities/song.dart';
 
 /// Lo que sabemos de los gustos del usuario, a partir de sus "me gusta" y
 /// de su historial. YouTube no da género, así que la afinidad es por

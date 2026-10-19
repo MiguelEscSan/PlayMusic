@@ -1,7 +1,7 @@
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
-import 'package:sponify/core/domain/entities/song.dart';
-import 'package:sponify/core/domain/sources/i_track_search.dart';
+import 'package:koda/core/domain/entities/song.dart';
+import 'package:koda/core/domain/sources/i_track_search.dart';
 
 /// Búsqueda en YouTube con youtube_explode_dart (20 resultados por página).
 class YoutubeTrackSearch implements ITrackSearch {

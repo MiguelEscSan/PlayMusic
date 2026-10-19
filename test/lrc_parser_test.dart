@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sponify/features/lyrics/data/lrc_parser.dart';
-import 'package:sponify/features/lyrics/domain/lyrics.dart';
+import 'package:koda/features/lyrics/data/lrc_parser.dart';
+import 'package:koda/features/lyrics/domain/lyrics.dart';
 
 void main() {
   group('parseLrc', () {

@@ -9,6 +9,6 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final deps = await bootstrap();
   runApp(
-    ProviderScope(overrides: appOverrides(deps), child: const SponifyApp()),
+    ProviderScope(overrides: appOverrides(deps), child: const KodaApp()),
   );
 }

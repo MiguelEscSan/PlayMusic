@@ -1,8 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
-import 'package:sponify/core/domain/entities/song.dart';
-import 'package:sponify/core/domain/sources/i_radio_source.dart';
+import 'package:koda/core/domain/entities/song.dart';
+import 'package:koda/core/domain/sources/i_radio_source.dart';
 
 import 'youtube_innertube.dart';
 import 'youtube_track_search.dart';

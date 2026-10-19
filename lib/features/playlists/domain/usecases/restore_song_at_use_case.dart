@@ -1,6 +1,6 @@
-import 'package:sponify/core/domain/entities/song.dart';
-import 'package:sponify/core/domain/repositories/i_playlist_repository.dart';
-import 'package:sponify/core/error/result.dart';
+import 'package:koda/core/domain/entities/song.dart';
+import 'package:koda/core/domain/repositories/i_playlist_repository.dart';
+import 'package:koda/core/error/result.dart';
 
 /// Deshace un "quitar": vuelve a poner [song] en la posición [position].
 ///

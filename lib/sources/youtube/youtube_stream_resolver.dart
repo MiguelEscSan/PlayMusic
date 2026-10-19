@@ -5,9 +5,9 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
-import 'package:sponify/core/audio/playback_source.dart';
-import 'package:sponify/core/domain/entities/song.dart';
-import 'package:sponify/core/domain/sources/i_stream_resolver.dart';
+import 'package:koda/core/audio/playback_source.dart';
+import 'package:koda/core/domain/entities/song.dart';
+import 'package:koda/core/domain/sources/i_stream_resolver.dart';
 
 /// Pide a YouTube la URL de audio de [videoId] con [clients] (null = los
 /// clientes por defecto de youtube_explode_dart). Devuelve null si no hay

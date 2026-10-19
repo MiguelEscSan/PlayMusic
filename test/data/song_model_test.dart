@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sponify/core/data/models/song_model.dart';
-import 'package:sponify/core/domain/entities/song.dart' as domain;
+import 'package:koda/core/data/models/song_model.dart';
+import 'package:koda/core/domain/entities/song.dart' as domain;
 
 void main() {
   final downloadedAt = DateTime.fromMillisecondsSinceEpoch(1700000000000);

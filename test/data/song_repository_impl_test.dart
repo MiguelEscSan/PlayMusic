@@ -1,10 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sponify/core/data/repositories/song_repository_impl.dart';
-import 'package:sponify/core/database/app_database.dart';
-import 'package:sponify/core/database/song_dao.dart';
-import 'package:sponify/core/domain/entities/song.dart';
-import 'package:sponify/core/error/failure.dart';
-import 'package:sponify/core/error/result.dart';
+import 'package:koda/core/data/repositories/song_repository_impl.dart';
+import 'package:koda/core/database/app_database.dart';
+import 'package:koda/core/database/song_dao.dart';
+import 'package:koda/core/domain/entities/song.dart';
+import 'package:koda/core/error/failure.dart';
+import 'package:koda/core/error/result.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 Song _song(String sourceId) => Song(

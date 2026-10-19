@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sponify/features/search/domain/genre.dart';
+import 'package:koda/features/search/domain/genre.dart';
 
 void main() {
   test('el catálogo no repite nombres ni textos de búsqueda', () {

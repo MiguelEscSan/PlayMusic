@@ -1,9 +1,9 @@
-import 'package:sponify/core/domain/entities/song.dart';
-import 'package:sponify/core/domain/guard.dart';
-import 'package:sponify/core/error/failure.dart';
-import 'package:sponify/core/error/result.dart';
-import 'package:sponify/features/lyrics/domain/i_lyrics_repository.dart';
-import 'package:sponify/features/lyrics/domain/lyrics.dart';
+import 'package:koda/core/domain/entities/song.dart';
+import 'package:koda/core/domain/guard.dart';
+import 'package:koda/core/error/failure.dart';
+import 'package:koda/core/error/result.dart';
+import 'package:koda/features/lyrics/domain/i_lyrics_repository.dart';
+import 'package:koda/features/lyrics/domain/lyrics.dart';
 
 /// Letra de [song]. Un fallo del servicio llega como `Err`.
 final class GetLyricsUseCase {

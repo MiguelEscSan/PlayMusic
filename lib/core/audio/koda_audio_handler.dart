@@ -19,10 +19,10 @@ import 'playback_source.dart';
 /// (las URLs de YouTube caducan y un archivo puede descargarse mientras
 /// tanto). La siguiente se pre-resuelve en segundo plano para que el salto
 /// sea rápido.
-class SponifyAudioHandler extends BaseAudioHandler
+class KodaAudioHandler extends BaseAudioHandler
     with SeekHandler
     implements AudioPlayerService {
-  SponifyAudioHandler({required this._resolver, AudioPlayer? player})
+  KodaAudioHandler({required this._resolver, AudioPlayer? player})
     : _player = player ?? AudioPlayer() {
     _subs
       ..add(_player.playbackEventStream.listen((_) => _broadcast()))

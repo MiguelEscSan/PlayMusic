@@ -1,8 +1,8 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sponify/core/audio/playback_source.dart';
-import 'package:sponify/sources/youtube/youtube_stream_resolver.dart';
+import 'package:koda/core/audio/playback_source.dart';
+import 'package:koda/sources/youtube/youtube_stream_resolver.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
 void main() {

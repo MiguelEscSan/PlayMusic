@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sponify/features/playlists/domain/i_playlist_importer.dart';
-import 'package:sponify/features/playlists/presentation/import_summary.dart';
+import 'package:koda/features/playlists/domain/i_playlist_importer.dart';
+import 'package:koda/features/playlists/presentation/import_summary.dart';
 
 ImportResult _r(int imported, int skipped, [int? total]) => ImportResult(
   playlistId: 'p',

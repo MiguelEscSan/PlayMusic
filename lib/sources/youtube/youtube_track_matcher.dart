@@ -1,10 +1,10 @@
-import 'package:sponify/core/domain/entities/song.dart';
-import 'package:sponify/core/error/failure.dart';
-import 'package:sponify/core/error/result.dart';
+import 'package:koda/core/domain/entities/song.dart';
+import 'package:koda/core/error/failure.dart';
+import 'package:koda/core/error/result.dart';
 
-import 'package:sponify/features/playlists/domain/i_track_matcher.dart';
-import 'package:sponify/features/playlists/domain/remote_playlist.dart';
-import 'package:sponify/features/playlists/data/track_match_scoring.dart';
+import 'package:koda/features/playlists/domain/i_track_matcher.dart';
+import 'package:koda/features/playlists/domain/remote_playlist.dart';
+import 'package:koda/features/playlists/data/track_match_scoring.dart';
 
 import 'youtube_innertube.dart';
 
