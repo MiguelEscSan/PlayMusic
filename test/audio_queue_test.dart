@@ -15,7 +15,18 @@ import 'package:koda/core/domain/entities/song.dart';
 /// final de una canción.
 class FakePlayer implements AudioPlayer {
   final processing = StreamController<ProcessingState>.broadcast();
+  final positions = StreamController<Duration>.broadcast();
   final loaded = <String?>[];
+
+  /// Duración real de la pista actual; `null` simula una fuente sin duración.
+  Duration? fakeDuration;
+  Duration _position = Duration.zero;
+
+  /// Simula el avance de la reproducción.
+  void emitPosition(Duration position) {
+    _position = position;
+    positions.add(position);
+  }
 
   /// Se ejecuta antes de "cargar" la fuente; puede lanzar para simular que
   /// el reproductor la rechaza.
@@ -41,7 +52,11 @@ class FakePlayer implements AudioPlayer {
   @override
   ProcessingState get processingState => _state;
   @override
-  Duration get position => Duration.zero;
+  Stream<Duration> get positionStream => positions.stream;
+  @override
+  Duration get position => _position;
+  @override
+  Duration? get duration => fakeDuration;
   @override
   Duration get bufferedPosition => Duration.zero;
   @override
@@ -75,7 +90,10 @@ class FakePlayer implements AudioPlayer {
   @override
   Future<void> setLoopMode(LoopMode mode) async {}
   @override
-  Future<void> dispose() async => processing.close();
+  Future<void> dispose() async {
+    await processing.close();
+    await positions.close();
+  }
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
@@ -123,6 +141,54 @@ void main() {
   tearDown(() => audio.dispose());
 
   List<String> ids() => [for (final s in audio.current.queue) s.id];
+
+  test('avanza al acabar la pista aunque no llegue completed (iOS)', () async {
+    player.fakeDuration = const Duration(seconds: 1);
+    await audio.playQueue([song('a'), song('b')]);
+    await audio.play();
+
+    player.emitPosition(const Duration(milliseconds: 900));
+    await Future<void>.delayed(Duration.zero);
+
+    expect(player.loaded, ['a', 'b']);
+    expect(audio.current.currentIndex, 1);
+  });
+
+  test('usa la duración de la canción si el reproductor no la da', () async {
+    player.fakeDuration = null;
+    await audio.playQueue([song('a'), song('b')]);
+    await audio.play();
+
+    player.emitPosition(const Duration(milliseconds: 900));
+    await Future<void>.delayed(Duration.zero);
+
+    expect(player.loaded, ['a', 'b']);
+  });
+
+  test('no avanza antes del margen final', () async {
+    player.fakeDuration = const Duration(seconds: 1);
+    await audio.playQueue([song('a'), song('b')]);
+    await audio.play();
+
+    player.emitPosition(const Duration(milliseconds: 400));
+    await Future<void>.delayed(Duration.zero);
+
+    expect(player.loaded, ['a']);
+    expect(audio.current.currentIndex, 0);
+  });
+
+  test('un completed tardío mientras se carga la siguiente no salta otra vez', () async {
+    player.fakeDuration = const Duration(seconds: 1);
+    await audio.playQueue([song('a'), song('b'), song('c')]);
+    await audio.play();
+
+    player.emitPosition(const Duration(milliseconds: 900));
+    player.complete();
+    await Future<void>.delayed(Duration.zero);
+    await Future<void>.delayed(Duration.zero);
+
+    expect(player.loaded, ['a', 'b']);
+  });
   String? currentId() => audio.current.currentSong?.id;
 
   test('playQueue carga la canción pedida y conserva el orden', () async {

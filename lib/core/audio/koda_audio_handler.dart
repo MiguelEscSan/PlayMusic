@@ -29,9 +29,14 @@ class KodaAudioHandler extends BaseAudioHandler
       ..add(_player.playingStream.listen((_) => _broadcast()))
       ..add(
         _player.processingStateStream.listen((state) {
-          if (state == ProcessingState.completed) _onTrackCompleted();
+          // Mientras se resuelve la siguiente, un `completed` tardío es de la
+          // pista anterior y no debe saltarse la nueva.
+          if (state == ProcessingState.completed && !_resolving) {
+            _endTrack();
+          }
         }),
       )
+      ..add(_player.positionStream.listen(_onPosition))
       ..add(_player.errorStream.listen(_onPlaybackError));
     _broadcast();
   }
@@ -59,6 +64,13 @@ class KodaAudioHandler extends BaseAudioHandler
   bool _resolving = false;
   bool _playingOffline = false;
   bool _retriedCurrent = false;
+
+  /// La pista actual ya terminó y se está pasando a la siguiente; evita
+  /// saltar dos veces si llegan a la vez el aviso de posición y `completed`.
+  bool _trackEndHandled = false;
+
+  /// Margen antes del final real para dar la pista por terminada.
+  static const _endTolerance = Duration(milliseconds: 500);
 
   /// googlevideo respondió 403 a la fuente de la carga actual.
   bool _sourceForbidden = false;
@@ -362,6 +374,7 @@ class KodaAudioHandler extends BaseAudioHandler
     _error = null;
     _resolving = true;
     _sourceForbidden = false;
+    _trackEndHandled = false;
     if (!forceRefresh) _retriedCurrent = false;
     mediaItem.add(_toMediaItem(song));
     _broadcast();
@@ -441,6 +454,32 @@ class KodaAudioHandler extends BaseAudioHandler
     _retriedCurrent = true;
     await _loadAt(index, autoplay: true, forceRefresh: true);
     if (_index == index) await _player.seek(position);
+  }
+
+  /// En iOS el evento `completed` no siempre llega al acabar una pista (ver
+  /// el resto del flujo de avance). Por eso el final también se detecta por
+  /// posición, cuando se acerca a la duración de la pista.
+  void _onPosition(Duration position) {
+    final duration = _trackDuration;
+    if (duration == null) return;
+    if (!_player.playing || _resolving || _trackEndHandled) return;
+    if (position < duration - _endTolerance) return;
+    _endTrack();
+  }
+
+  /// Duración del reproductor o, si iOS no la da (fuentes en streaming sin
+  /// longitud conocida), la que guardamos con la canción.
+  Duration? get _trackDuration {
+    final fromPlayer = _player.duration;
+    if (fromPlayer != null && fromPlayer > Duration.zero) return fromPlayer;
+    final song = _currentSong;
+    return song != null && song.durationMs > 0 ? song.duration : null;
+  }
+
+  void _endTrack() {
+    if (_trackEndHandled) return;
+    _trackEndHandled = true;
+    unawaited(_onTrackCompleted());
   }
 
   Future<void> _onTrackCompleted() async {
