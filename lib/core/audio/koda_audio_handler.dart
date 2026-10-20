@@ -460,7 +460,7 @@ class KodaAudioHandler extends BaseAudioHandler
   /// el resto del flujo de avance). Por eso el final también se detecta por
   /// posición, cuando se acerca a la duración de la pista.
   void _onPosition(Duration position) {
-    final duration = _player.duration;
+    final duration = _currentSong?.duration;
     if (duration == null || duration <= Duration.zero) return;
     if (!_player.playing || _resolving || _trackEndHandled) return;
     if (position < duration - _endTolerance) return;
@@ -631,7 +631,6 @@ class KodaAudioHandler extends BaseAudioHandler
       queue: List.unmodifiable(_queue),
       currentIndex: _index,
       position: _player.position,
-      duration: _player.duration,
       bufferedPosition: _player.bufferedPosition,
       repeatMode: _repeat,
       shuffleEnabled: _shuffleEnabled,

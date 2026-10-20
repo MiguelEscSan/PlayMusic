@@ -154,15 +154,15 @@ void main() {
     expect(audio.current.currentIndex, 1);
   });
 
-  test('sin duración del reproductor no avanza por posición', () async {
-    player.fakeDuration = null;
+  test('usa la duración guardada aunque el reproductor reporte otra', () async {
+    player.fakeDuration = const Duration(seconds: 10);
     await audio.playQueue([song('a'), song('b')]);
     await audio.play();
 
     player.emitPosition(const Duration(milliseconds: 900));
     await Future<void>.delayed(Duration.zero);
 
-    expect(player.loaded, ['a']);
+    expect(player.loaded, ['a', 'b']);
   });
 
   test('no avanza antes del margen final', () async {

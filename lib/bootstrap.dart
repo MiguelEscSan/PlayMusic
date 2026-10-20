@@ -28,7 +28,6 @@ import 'features/history/domain/history_events.dart';
 import 'features/history/domain/i_history_repository.dart';
 import 'features/playlists/data/playlist_cover_service.dart';
 import 'features/playback/data/last_playback_recorder.dart';
-import 'features/playback/data/song_duration_corrector.dart';
 import 'core/database/playlist_dao.dart';
 import 'features/radio/domain/radio_service.dart';
 import 'features/search/data/search_history_dao.dart';
@@ -166,8 +165,6 @@ Future<AppDependencies> bootstrap() async {
 
   // Guarda la reproducción mientras suena y la retoma (en pausa) al abrir.
   LastPlaybackRecorder(audio: audio, settings: settingsRepository);
-  // Corrige la duración guardada cuando el audio real no coincide.
-  SongDurationCorrector(audio: audio, songs: songRepository);
   unawaited(
     restoreLastPlayback(
       settings: settingsRepository,

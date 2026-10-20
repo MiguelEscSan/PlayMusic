@@ -33,7 +33,7 @@ class MiniPlayer extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _MiniProgress(total: snapshot.duration ?? song.duration),
+            _MiniProgress(total: song.duration),
             Row(
               children: [
                 // Solo carátula y textos se deslizan; los botones se quedan.
