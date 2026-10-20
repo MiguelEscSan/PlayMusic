@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -16,14 +18,17 @@ import 'package:koda/features/player/presentation/player_providers.dart';
 
 import '../helpers/fixed_notifiers.dart';
 
-/// Genera las capturas de la demo del README. No usa canciones ni carátulas
-/// reales: títulos inventados y carátulas generadas por la app.
+/// Genera los frames de la demo del README en `build/demo_frames`. No usa
+/// canciones ni carátulas reales: títulos inventados y carátulas generadas
+/// por la app. Después se codifican a video con ffmpeg (ver README).
 ///
-/// Regenerar: `flutter test --update-goldens test/demo`
+/// Regenerar: `flutter test test/demo`
 const _fontPath = r'C:\Windows\Fonts\segoeui.ttf';
 const _iconsPath =
     r'C:\src\flutter\bin\cache\artifacts\material_fonts\materialicons-regular.otf';
-const _frames = 10;
+const _frames = 120;
+const _framesDir = 'build/demo_frames';
+final _boundaryKey = GlobalKey();
 
 final _queue = [
   const Song(
@@ -120,21 +125,31 @@ void main() {
               brightness: Brightness.dark,
               fontFamily: 'Segoe UI',
             ),
-            home: const NowPlayingScreen(),
+            home: RepaintBoundary(
+              key: _boundaryKey,
+              child: const NowPlayingScreen(),
+            ),
           ),
         ),
       );
 
+      Directory(_framesDir).createSync(recursive: true);
+      final boundary = tester.renderObject<RenderRepaintBoundary>(
+        find.byKey(_boundaryKey),
+      );
+
       for (var i = 0; i < _frames; i++) {
-        positions.add(Duration(seconds: i * 21));
+        positions.add(Duration(milliseconds: i * 1750));
         await tester.pump();
-        await tester.pump(const Duration(milliseconds: 300));
-        await expectLater(
-          find.byType(MaterialApp),
-          matchesGoldenFile(
-            '../../docs/demo/frame_${i.toString().padLeft(2, '0')}.png',
-          ),
-        );
+        await tester.pump(const Duration(milliseconds: 100));
+        await tester.runAsync(() async {
+          final image = await boundary.toImage(pixelRatio: 2);
+          final data = await image.toByteData(format: ui.ImageByteFormat.png);
+          final name = i.toString().padLeft(3, '0');
+          File(
+            '$_framesDir/frame_$name.png',
+          ).writeAsBytesSync(data!.buffer.asUint8List());
+        });
       }
     },
   );
