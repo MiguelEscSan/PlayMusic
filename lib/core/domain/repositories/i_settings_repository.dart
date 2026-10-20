@@ -1,3 +1,4 @@
+import 'package:koda/core/domain/entities/last_playback.dart';
 import 'package:koda/core/error/result.dart';
 
 /// Ajustes de la app, con un método tipado por ajuste: las claves y el
@@ -19,4 +20,9 @@ abstract interface class ISettingsRepository {
   Future<Result<String?>> getLikedPlaylistId();
 
   Future<Result<Unit>> setLikedPlaylistId(String id);
+
+  /// Última reproducción; `null` si nunca se guardó o el dato está corrupto.
+  Future<Result<LastPlayback?>> getLastPlayback();
+
+  Future<Result<Unit>> setLastPlayback(LastPlayback playback);
 }

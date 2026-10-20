@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
@@ -25,6 +27,7 @@ import 'features/history/data/history_repository_impl.dart';
 import 'features/history/domain/history_events.dart';
 import 'features/history/domain/i_history_repository.dart';
 import 'features/playlists/data/playlist_cover_service.dart';
+import 'features/playback/data/last_playback_recorder.dart';
 import 'core/database/playlist_dao.dart';
 import 'features/radio/domain/radio_service.dart';
 import 'features/search/data/search_history_dao.dart';
@@ -159,6 +162,16 @@ Future<AppDependencies> bootstrap() async {
   } else if (liked case Err(:final failure)) {
     debugPrint('No se pudieron leer los "me gusta": $failure');
   }
+
+  // Guarda la reproducción mientras suena y la retoma (en pausa) al abrir.
+  LastPlaybackRecorder(audio: audio, settings: settingsRepository);
+  unawaited(
+    restoreLastPlayback(
+      settings: settingsRepository,
+      songs: songRepository,
+      restore: audio.restoreQueue,
+    ),
+  );
 
   return AppDependencies(
     database: database,

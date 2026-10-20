@@ -14,6 +14,9 @@ abstract final class SettingsKeys {
 
   /// Id de la playlist "Me encanta" (la crea `LikedPlaylist`).
   static const likedPlaylistId = 'favorites.playlist_id';
+
+  /// Última reproducción (cola, índice y posición) para retomarla al abrir.
+  static const lastPlayback = 'playback.last';
 }
 
 /// Ajustes de la app en la tabla `settings` (clave/valor de texto).

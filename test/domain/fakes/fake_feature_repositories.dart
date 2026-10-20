@@ -1,3 +1,4 @@
+import 'package:koda/core/domain/entities/last_playback.dart';
 import 'package:koda/core/domain/entities/song.dart';
 import 'package:koda/core/domain/repositories/i_settings_repository.dart';
 import 'package:koda/core/error/failure.dart';
@@ -42,6 +43,18 @@ class FakeSettingsRepository implements ISettingsRepository {
   @override
   Future<Result<Unit>> setLikedPlaylistId(String id) => _run(() {
     likedPlaylistId = id;
+    return unit;
+  });
+
+  LastPlayback? lastPlayback;
+
+  @override
+  Future<Result<LastPlayback?>> getLastPlayback() =>
+      _run(() => lastPlayback);
+
+  @override
+  Future<Result<Unit>> setLastPlayback(LastPlayback playback) => _run(() {
+    lastPlayback = playback;
     return unit;
   });
 }

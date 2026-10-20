@@ -121,6 +121,22 @@ class KodaAudioHandler extends BaseAudioHandler
     await _loadAt(startIndex);
   }
 
+  /// Carga una cola guardada en pausa, sin reproducirla, y salta a [position].
+  /// No hace nada si ya hay una cola (el usuario empezó a reproducir antes).
+  Future<void> restoreQueue(
+    List<Song> songs, {
+    required int index,
+    Duration position = Duration.zero,
+  }) async {
+    if (songs.isEmpty || _queue.isNotEmpty) return;
+    RangeError.checkValidIndex(index, songs, 'index');
+    _unshuffled = null;
+    _queue = [...songs];
+    _publishQueue();
+    await _loadAt(index, autoplay: false);
+    if (position > Duration.zero) await _player.seek(position);
+  }
+
   @override
   Future<void> addToQueue(Song song) async {
     _queue.add(song);
