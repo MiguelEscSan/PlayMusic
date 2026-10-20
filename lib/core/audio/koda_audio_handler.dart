@@ -467,6 +467,13 @@ class KodaAudioHandler extends BaseAudioHandler
     _endTrack();
   }
 
+  /// TEMP: diagnóstico del auto-avance. Quitar al terminar de investigar.
+  String debugReadout() =>
+      'ps=${_player.processingState.name} playing=${_player.playing} '
+      'pos=${_player.position.inMilliseconds} '
+      'dur=${_player.duration?.inMilliseconds} '
+      'stored=${_currentSong?.durationMs} idx=$_index/${_queue.length}';
+
   /// Duración del reproductor o, si iOS no la da (fuentes en streaming sin
   /// longitud conocida), la que guardamos con la canción.
   Duration? get _trackDuration {
