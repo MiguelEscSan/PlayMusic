@@ -179,7 +179,7 @@ class NowPlayingScreen extends ConsumerWidget {
                       ),
                     ),
                   const SizedBox(height: 16),
-                  _SeekBar(total: song.duration),
+                  _SeekBar(total: snapshot.duration ?? song.duration),
                   const SizedBox(height: 8),
                   _TransportControls(snapshot: snapshot),
                   const SizedBox(height: 16),

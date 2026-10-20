@@ -16,6 +16,7 @@ class PlayerSnapshot {
     this.queue = const [],
     this.currentIndex,
     this.position = Duration.zero,
+    this.duration,
     this.bufferedPosition = Duration.zero,
     this.repeatMode = PlayerRepeatMode.off,
     this.shuffleEnabled = false,
@@ -30,6 +31,10 @@ class PlayerSnapshot {
   final List<Song> queue;
   final int? currentIndex;
   final Duration position;
+
+  /// Duración real de lo que suena (la del reproductor). `null` si aún no se
+  /// conoce; la de [currentSong] puede no coincidir.
+  final Duration? duration;
   final Duration bufferedPosition;
   final PlayerRepeatMode repeatMode;
   final bool shuffleEnabled;

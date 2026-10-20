@@ -460,8 +460,8 @@ class KodaAudioHandler extends BaseAudioHandler
   /// el resto del flujo de avance). Por eso el final también se detecta por
   /// posición, cuando se acerca a la duración de la pista.
   void _onPosition(Duration position) {
-    final duration = _trackDuration;
-    if (duration == null) return;
+    final duration = _player.duration;
+    if (duration == null || duration <= Duration.zero) return;
     if (!_player.playing || _resolving || _trackEndHandled) return;
     if (position < duration - _endTolerance) return;
     _endTrack();
@@ -473,15 +473,6 @@ class KodaAudioHandler extends BaseAudioHandler
       'pos=${_player.position.inMilliseconds} '
       'dur=${_player.duration?.inMilliseconds} '
       'stored=${_currentSong?.durationMs} idx=$_index/${_queue.length}';
-
-  /// Duración del reproductor o, si iOS no la da (fuentes en streaming sin
-  /// longitud conocida), la que guardamos con la canción.
-  Duration? get _trackDuration {
-    final fromPlayer = _player.duration;
-    if (fromPlayer != null && fromPlayer > Duration.zero) return fromPlayer;
-    final song = _currentSong;
-    return song != null && song.durationMs > 0 ? song.duration : null;
-  }
 
   void _endTrack() {
     if (_trackEndHandled) return;
@@ -640,6 +631,7 @@ class KodaAudioHandler extends BaseAudioHandler
       queue: List.unmodifiable(_queue),
       currentIndex: _index,
       position: _player.position,
+      duration: _player.duration,
       bufferedPosition: _player.bufferedPosition,
       repeatMode: _repeat,
       shuffleEnabled: _shuffleEnabled,
