@@ -52,11 +52,9 @@ lib/
 
 ## 📱 Demo
 
-*(Añade aquí capturas de pantalla o un GIF mostrando la app en funcionamiento)*
+![Reproductor de Koda](docs/demo/demo.gif)
 
-- Reproductor
-- Mi Biblioteca
-- Descargas Offline
+La demo usa canciones y carátulas ficticias, generadas por un test de golden (`test/demo`). Las capturas individuales están en [docs/demo](docs/demo).
 
 ## ⚙️ Cómo ejecutar el proyecto (Modo Desarrollo)
 
