@@ -48,7 +48,6 @@ lib/
 
 ## ⚠️ Problemas conocidos
 
-- **Auto-avance en iOS:** en algunos casos la pista no pasa a la siguiente al terminar, tanto en streaming como en descargas. Es la línea de trabajo abierta.
 - **Duración del stream distinta a la metadata:** para algunos videos, el audio que resuelve YouTube dura más que la canción guardada. La app usa la duración guardada como referencia para la barra de progreso y el fin de pista.
 
 ## 📱 Demo
@@ -73,8 +72,4 @@ flutter pub get
 ```bash
 flutter run
 ```
-
-## 🍏 Compilar para iOS sin Xcode
-
-El repositorio incluye un workflow manual de GitHub Actions que genera un IPA sin firmar. Se lanza desde la pestaña **Actions** del repositorio, eligiendo la rama `main`.
 
