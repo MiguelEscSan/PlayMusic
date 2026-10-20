@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/audio/audio_player_service.dart';
-import '../../../core/audio/koda_audio_handler.dart';
 import '../../../di/providers.dart';
 import 'player_providers.dart';
 import '../../../core/domain/entities/song.dart';
@@ -55,29 +54,11 @@ class NowPlayingScreen extends ConsumerWidget {
           icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 32),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              snapshot.isPlayingOffline
-                  ? 'Sin conexión · archivo local'
-                  : 'Streaming',
-              style: theme.textTheme.labelLarge,
-            ),
-            // TEMP: diagnóstico del auto-avance. Quitar al terminar.
-            Consumer(
-              builder: (context, ref, _) {
-                ref.watch(playerPositionProvider);
-                final audio = ref.read(audioPlayerServiceProvider);
-                return Text(
-                  audio is KodaAudioHandler
-                      ? audio.debugReadout()
-                      : 'sin handler',
-                  style: theme.textTheme.labelSmall,
-                );
-              },
-            ),
-          ],
+        title: Text(
+          snapshot.isPlayingOffline
+              ? 'Sin conexión · archivo local'
+              : 'Streaming',
+          style: theme.textTheme.labelLarge,
         ),
         centerTitle: true,
       ),
