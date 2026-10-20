@@ -18,7 +18,9 @@ El objetivo principal de este proyecto es resolver problemas arquitectónicos co
 - **Arquitectura:** Clean Architecture estructurada por funcionalidades (*Feature-first*)
 - **Base de Datos:** SQLite (`sqflite`)
 - **Motor de Audio:** `just_audio` + `audio_service` (OS Media Controls)
+- **Fuente de streaming:** `youtube_explode_dart` (resolución de URLs de audio)
 - **Networking & Descargas:** `dio` (Chunked downloads)
+- **Plataformas:** Android e iOS (audio en segundo plano)
 
 ## 🏗️ Arquitectura y Diseño
 
@@ -41,6 +43,13 @@ lib/
 - **Gestor de Descargas Concurrente:** Implementación de un `DownloadManager` personalizado usando `dio` para descargar archivos grandes en fragmentos (chunks), permitiendo pausar, cancelar y reanudar descargas en caso de fallo de red.
 - **Audio Background & OS Integration:** Integración profunda con Android/iOS para mantener la reproducción con la pantalla apagada, respondiendo a eventos de auriculares Bluetooth y controles en la pantalla de bloqueo a través de `audio_service`.
 - **Motor de Recomendaciones Local:** Un algoritmo híbrido que cruza los grafos de canciones recomendadas de una API pública con el historial de reproducción local (SQLite) para sugerir la siguiente pista automáticamente (Radio Infinita).
+- **Reanudar la última reproducción:** Al cambiar de pista, pausar o mientras suena (cada 5 s), se guardan la cola, el índice y la posición en la tabla `settings`. Al abrir la app, la última canción se carga en pausa en ese punto, omitiendo las que ya no existen.
+- **Fin de pista por posición:** El avance a la siguiente pista no depende solo del evento `completed` del reproductor: se detecta también cuando la posición llega al final de la duración guardada en la base de datos.
+
+## ⚠️ Problemas conocidos
+
+- **Auto-avance en iOS:** en algunos casos la pista no pasa a la siguiente al terminar, tanto en streaming como en descargas. Es la línea de trabajo abierta.
+- **Duración del stream distinta a la metadata:** para algunos videos, el audio que resuelve YouTube dura más que la canción guardada. La app usa la duración guardada como referencia para la barra de progreso y el fin de pista.
 
 ## 📱 Demo
 
@@ -54,7 +63,7 @@ lib/
 
 1. **Clona el repositorio:**
 ```bash
-git clone [https://github.com/tu-usuario/koda.git](https://github.com/tu-usuario/koda.git)
+git clone https://github.com/MiguelEscSan/PlayMusic.git
 ```
 2. **Instala las dependencias:**
 ```bash
@@ -65,4 +74,7 @@ flutter pub get
 flutter run
 ```
 
+## 🍏 Compilar para iOS sin Xcode
+
+El repositorio incluye un workflow manual de GitHub Actions que genera un IPA sin firmar. Se lanza desde la pestaña **Actions** del repositorio, eligiendo la rama `main`.
 
