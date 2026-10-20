@@ -54,7 +54,7 @@ lib/
 
 ![Reproductor de Koda](docs/demo/demo.gif)
 
-La demo usa canciones y carátulas ficticias, generadas por un test (`test/demo`). El video completo está en [demo.mp4](docs/demo/demo.mp4).
+La demo usa canciones y carátulas ficticias, generadas por un test (`test/demo`).
 
 ## ⚙️ Cómo ejecutar el proyecto (Modo Desarrollo)
 
