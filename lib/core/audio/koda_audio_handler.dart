@@ -53,6 +53,10 @@ class KodaAudioHandler extends BaseAudioHandler
 
   bool _stopAfterCurrent = false;
 
+  /// Petición a [onQueueEnded] en curso y la cola para la que se hizo; evita
+  /// pedir dos veces lo mismo.
+  (List<Song>, Future<void>)? _extending;
+
   /// Orden de reproducción actual.
   List<Song> _queue = [];
 
@@ -245,8 +249,11 @@ class KodaAudioHandler extends BaseAudioHandler
 
   @override
   Future<void> skipToNext() async {
-    if (_hasNext) return _loadAt(_index! + 1);
+    if (_hasNext) return _advance();
     if (_repeat == PlayerRepeatMode.all && _queue.isNotEmpty) return _loadAt(0);
+    final generation = _loadGeneration;
+    await _extendQueue();
+    if (generation == _loadGeneration && _hasNext) return _advance();
   }
 
   /// Como en cualquier reproductor: si van más de 3 s, vuelve al inicio de
@@ -478,18 +485,64 @@ class KodaAudioHandler extends BaseAudioHandler
       _stopAfterCurrent = false;
       return _parkAtStart();
     }
-    if (_hasNext) return _loadAt(_index! + 1);
+    if (_hasNext) return _advance();
     if (_repeat == PlayerRepeatMode.all && _queue.isNotEmpty) return _loadAt(0);
 
-    final more = await onQueueEnded?.call(List.unmodifiable(_queue)) ?? [];
-    if (more.isNotEmpty) {
-      final next = _queue.length;
-      _queue.addAll(more);
-      _unshuffled?.addAll(more);
-      _publishQueue();
-      return _loadAt(next);
-    }
+    final generation = _loadGeneration;
+    await _extendQueue();
+    // Mientras se esperaba, el usuario puso otra cosa.
+    if (generation != _loadGeneration) return;
+    if (_hasNext) return _advance();
     await _parkAtStart();
+  }
+
+  /// Pasa a la siguiente. Si es la última, pide más en segundo plano para
+  /// que la radio no se corte ni haya silencio al acabar.
+  Future<void> _advance() {
+    final next = _index! + 1;
+    if (next == _queue.length - 1 && _repeat != PlayerRepeatMode.all) {
+      unawaited(_extendQueue());
+    }
+    return _loadAt(next);
+  }
+
+  /// Añade al final lo que devuelva [onQueueEnded]. Si ya hay una petición
+  /// para esta cola, espera esa en vez de repetirla.
+  Future<void> _extendQueue() {
+    if (_extending case (final queue, final pending)
+        when identical(queue, _queue)) {
+      return pending;
+    }
+    final queue = _queue;
+    final pending = _fetchMore(queue);
+    _extending = (queue, pending);
+    unawaited(
+      pending.whenComplete(() {
+        if (identical(_extending?.$2, pending)) _extending = null;
+      }),
+    );
+    return pending;
+  }
+
+  Future<void> _fetchMore(List<Song> queue) async {
+    final callback = onQueueEnded;
+    if (callback == null) return;
+    final length = queue.length;
+    final List<Song> more;
+    try {
+      more = await callback(List.unmodifiable(queue));
+    } catch (_) {
+      return;
+    }
+    // La cola se sustituyó o cambió mientras tanto: estas ya no tocan.
+    if (more.isEmpty || !identical(queue, _queue) || queue.length != length) {
+      return;
+    }
+    _queue.addAll(more);
+    _unshuffled?.addAll(more);
+    _publishQueue();
+    _broadcast();
+    _prefetchNext();
   }
 
   /// Fin de la reproducción: dejamos la canción actual preparada al

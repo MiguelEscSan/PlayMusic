@@ -296,6 +296,62 @@ void main() {
       expect(currentId(), 'r1');
     });
 
+    test('al llegar a la última pide más sin esperar a que acabe', () async {
+      List<String>? seen;
+      audio.onQueueEnded = (queue) async {
+        seen = [for (final s in queue) s.id];
+        return [song('r1'), song('r2')];
+      };
+
+      await audio.playQueue([song('a'), song('b')]);
+      player.complete();
+      await pumpEventQueue();
+
+      expect(seen, ['a', 'b']);
+      expect(ids(), ['a', 'b', 'r1', 'r2']);
+      expect(currentId(), 'b', reason: 'sigue sonando la última');
+    });
+
+    test('al empezar una cola no pide más hasta llegar a la última', () async {
+      var calls = 0;
+      audio.onQueueEnded = (queue) async {
+        calls++;
+        return [song('r1')];
+      };
+
+      await audio.playQueue([song('a')]);
+      await pumpEventQueue();
+
+      expect(calls, 0);
+      expect(ids(), ['a']);
+    });
+
+    test('siguiente en la última pide más y salta a la primera nueva', () async {
+      audio.onQueueEnded = (queue) async => [song('r1'), song('r2')];
+
+      await audio.playQueue([song('a')]);
+      await audio.skipToNext();
+      await pumpEventQueue();
+
+      expect(ids(), ['a', 'r1', 'r2']);
+      expect(currentId(), 'r1');
+    });
+
+    test('lo que llega para una cola ya sustituida se descarta', () async {
+      final pending = Completer<List<Song>>();
+      audio.onQueueEnded = (queue) => pending.future;
+
+      await audio.playQueue([song('a'), song('b')]);
+      player.complete();
+      await pumpEventQueue();
+      await audio.playQueue([song('x'), song('y')]);
+      pending.complete([song('r1')]);
+      await pumpEventQueue();
+
+      expect(ids(), ['x', 'y']);
+      expect(currentId(), 'x');
+    });
+
     test('sin onQueueEnded la cola se para al final', () async {
       await audio.playQueue([song('a')]);
       player.complete();
